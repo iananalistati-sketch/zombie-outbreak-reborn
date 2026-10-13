@@ -48,8 +48,8 @@ local function ensureSpawn(name: string, position: Vector3, color: Color3): Base
     part.Parent = world
     return part
 end
-local humanSpawn = ensureSpawn("HumanSpawn", Vector3.new(-25, 3, -115), Color3.fromRGB(35, 100, 170))
-local zombieSpawn = ensureSpawn("ZombieSpawn", Vector3.new(105, 3, -115), Color3.fromRGB(40, 115, 66))
+local humanSpawn = ensureSpawn("HumanSpawn", Vector3.new(-33, 3, 35), Color3.fromRGB(35, 100, 170))
+local zombieSpawn = ensureSpawn("ZombieSpawn", Vector3.new(32, 3, -35), Color3.fromRGB(40, 115, 66))
 
 local state = "Waiting"
 local roundId = 0
