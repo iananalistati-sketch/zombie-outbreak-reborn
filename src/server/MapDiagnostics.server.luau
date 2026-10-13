@@ -1,30 +1,32 @@
 --!strict
--- Zombie Outbreak: diagnostics for Riverside Survival 01.
--- Read-only: validates mapped sectors and physically reachable key door openings.
+-- Harbor Locks authored GLB scene validator. Always runs on server.
+-- This cannot import the GLB: Roblox Studio Importer uploads MeshParts.
 local Workspace = game:GetService("Workspace")
-print("[ZO MAP] Riverside diagnostics online")
-local root = Workspace:FindFirstChild("ZO_Survival")
-if not root then
-    warn("[ZO MAP] Workspace.ZO_Survival missing: check Rojo synchronization.")
+local mapName = "HarborLocks_Survival_Visual"
+local found = Workspace:FindFirstChild(mapName)
+local physics = Workspace:FindFirstChild("ZO_HarborCollision")
+if physics then
+    print("[ZO HARBOR] Collision proxy present; "+tostring(#physics:GetChildren())+" parts")
+else
+    warn("[ZO HARBOR] Missing collision proxy. Check Rojo sync of default.project.json.")
+end
+if not found then
+    warn("[ZO HARBOR] 3D map has not been imported into Workspace yet. File > Import > assets/maps/HarborLocks_Survival_Visual.glb. Rename model exactly HarborLocks_Survival_Visual.")
     return
 end
-local names = {
-    "00_StreetAndSite", "01_MultilevelGarage", "02_SecurityOffice",
-    "03_SubwayEntrance", "04_UndergroundStation", "05_EmergencyEscape",
-    "06_SiteFinishing",
-}
-local total=0
-for _,name in ipairs(names) do
-    local sector=root:FindFirstChild(name)
-    if not sector then
-        warn("[ZO MAP] Missing sector: "..name)
-    else
-        local parts=0
-        for _,inst in ipairs(sector:GetDescendants()) do
-            if inst:IsA("BasePart") then parts+=1 end
+local meshes,parts,unanchored=0,0,0
+for _,v in ipairs(found:GetDescendants()) do
+    if v:IsA("BasePart") then
+        parts+=1
+        if not v.Anchored then
+            unanchored+=1
+            v.Anchored=true -- don't let the imported scene fall during testing
         end
-        total+=parts
-        print("[ZO MAP] "..name.." | "..parts.." parts")
+        if v:IsA("MeshPart") then meshes+=1 end
     end
 end
-print("[ZO MAP] Riverside 01 loaded: "..total.." parts. Connectivity still requires multiplayer playtest.")
+print(("[ZO HARBOR] Imported authored map found: %d BaseParts, %d MeshParts; anchored %d."):format(parts,meshes,unanchored))
+if meshes < 12 then
+    warn("[ZO HARBOR] Few or no MeshParts. Verify GLB import options or hierarchy.")
+end
+print("[ZO HARBOR] Routes and collision STILL require in-Studio testing. This message is not gameplay approval.")
