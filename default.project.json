@@ -12751,7 +12751,7 @@
           }
         }
       },
-      "$ignoreUnknownInstances": true,
+      "$ignoreUnknownInstances": false,
       "ZO_Survival_Probe": {
         "$className": "Part",
         "$properties": {
