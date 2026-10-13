@@ -1,0 +1,35 @@
+name: Import licensed authored FPS map
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/import-authored-map.yml
+      - scripts/inspect_upstream_glb.py
+
+permissions:
+  contents: write
+
+jobs:
+  stage-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download pinned upstream MIT-licensed GLB
+        run: |
+          mkdir -p third_party/fps-multiplayer-template
+          curl -fL --retry 3 \
+            "https://raw.githubusercontent.com/TheDahoom/FPS-Multiplayer-Template/dd9627490d5bb6f16f84b4ffd09bfc6f036140b1/imports/map.glb" \
+            -o third_party/fps-multiplayer-template/map.glb
+          test "$(wc -c < third_party/fps-multiplayer-template/map.glb)" -gt 100000
+      - name: Inspect real source geometry
+        run: python3 scripts/inspect_upstream_glb.py
+      - name: Commit original map and inspection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add third_party/fps-multiplayer-template/map.glb docs/UPSTREAM_MAP_INSPECTION.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "assets: stage licensed original FPS map for Roblox import [skip ci]"
+          git push
