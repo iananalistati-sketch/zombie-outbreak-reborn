@@ -1,0 +1,256 @@
+{
+  "status": "VISUAL SCENE ASSEMBLED; GAMEPLAY UNTESTED",
+  "basis": "Operation Steel Tide Harbor Locks (MIT layout) and Kenney Industrial CC0 enterable models",
+  "model": "assets/maps/HarborLocks_Survival_Visual.glb",
+  "bytes": 848388,
+  "buildings": 19,
+  "instances": [
+    {
+      "name": "WestControlHall",
+      "source": "enterable/building-a-enterable.glb",
+      "position_m": [
+        -43,
+        0,
+        -33
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 8.5,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "WestTurbineHall",
+      "source": "enterable/building-c-enterable.glb",
+      "position_m": [
+        -43,
+        0,
+        -4
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 8.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "NorthFreightHall",
+      "source": "enterable/building-q-enterable.glb",
+      "position_m": [
+        -16,
+        0,
+        -32
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.8,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "NorthAdministration",
+      "source": "enterable/building-h-enterable.glb",
+      "position_m": [
+        8,
+        0,
+        -33
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 7.5,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "EastBoilerHall",
+      "source": "enterable/building-l-enterable.glb",
+      "position_m": [
+        43,
+        0,
+        -14
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 8.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "EastPumpHall",
+      "source": "building-b.glb",
+      "position_m": [
+        42,
+        0,
+        33
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 8.5,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "SouthFreightHall",
+      "source": "enterable/building-e-enterable.glb",
+      "position_m": [
+        15,
+        0,
+        33
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.8,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "SouthControlAnnex",
+      "source": "enterable/building-r-enterable.glb",
+      "position_m": [
+        -8,
+        0,
+        33
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.8,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "MidCoverWestOffice",
+      "source": "enterable/building-h-enterable.glb",
+      "position_m": [
+        -23,
+        0,
+        -14
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "MidCoverEastOffice",
+      "source": "enterable/building-t-enterable.glb",
+      "position_m": [
+        23,
+        0,
+        18
+      ],
+      "rotation_y_rad": 1.5707963268,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "MidCoverNorthPump",
+      "source": "enterable/building-f-enterable.glb",
+      "position_m": [
+        -3,
+        0,
+        -16
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "MidCoverSouthPump",
+      "source": "enterable/building-n-enterable.glb",
+      "position_m": [
+        3,
+        0,
+        16
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "NorthDispatchOffice",
+      "source": "enterable/building-j-enterable.glb",
+      "position_m": [
+        -27.5,
+        0,
+        -33
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 6.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "NorthSecurityOffice",
+      "source": "enterable/building-j-enterable.glb",
+      "position_m": [
+        -3,
+        0,
+        -32.5
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 6.8,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "SouthSecurityOffice",
+      "source": "enterable/building-j-enterable.glb",
+      "position_m": [
+        30,
+        0,
+        34
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 6.8,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "WestCustomsWorkshop",
+      "source": "enterable/building-g-enterable.glb",
+      "position_m": [
+        -32,
+        0,
+        13
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "WestServiceOffice",
+      "source": "enterable/building-j-enterable.glb",
+      "position_m": [
+        -18,
+        0,
+        9.5
+      ],
+      "rotation_y_rad": 1.5707963268,
+      "scale": 4.5,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "EastQuayWorkshop",
+      "source": "enterable/building-g-enterable.glb",
+      "position_m": [
+        51,
+        0,
+        5
+      ],
+      "rotation_y_rad": 0.0,
+      "scale": 7.0,
+      "mesh_nodes": 1
+    },
+    {
+      "name": "EastServiceOffice",
+      "source": "enterable/building-j-enterable.glb",
+      "position_m": [
+        51,
+        0,
+        17.5
+      ],
+      "rotation_y_rad": 3.14159265,
+      "scale": 6.8,
+      "mesh_nodes": 1
+    }
+  ],
+  "bounds_m": {
+    "min": [
+      -58.0,
+      -0.98,
+      -42.0
+    ],
+    "max": [
+      58.0,
+      15.399999618530273,
+      42.0
+    ]
+  },
+  "geometry_count": 29,
+  "warnings": [
+    "This is a 3D authored architectural composition, not a complete Roblox game map.",
+    "Roblox mesh import must be performed in Studio; Rojo cannot upload a GLB as a MeshPart.",
+    "Character-scale, collision proxies, door entrances, safe spots and raycast reachability require Studio tests.",
+    "The original Godot game logic is NOT copied or executed in Roblox."
+  ]
+}
