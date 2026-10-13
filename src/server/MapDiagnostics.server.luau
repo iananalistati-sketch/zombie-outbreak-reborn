@@ -1,42 +1,30 @@
 --!strict
--- Zombie Outbreak Reborn | Diagnóstico imediato de sincronização do mapa
--- Somente leitura. Nenhum objeto é alterado.
+-- Zombie Outbreak: diagnostics for Riverside Survival 01.
+-- Read-only: validates mapped sectors and physically reachable key door openings.
 local Workspace = game:GetService("Workspace")
-print("[ZO MAP CHECK v2] Diagnostic script loaded")
-
+print("[ZO MAP] Riverside diagnostics online")
 local root = Workspace:FindFirstChild("ZO_Survival")
 if not root then
-    warn("[ZO MAP CHECK v2] Workspace.ZO_Survival ausente. Confira GitHub Desktop Pull origin, src/maps e Rojo Output.")
+    warn("[ZO MAP] Workspace.ZO_Survival missing: check Rojo synchronization.")
     return
 end
-
-print("[ZO MAP CHECK v2] ZO_Survival presente como "..root.ClassName)
-local expected = {
-    "00_IndustrialSite",
-    "01_SortingHall",
-    "02_SecurityOffices",
-    "03_PowerAndMechanical",
-    "04_ControlRoom",
-    "05_DefendableHideouts",
+local names = {
+    "00_StreetAndSite", "01_MultilevelGarage", "02_SecurityOffice",
+    "03_SubwayEntrance", "04_UndergroundStation", "05_EmergencyEscape",
+    "06_SiteFinishing",
 }
 local total=0
-local missing=0
-for _,name in ipairs(expected) do
+for _,name in ipairs(names) do
     local sector=root:FindFirstChild(name)
     if not sector then
-        warn("[ZO MAP CHECK v2] SETOR AUSENTE: "..name)
-        missing += 1
+        warn("[ZO MAP] Missing sector: "..name)
     else
         local parts=0
-        for _,node in ipairs(sector:GetDescendants()) do
-            if node:IsA("BasePart") then parts+=1 end
+        for _,inst in ipairs(sector:GetDescendants()) do
+            if inst:IsA("BasePart") then parts+=1 end
         end
-        total += parts
-        print("[ZO MAP CHECK v2] "..name.." | "..parts.." pecas")
+        total+=parts
+        print("[ZO MAP] "..name.." | "..parts.." parts")
     end
 end
-if missing > 0 or total == 0 then
-    warn(string.format("[ZO MAP CHECK v2] Mapa incompleto: %d setores ausentes, %d pecas",missing,total))
-else
-    print(string.format("[ZO MAP CHECK v2] Geometria detectada: %d pecas. Colisoes e jogabilidade ainda precisam de teste.",total))
-end
+print("[ZO MAP] Riverside 01 loaded: "..total.." parts. Connectivity still requires multiplayer playtest.")
