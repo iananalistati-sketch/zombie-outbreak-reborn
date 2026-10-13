@@ -24,7 +24,7 @@ jobs:
       - name: Validate generated map
         run: |
           test -s /tmp/zombie-outbreak.rbxlx
-          grep -q 'ZO_Survival' /tmp/zombie-outbreak.rbxlx
-          grep -q '00_StreetAndSite' /tmp/zombie-outbreak.rbxlx
-          grep -q '05_EmergencyEscape' /tmp/zombie-outbreak.rbxlx
-          echo "Map present in compiled .rbxlx"
+          grep -q 'ZO_HarborCollision' /tmp/zombie-outbreak.rbxlx
+          grep -q 'HarborGround' /tmp/zombie-outbreak.rbxlx
+          grep -q 'CentralCrossing' /tmp/zombie-outbreak.rbxlx
+          echo "Harbor collision geometry present in compiled .rbxlx"
