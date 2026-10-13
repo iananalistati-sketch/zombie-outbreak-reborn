@@ -1,51 +1,52 @@
-# Foundry Survival — especificação de layout v0.1
+# Zombie Outbreak Reborn — Riverside Transit (Survival v0.2)
 
-## Estado
-Primeira revisão arquitetônica sincronizada no **modo de edição** pelo Rojo.
-É um **blockout arquitetônico funcional em avaliação**, não um mapa artístico de nível CS2.
-Não foram importados mapas, modelos ou texturas do Counter-Strike.
+## Conceito: referências e adaptação
+A organização do mapa inspira-se na lógica dos Zombie Mod clássicos do Counter-Strike: Source, principalmente `zm_panic` (pátio aberto e acesso estreito ao metrô) e a importância de esconderijos defensáveis documentada nas variantes de `zm_lila_panic`. **Não é cópia nem conversão de geometria, textura ou código desses mapas.**
 
-## Planta e lógica arquitetônica
-- Complexo industrial de separação de cargas, com entrada no **pátio de recebimento** (sul, z~-130).
-- **Galpão de triagem** no centro (x~-92..92, z~-60..128): duas linhas de esteira em paralelo, corredores entre elas, estantes de almoxarifado no fundo e galeria de inspeção com duas escadas.
-- **Escritórios e segurança** no anexo oeste (x~-160..-94, z~-11..117): recepção, corredor, salas de operação, arquivos. A saída lateral do galpão conecta ao corredor de serviço.
-- **Manutenção e geração** no anexo leste (x~96..160, z~-10..118): geradores, tubulações, quadros técnicos, corredor de serviço e saída leste.
-- **Sala de controle** ao norte (x~-47..47, z~149..185): sala elevada, consoles, uma escada de acesso pela frente e uma segunda saída posterior.
-- **Galeria técnica elevada** e **duto de cabos** atravessam áreas de transição, em vez de surgirem como plataformas sem contexto.
+## Estrutura conectada
+```
+                 NORTE
+          [PLATAFORMAS SUBTERRÂNEAS]
+                    ↑
+       [HALL/TICKET] ← [TÚNEL DE SERVIÇO]
+                    ↑                ↑
+            [ESCADA PRINCIPAL]  [ESCADA EMERGÊNCIA]
+                    ↑                ↑
+[ESTACIONAMENTO] ← PÁTIO → [ESCRITÓRIO SEGURANÇA]
+   ↕ ↕                          ↕         ↕
+  ESCADAS                      RECEPÇÃO / SAÍDA TRASEIRA
+                 SUL
+```
 
-## Pontos defensáveis de Survival (não são áreas invulneráveis)
+## Função arquitetônica e posicionamento tático
 
-| Posição | Vantagem humana | Entrada dos zumbis / risco | Recuo |
+| Zona | Funcionalidade do edifício | Posição de defesa | Como os zumbis invadem |
 |---|---|---|---|
-| Galeria de inspeção | Visão do chão do galpão; tiro com knockback | Duas escadas nas extremidades e alcance lateral | Descer para depósito ou correr ao controle |
-| Segurança administrativa | Corredores e móveis como cobertura; gargalo no arquivo | Entrada da recepção + duto de cabos pelo galpão | Seguir corredor sul |
-| Duto técnico | Acesso estreito que favorece defesa em sequência | Ambas as bocas acessíveis por escadas | Sair pelo galpão ou pelo escritório |
-| Sala de controle | Janela de observação e corredor em funil | Portas/frentes sul e norte (via pátio posterior) | Escada posterior |
-| Manutenção | Acesso lateral e obstáculo real de geradores | Portas do galpão + saída externa leste | Corredor externo leste |
+| Pátio e rua | acesso principal e estacionamento descoberto | movimentação, agrupamento e retirada | aberto, poucos obstáculos fixos |
+| Garagem dois pavimentos | estacionamento com vagas, pilares e duas escadas | pavimento superior com visão do pátio | duas escadas distintas nas extremidades |
+| Escritório de segurança | recepção, guarita, mesas, corredores e duas saídas | sala interna e porta frontal estreita | entrada frontal ou passagem posterior |
+| Entrada do metrô | portal, canopy e escada abaixo do nível da rua | topo/rodapé da escada (gargalo) | escada principal + ligação de emergência |
+| Hall subterrâneo | bilheteria, espera, luzes de plataforma | balcão de bilheteria com duas aberturas | via escada principal ou corredor de serviço |
+| Plataforma | bancos, linha de segurança e trilhos rebaixados | plataformas laterais com deslocamento e tiro | dois acessos ao hall e ao serviço |
+| Saída de emergência | escada lateral, corredor utilitário e iluminação | ponto de retirada do hall | ligação pelo escritório ou área lateral |
 
-## Rotas previstas
-- **Rota principal**: pátio de recebimento → docas → portão sul → esteiras → portão norte → serviço norte → sala de controle.
-- **Flanco oeste**: pátio oeste → recepção → corredores do escritório → abertura lateral do galpão.
-- **Flanco leste**: via de serviço leste → sala de geradores → abertura lateral do galpão.
-- **Rota elevada**: piso do galpão → escada oeste ou leste → galeria de observação.
-- **Duto**: piso do galpão → escada do duto → trecho elevado → escada administrativa.
+## Validações efetuadas
+- O mapa é uma instância persistente em `default.project.json`: aparece no Workspace fora de Play.
+- Layout novo substitui os sete grupos de geometria inconsistentes do Foundry.
+- Inspeção estática de colisões nos pontos centrais de circulação: pátio, acesso principal, degraus, bilheteria, duas plataformas, escritório, serviço e garagem.
+- Uma parede obstruindo a saída de emergência e uma mesa bloqueando a circulação foram corrigidas.
+- Ainda não foi possível testar escadas, pulo, collision box e equilíbrio humano/zumbi diretamente no Roblox Studio. Não tratar mapa como aprovado até testes com jogadores.
 
-## Regras para próximos ajustes
-1. Não acrescentar coberturas ou caixas aleatórias; todo objeto tem de pertencer a uma função plausível de logística, segurança ou manutenção.
-2. Antes de criar uma posição de defesa, identificar pelo menos uma forma de invasão e uma forma de recuo.
-3. Manter linhas de visão e largura de circulação compatíveis com personagens Roblox, knockback e partidas de vários jogadores.
-4. Validar passagem real e colisões **dentro do Roblox Studio**. O projeto não foi executado remotamente.
-5. Acrescentar assets 3D licenciados e materiais personalizados somente depois de validar rotas/escala. Neste commit, as superfícies ainda são materiais nativos.
-6. Para mapa definitivo e modo Zombie Escape, criar projeto de mapa separado, não reaproveitar a mesma arena.
+## Pendências de arte e gameplay
+- Geometria é um **blockout coerente**, não arte final CS2. Para qualidade visual realista, usar assets 3D próprios/licenciados, texturas/material variants PBR, melhor iluminação e efeitos.
+- Respawn em pontos opostos do pátio é provisório para teste.
+- Defesa com knockback deve ser balanceada para largura das passagens e tamanho de servidor.
+- Testar também a rota alternativa pelo posto de segurança, sem criar posições invulneráveis.
+- Zombie Escape será um mapa e regras independentes.
 
-## Integração do Rojo
-`default.project.json` sincroniza `src/roblox_models` em `Workspace.ZO_Survival`. 
-Os modelos `.rbxmx` em `src/roblox_models/` são sincronizados para o **modo de edição**. Os arquivos `.model.json` em `src/maps/` são legados não sincronizados. 
-O gerador antigo `FoundryMap.server.luau` foi removido.
-Mudanças feitas à mão nos objetos sincronizados no Studio podem ser substituídas pelo próximo Pull/Sync; altere a fonte controlada pelo Rojo.
-
-## Verificação no editor
-Após `Fetch origin → Pull origin` no GitHub Desktop, volte ao Studio com o Rojo conectado.
-Expanda `Workspace → ZO_Survival`. Devem aparecer 6 modelos.
-Selecione `ZO_Survival` e pressione **F** para enquadrar a planta.
-Faça testes com dois clientes, verificando portão frontal, dois acessos à galeria, duto com duas saídas e sala de controle.
+## Critério de aceite do mapa
+1. Humano alcança garagem superior, sala de segurança, bilheteria e plataformas sem ficar preso.
+2. Zumbi tem rota real para cada posição defensiva; duas para garagem e estação.
+3. Nenhuma sala ou escada termina em barreira arbitrária.
+4. O ambiente se lê como uma estação, um pátio e prédios adjacentes — não como módulos aleatórios.
+5. Colisão e escala testadas com ao menos dois clientes.
