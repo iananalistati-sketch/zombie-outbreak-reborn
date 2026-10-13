@@ -44,7 +44,7 @@ local function step(x:number,y:number,z:number,w:number,d:number)
     return part("Stair",Vector3.new(x,y,z),Vector3.new(w,2,d),Enum.Material.Metal,iron)
 end
 local function sign(text:string,x:number,y:number,z:number,rot:number)
-    local holder=part("Sign_"..text,Vector3.new(x,y,z),Vector3.new(17,4,.3),Enum.Material.Metal,iron,false)
+    local holder=part("Sign_"..text,Vector3.new(x,y,z),Vector3.new(17,4,.3),Enum.Material.Metal,iron,nil)
     holder.CFrame=holder.CFrame*CFrame.Angles(0,math.rad(rot),0)
     local gui=Instance.new("SurfaceGui")
     gui.Face=Enum.NormalId.Front
