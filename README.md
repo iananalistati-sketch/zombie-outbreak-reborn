@@ -1,23 +1,31 @@
 # Zombie Outbreak Reborn
 
-Projeto Roblox Studio com Rojo 7 e Luau.
+Jogo de zumbis em Luau para Roblox Studio, inspirado na jogabilidade de Zombie Survival e Zombie Escape do Counter-Strike. Projeto próprio: não contém código, modelos nem mapas proprietários do CS2.
 
-## Desenvolvimento
+## Desenvolvimento com GitHub + Rojo 7
 
-1. Clone o repositório: `git clone https://github.com/iananalistati-sketch/zombie-outbreak-reborn.git`
-2. Abra a pasta no VS Code.
-3. Execute `rojo serve` no terminal.
-4. No Roblox Studio, abra uma experiência **Baseplate de testes**, abra o plugin Rojo e conecte em `localhost:34872`.
-5. Confirme na janela **Saída (Output)** as mensagens `[Zombie Outbreak] Server bootstrap OK` e `[Zombie Outbreak] Client bootstrap OK`.
+1. No GitHub Desktop, use **Fetch origin → Pull origin**.
+2. Deixe o **Rojo Server** ligado no VS Code e o plugin conectado no Roblox Studio.
+3. Acesse `Workspace → ZO_Survival` no Explorer. O mapa persistente está em 6 modelos, visível **fora do Play**. Selecione a pasta e pressione **F** para enquadrar.
+4. Use **Play** para testar HUD, combate e infecção; 2 clientes para validar uma rodada.
+5. Se os modelos não aparecerem após o Pull, reconecte o plugin Rojo ao servidor iniciado na pasta correta.
 
-**Atenção:** use uma experiência nova ou faça backup antes de sincronizar. Rojo controla os caminhos definidos em `default.project.json`.
+## Pastas
 
-## Estrutura
+- `src/maps/`: geometria do Survival como arquivos `.model.json` sincronizados com o editor
+- `src/shared/`: parâmetros de rodada e jogo
+- `src/server/`: rodadas, infecção, combate e diagnóstico estrutural
+- `src/client/`: HUD e rifle FPS
+- `docs/SURVIVAL_LAYOUT.md`: planta e descrição de cada rota defensiva
 
-- `src/shared`: configuração e módulos compartilhados
-- `src/server`: serviços autoritativos no servidor
-- `src/client`: câmera, controles e interface locais
+## Situação do desenvolvimento
 
-## Direção
+- Fundação multiplayer: equipes, seleção de zumbi, infecção e rodadas em fase de teste.
+- Combate FPS: rifle, dano e knockback prototipados.
+- **Survival**: mapa arquitetônico persistente com pátio, triagem, segurança, manutenção, galeria e controle. Os acessos e colisões ainda exigem validação no Studio.
+- **Escape**: planejado, ainda não implementado nesta reestruturação.
+- Direção artística: materiais e peças nativas neste momento. Assets 3D personalizados, acabamentos e texturas PBR ainda não foram incorporados.
 
-Dois modos planejados: Zombie Survival (defesa em esconderijos e pontos estratégicos) e Zombie Escape (progressão, portas e extração). Inspirados em Counter-Strike, mas com sistemas próprios em Luau e assets licenciados. Não incluir arquivos proprietários de CS2.
+**Não edite diretamente e salve como definitivo um objeto controlado pelo Rojo; as mudanças manuais podem ser substituídas pela próxima sincronização.**
+
+Projeto testado por inspeção dos arquivos e verificação de propriedades e dimensões dos modelos. Não foi executado dentro do Roblox Studio pelo desenvolvedor remoto.
