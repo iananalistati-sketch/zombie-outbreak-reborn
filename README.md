@@ -1,32 +1,31 @@
 # Zombie Outbreak Reborn
 
-Jogo de zumbis em Luau para Roblox Studio, inspirado na jogabilidade de Zombie Survival e Zombie Escape do Counter-Strike. Projeto próprio: não contém código, modelos nem mapas proprietários do CS2.
+Jogo Roblox Studio com Luau e Rojo 7. Equipes, rodada, infecção e protótipo FPS.
+Survival e Escape serão modos distintos. Sem arquivos proprietários do CS2.
 
-## Desenvolvimento com GitHub + Rojo 7
+## Atualização do mapa Survival (2026-10)
 
-1. No GitHub Desktop, use **Fetch origin → Pull origin**.
-2. Deixe o **Rojo Server** ligado no VS Code e o plugin conectado no Roblox Studio.
-3. Acesse `Workspace → ZO_Survival` no Explorer. O mapa persistente está em 6 modelos `.rbxmx`, visível **fora do Play**. Selecione a pasta e pressione **F** para enquadrar.
-4. Use **Play** para testar HUD, combate e infecção; 2 clientes para validar uma rodada.
-5. Se os modelos não aparecerem após o Pull, reconecte o plugin Rojo ao servidor iniciado na pasta correta.
+**Mapa declarado diretamente no `default.project.json`**, usando instâncias e propriedades no formato oficial de projeto Rojo. O projeto inclui seis modelos com 382 peças estáticas e uma coluna laranja de teste chamada `ZO_Survival_Probe`.
 
-## Pastas
+**Como receber a geometria no editor:**
+1. Roblox Studio: clique em Stop.
+2. GitHub Desktop: Fetch origin e Pull origin.
+3. VS Code: pare e reinicie o servidor Rojo para recarregar o `default.project.json` (a extensão já está instalada).
+4. Roblox Studio: no plugin Rojo, Disconnect e Connect novamente ao projeto correto.
+5. Confira `Workspace → ZO_Survival` e `ZO_Survival_Probe` **antes de Play**.
 
-- `src/roblox_models/`: modelos de Survival (`.rbxmx`) sincronizados com o editor
-- `src/maps/`: modelos JSON anteriores conservados apenas como referência; não são mais sincronizados
-- `src/shared/`: parâmetros de rodada e jogo
-- `src/server/`: rodadas, infecção, combate e diagnóstico estrutural
-- `src/client/`: HUD e rifle FPS
-- `docs/SURVIVAL_LAYOUT.md`: planta e descrição de cada rota defensiva
+Se **nenhum dos dois** aparecer: confira `View → Output → Rojo` no VS Code e envie o primeiro erro. Não reinstale extensões.
+Se **somente a coluna** aparecer: verifique erros de propriedade/filhos durante a sincronização.
+Se **ambos aparecerem**: selecione `ZO_Survival` e use a tecla **F** para centralizar a câmera.
 
-## Situação do desenvolvimento
+## Fontes
+- `default.project.json`: estrutura Rojo e geometria declarada
+- `src/maps`: dados de referência do desenho, não importados
+- `src/server`: rodadas, infecção, combate e diagnóstico
+- `src/client`: HUD e câmera FPS
+- `src/shared`: parâmetros
+- `docs/SURVIVAL_LAYOUT.md`: planta e rotas táticas
 
-- Fundação multiplayer: equipes, seleção de zumbi, infecção e rodadas em fase de teste.
-- Combate FPS: rifle, dano e knockback prototipados.
-- **Survival**: mapa arquitetônico persistente com pátio, triagem, segurança, manutenção, galeria e controle. Os acessos e colisões ainda exigem validação no Studio.
-- **Escape**: planejado, ainda não implementado nesta reestruturação.
-- Direção artística: materiais e peças nativas neste momento. Assets 3D personalizados, acabamentos e texturas PBR ainda não foram incorporados.
+## Limitações
 
-**Não edite diretamente e salve como definitivo um objeto controlado pelo Rojo; as mudanças manuais podem ser substituídas pela próxima sincronização.**
-
-Projeto testado por inspeção dos arquivos e verificação de propriedades e dimensões dos modelos. Não foi executado dentro do Roblox Studio pelo desenvolvedor remoto.
+A estrutura foi validada como JSON, com partes, cores, materiais e CFrames formatados conforme a documentação Rojo. **Ainda falta confirmar um build real com Rojo 7.7.1 e a importação no Roblox Studio.** O cenário é um blockout arquitetônico, sem arte 3D realista.
