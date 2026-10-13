@@ -27,7 +27,8 @@
       "$className": "Workspace",
       "ZO_Survival": {
         "$path": "src/maps"
-      }
+      },
+      "$ignoreUnknownInstances": true
     }
   }
 }
