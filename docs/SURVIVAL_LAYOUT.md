@@ -39,8 +39,8 @@ Não foram importados mapas, modelos ou texturas do Counter-Strike.
 6. Para mapa definitivo e modo Zombie Escape, criar projeto de mapa separado, não reaproveitar a mesma arena.
 
 ## Integração do Rojo
-`default.project.json` sincroniza `src/maps` em `Workspace.ZO_Survival`. 
-Os modelos `00_...model.json` até `05_...model.json` persistem no **modo de edição**. 
+`default.project.json` sincroniza `src/roblox_models` em `Workspace.ZO_Survival`. 
+Os modelos `.rbxmx` em `src/roblox_models/` são sincronizados para o **modo de edição**. Os arquivos `.model.json` em `src/maps/` são legados não sincronizados. 
 O gerador antigo `FoundryMap.server.luau` foi removido.
 Mudanças feitas à mão nos objetos sincronizados no Studio podem ser substituídas pelo próximo Pull/Sync; altere a fonte controlada pelo Rojo.
 
