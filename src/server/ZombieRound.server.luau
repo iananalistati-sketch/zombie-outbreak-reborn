@@ -38,17 +38,18 @@ local function ensureSpawn(name: string, position: Vector3, color: Color3): Base
     if existing and existing:IsA("BasePart") then return existing end
     local part = Instance.new("Part")
     part.Name = name
-    part.Size = Vector3.new(12, 1, 12)
+    part.Size = Vector3.new(2, 0.2, 2)
     part.Position = position
     part.Anchored = true
-    part.CanCollide = true
+    part.CanCollide = false
+    part.Transparency = 1
     part.Color = color
     part.Material = Enum.Material.Metal
     part.Parent = world
     return part
 end
-local humanSpawn = ensureSpawn("HumanSpawn", Vector3.new(-12, 3, -130), Color3.fromRGB(35, 100, 170))
-local zombieSpawn = ensureSpawn("ZombieSpawn", Vector3.new(0, 3, 193), Color3.fromRGB(40, 115, 66))
+local humanSpawn = ensureSpawn("HumanSpawn", Vector3.new(-25, 3, -115), Color3.fromRGB(35, 100, 170))
+local zombieSpawn = ensureSpawn("ZombieSpawn", Vector3.new(105, 3, -115), Color3.fromRGB(40, 115, 66))
 
 local state = "Waiting"
 local roundId = 0
