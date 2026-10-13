@@ -22,6 +22,12 @@
           "$path": "src/client"
         }
       }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "ZO_Survival": {
+        "$path": "src/maps"
+      }
     }
   }
 }
