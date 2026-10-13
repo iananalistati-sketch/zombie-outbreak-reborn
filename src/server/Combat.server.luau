@@ -77,7 +77,7 @@ Remote.OnServerEvent:Connect(function(p:Player,action:any,direction:any)
         local away=root.Position-head.Position
         local horizontal=Vector3.new(away.X,0,away.Z)
         if horizontal.Magnitude>.1 then
-            local impulse=horizontal.Unit*root.AssemblyMass*if part.Name=="Head" then 45 else 30
+            local impulse=horizontal.Unit * root.AssemblyMass * (if part.Name == "Head" then 45 else 30)
             root:ApplyImpulse(impulse)
         end
     end
