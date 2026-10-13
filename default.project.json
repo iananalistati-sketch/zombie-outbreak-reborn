@@ -359,6 +359,33 @@
             "Transparency": 0.9
           }
         }
+      },
+      "Baseplate": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "CanCollide": false,
+          "Transparency": 1,
+          "Size": [
+            512,
+            1,
+            512
+          ],
+          "CFrame": [
+            0,
+            -70,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ]
+        }
       }
     }
   }
