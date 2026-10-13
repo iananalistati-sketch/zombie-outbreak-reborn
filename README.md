@@ -6,13 +6,14 @@ Jogo de zumbis em Luau para Roblox Studio, inspirado na jogabilidade de Zombie S
 
 1. No GitHub Desktop, use **Fetch origin → Pull origin**.
 2. Deixe o **Rojo Server** ligado no VS Code e o plugin conectado no Roblox Studio.
-3. Acesse `Workspace → ZO_Survival` no Explorer. O mapa persistente está em 6 modelos, visível **fora do Play**. Selecione a pasta e pressione **F** para enquadrar.
+3. Acesse `Workspace → ZO_Survival` no Explorer. O mapa persistente está em 6 modelos `.rbxmx`, visível **fora do Play**. Selecione a pasta e pressione **F** para enquadrar.
 4. Use **Play** para testar HUD, combate e infecção; 2 clientes para validar uma rodada.
 5. Se os modelos não aparecerem após o Pull, reconecte o plugin Rojo ao servidor iniciado na pasta correta.
 
 ## Pastas
 
-- `src/maps/`: geometria do Survival como arquivos `.model.json` sincronizados com o editor
+- `src/roblox_models/`: modelos de Survival (`.rbxmx`) sincronizados com o editor
+- `src/maps/`: modelos JSON anteriores conservados apenas como referência; não são mais sincronizados
 - `src/shared/`: parâmetros de rodada e jogo
 - `src/server/`: rodadas, infecção, combate e diagnóstico estrutural
 - `src/client/`: HUD e rifle FPS
