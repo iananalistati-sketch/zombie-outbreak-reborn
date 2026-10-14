@@ -1,38 +1,91 @@
 # Zombie Outbreak Reborn
 
-FPS multiplayer survival/escape em Luau no Roblox Studio, sincronizado pelo Rojo 7.
+Survival multiplayer em Luau para Roblox Studio, sincronizado com **Rojo 7.7.1**.
 
-## Mapa Survival — Harbor Locks (arquitetura de código aberto)
+## Mapa ativo: Distrito Santa Aurora
 
-Substituímos o mapa antigo de blocos por um **modelo 3D importável**, montado a partir do layout industrial MIT de *Operation Steel Tide* e edifícios Kenney CC0 com interiores acessíveis.
+Um quarteirão urbano de serviços com arquitetura conectada:
 
-O arquivo real já foi gerado pelo GitHub Actions:
+- **Mercearia Aurora:** loja mobiliada, caixa, estoque e saída lateral.
+- **Administração:** escritórios no segundo andar, escada interna e escada de incêndio.
+- **Oficina Luz:** garagem, recepção, bancada e acessos de serviço.
+- **Armazém Ferrovia:** área de carga, estantes e mezanino com duas escadas.
+- Rua com calçadas, faixa de pedestres, drenagem, iluminação e estacionamento.
 
-`assets/maps/HarborLocks_Survival_Visual.glb` — aprox. 848 KB, 19 edifícios, 29 malhas, 116×84 m no GLB.
+O mapa usa objetos nativos do Roblox e materiais do motor. **Aparece fora de Play
+e não exige importar GLB**, buscar modelos no Toolbox ou publicar meshes.
+As janelas têm vidro com colisão; portas e acessos são vãos reais.
 
-O Rojo controla apenas os scripts e colisões auxiliares. **Para ver as malhas 3D é necessária uma importação pelo Studio uma vez**, pois Rojo não publica meshes automaticamente.
+[Planta e documentação](docs/SANTA_AURORA.md) · [Planta do térreo](docs/SANTA_AURORA_PLAN.svg)
 
-### Instalar versão nova sem reconfigurar o Rojo
+## Abrir no Windows sem Codex local
 
-1. No GitHub Desktop faça **Fetch origin → Pull origin**.
-2. Com o jogo parado, reinicie o Rojo no VS Code; a antiga cena `ZO_Survival` deve ser substituída por `ZO_HarborCollision`.
-3. No Roblox Studio, vá a **Arquivo → Importar (File → Import)**.
-4. Selecione no repositório: `assets/maps/HarborLocks_Survival_Visual.glb`.
-5. Importe como **Model**, mantenha a hierarquia de meshes e confira a escala no preview. Se aparecer um aviso de limite de textura, prossiga sem forçar a importação.
-6. Insira o modelo em `Workspace` e renomeie **exatamente** `HarborLocks_Survival_Visual`. Salve seu place.
-7. Selecione o Model e pressione **F**. Com dois jogadores em Test, valide entrada e rotas. O Output mostra `[ZO HARBOR]`.
+1. No GitHub Desktop, use **Fetch origin**, selecione a branch
+   `feat/santa-aurora-urban-map` e faça Pull se houver atualização.
+   Preserve suas alterações locais antes de trocar de branch.
+2. No Roblox Studio, salve uma cópia do seu place atual como backup.
+3. Use **File → Open from File** para abrir
+   `builds/ZombieOutbreakReborn_SantaAurora.rbxlx` da pasta do repositório.
+4. Em Explorer, selecione `Workspace → ZO_SantaAurora` e pressione **F**.
+5. Faça Play para explorar; use teste local com **dois jogadores** para iniciar rodadas.
 
-O MapDiagnostics ancora partes importadas na execução e avisa se o modelo estiver ausente. **Os spawns foram atualizados ao layout original**. Os meshes e suas colisões ainda precisam de teste. O resultado não é visualmente idêntico ao CS2, pois os modelos de origem são de um pacote estilizado CC0.
+Esse arquivo já contém o mapa, a iluminação e os scripts. Abra-o como place de
+teste separado: ele não precisa ser importado como modelo nem publicado por cima
+do jogo existente.
 
-**Backup do projeto anterior:** branch `backup/riverside-before-harbor-import`.
+O arquivo em `builds/` é uma compilação desta entrega. Depois de editar os scripts,
+recompile com Rojo ou use a sincronização para ver as alterações.
 
-## Organização
+## Sincronizar com Rojo
 
-- `default.project.json`: Rojo, serviços e colisão auxiliar Harbor Locks
-- `assets/maps`: GLB final e relatório de construção/escala
-- `third_party/harbor-locks`: modelos originais CC0 com licença e proveniência
-- `scripts/assemble_harbor_locks.py`: monta a cena a partir da planta aberta
-- `src/server`, `src/shared`, `src/client`: sistemas de jogo Luau
-- `docs/HARBOR_LOCKS_SOURCES.md`: fontes, licenças e fluxo de importação
+No terminal, na raiz do repositório:
 
-A próxima etapa, **após a importação real**, é validar rotas e criar pontos defensáveis com colisão correta, sem acrescentar obstáculos aleatórios.
+```sh
+rojo serve default.project.json
+```
+
+Conecte o plugin Rojo no Studio ao servidor local. O Codex desktop não é
+necessário. **Antes de sincronizar em um place antigo**, faça backup e mova os
+mapas antigos para ServerStorage, incluindo `HarborLocks_Survival_Visual`,
+`ZO_HarborCollision`, `ZO_Survival` e `ZO_TestSpawns`, caso existam.
+O projeto preserva objetos desconhecidos no Workspace; ele não apaga suas
+importações automaticamente.
+
+## Compilar e verificar
+
+Python padrão e Rojo 7.7.1:
+
+```sh
+python scripts/build_santa_aurora.py --check
+rojo build default.project.json --output builds/ZombieOutbreakReborn_SantaAurora.rbxlx
+python scripts/validate_santa_aurora.py --place builds/ZombieOutbreakReborn_SantaAurora.rbxlx
+```
+
+No Windows, `py` pode substituir `python`. Para mudar a arquitetura, edite
+`scripts/build_santa_aurora.py` e execute-o sem `--check` antes de recompilar.
+Não edite o modelo gerado esperando que as mudanças sobrevivam à regeneração.
+
+**Validação na nuvem:** compilação Luau e Rojo; 14 percursos conferidos contra as
+colisões do modelo. **Ainda pendente:** física Humanoid, PathfindingService,
+qualidade visual, FPS e multiplayer no Roblox Studio.
+
+Durante Play, na Command Bar em contexto **Server**:
+
+```lua
+require(game.ServerStorage.ZO_Validation.SantaAuroraAudit)()
+```
+
+A auditoria imprime `[ZO AUDIT]` com resultados de spawn, portas/paredes e
+navegação. Veja o [roteiro de teste](docs/SANTA_AURORA.md) para inspeção manual.
+
+## Código e arquivos anteriores
+
+- `src/server`, `src/client`, `src/shared`: sistemas Luau existentes e configuração.
+- `src/maps/santa-aurora`: modelo do mapa ativo.
+- `tests/studio`: auditoria executável no Studio.
+- `assets/maps`, `third_party` e os modelos antigos em `src/maps`: histórico
+  preservado; não são carregados pelo projeto ativo.
+- Fontes/licenças do Harbor anterior: [HARBOR_LOCKS_SOURCES.md](docs/HARBOR_LOCKS_SOURCES.md).
+
+O projeto anterior foi preservado antes da edição; base Git:
+`34b08175968a5420e35229037b64bb7ca933110b`.

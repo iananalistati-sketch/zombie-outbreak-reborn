@@ -1,12 +1,13 @@
 --!strict
 -- Zombie Outbreak Reborn | Autoridade de rodada e infecção (servidor)
--- Survival inicial, sem armas. Mapas finais e o modo Escape usarão serviços separados.
+-- Survival: seleção de infectados, equipes e temporizadores no servidor.
 local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RoundConfig"))
+local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig"))
 local rng = Random.new()
 
 local function ensureTeam(name: string, color: BrickColor): Team
@@ -26,30 +27,16 @@ local lobby = ensureTeam("Lobby", BrickColor.new("Medium stone grey"))
 local humans = ensureTeam("Humans", BrickColor.new("Bright blue"))
 local zombies = ensureTeam("Zombies", BrickColor.new("Bright green"))
 
-local world = Workspace:FindFirstChild("ZO_TestSpawns") :: Folder?
-if not world then
-    world = Instance.new("Folder")
-    world.Name = "ZO_TestSpawns"
-    world.Parent = Workspace
+local world = Workspace:WaitForChild(MapConfig.ModelName)
+local spawns = world:WaitForChild("Spawns")
+local function getSpawn(name: string): BasePart
+    local marker = spawns:WaitForChild(name)
+    assert(marker:IsA("BasePart"), "Map spawn must be a BasePart: " .. name)
+    return marker
 end
-
-local function ensureSpawn(name: string, position: Vector3, color: Color3): BasePart
-    local existing = world:FindFirstChild(name)
-    if existing and existing:IsA("BasePart") then return existing end
-    local part = Instance.new("Part")
-    part.Name = name
-    part.Size = Vector3.new(2, 0.2, 2)
-    part.Position = position
-    part.Anchored = true
-    part.CanCollide = false
-    part.Transparency = 1
-    part.Color = color
-    part.Material = Enum.Material.Metal
-    part.Parent = world
-    return part
-end
-local humanSpawn = ensureSpawn("HumanSpawn", Vector3.new(-33, 3, 35), Color3.fromRGB(35, 100, 170))
-local zombieSpawn = ensureSpawn("ZombieSpawn", Vector3.new(32, 3, -35), Color3.fromRGB(40, 115, 66))
+local humanSpawn = getSpawn(MapConfig.HumanSpawn)
+local zombieSpawn = getSpawn(MapConfig.ZombieSpawn)
+local lobbySpawn = getSpawn(MapConfig.LobbySpawn)
 
 local state = "Waiting"
 local roundId = 0
@@ -135,14 +122,16 @@ end
 
 local function onJoin(player: Player)
     setRole(player, lobby, false)
-    player.CharacterAdded:Connect(function()
+    player.CharacterAdded:Connect(function(character: Model)
         task.defer(function()
-            if player.Parent ~= Players then return end
+            local root = character:WaitForChild("HumanoidRootPart", 10)
+            local humanoid = character:WaitForChild("Humanoid", 10)
+            if not root or not humanoid or player.Parent ~= Players or player.Character ~= character then return end
             roleStyle(player)
             if state == "Active" and roundParticipants[player] then
                 teleport(player, if player.Team == zombies then zombieSpawn else humanSpawn)
             elseif state ~= "Active" then
-                teleport(player, humanSpawn)
+                teleport(player, lobbySpawn)
             end
         end)
     end)
@@ -177,7 +166,15 @@ task.spawn(function()
         end
         for _, victim in ipairs(victims) do
             for _, attacker in ipairs(attackers) do
-                if (victim.root.Position - attacker.Position).Magnitude <= Config.InfectionDistance then
+                local displacement = victim.root.Position - attacker.Position
+                if displacement.Magnitude <= Config.InfectionDistance then
+                    -- Closed walls and glazing must stop infection, even at arm's reach.
+                    local params = RaycastParams.new()
+                    params.FilterType = Enum.RaycastFilterType.Exclude
+                    params.FilterDescendantsInstances = {attacker.Parent, victim.root.Parent}
+                    if Workspace:Raycast(attacker.Position, displacement, params) then
+                        continue
+                    end
                     infect(victim.player)
                     break
                 end
