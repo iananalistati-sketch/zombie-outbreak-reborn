@@ -23,7 +23,7 @@ function Audit.run()
         record(remote~=nil and remote:IsA("RemoteEvent"),name)
     end
     local internal=SS:FindFirstChild("ZO_Gameplay")
-    for _,name in {"Infect","DamageBarricade"} do
+    for _,name in {"Infect","DamageBarricade","PushBarricade"} do
         local item=internal and internal:FindFirstChild(name)
         record(item~=nil and item:IsA("BindableFunction"),"server-only "..name)
     end

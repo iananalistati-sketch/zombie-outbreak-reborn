@@ -21,7 +21,7 @@ function Audit.run()
         else failed+=1;warn("[BARRICADE AUDIT] FAIL "..name) end
     end
     record(RS:GetAttribute("ZO_BarricadesReady")==true,"server ready")
-    record(#folder:GetChildren()==5,"five catalog props")
+    record(#folder:GetChildren()==16,"sixteen catalog props")
     for name,prop in Config.Props do
         local model=folder:FindFirstChild(name)
         local hull=model and model:FindFirstChild("Hull")
@@ -30,7 +30,13 @@ function Audit.run()
             record((hull.Size-Vector3.new(kind.Width,kind.Height,kind.Depth)).Magnitude<.01,name.." catalog dimensions")
             local ok=Placement.clear(model,hull.CFrame,hull.Size,map)
             record(ok and model:GetAttribute("ZO_Destroyed")==false,name.." supported, unoccupied placement")
-            record(model.PrimaryPart==hull and hull.Anchored and hull.CanCollide and hull.CanQuery,name.." solid, queryable primary hull")
+            record(model.PrimaryPart==hull and not hull.Anchored and hull.CanCollide and hull.CanQuery,name.." dynamic, solid primary hull")
+            record(hull:GetNetworkOwner()==nil,name.." server network ownership")
+            record(math.abs(hull.AssemblyMass-kind.Mass)<.1,name.." configured assembly mass")
+            local connected=hull:GetConnectedParts(true)
+            local visuals=0
+            for _,part in model:GetDescendants() do if part:IsA("BasePart") and part~=hull then visuals+=1 end end
+            record(#connected==visuals,name.." all visuals welded to hull")
         else record(false,name.." missing model/hull") end
     end
     local model=folder:FindFirstChild("Cabinet01") :: Model

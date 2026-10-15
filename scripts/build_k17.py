@@ -12,6 +12,7 @@ import json
 import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from k17_refuges import build_refuges
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = {
@@ -77,7 +78,7 @@ class Map:
         self.xml=ET.Element('roblox',version='4')
         self.root=self.item(self.xml,'Model','ZO_K17Foundry')
         self.models={}; self.parts=0; self.lights=0; self.shadow_lights=0
-        self.routes=[]; self.defenses=[]; self.buildings=[]; self.openings=[]
+        self.routes=[]; self.defenses=[]; self.buildings=[]; self.openings=[]; self.refuges=[]
 
     @staticmethod
     def prop(p,kind,name,value):
@@ -285,6 +286,10 @@ def office_block(m,name,rect,levels,color,bridges=()):
             m.wall(name,'RearRooms','X',z0+20,a,b,floor,high,[(mid-5,mid+5,floor,floor+11,'door')],color='plaster',thick=.6)
             for cut in cuts[:-1]:m.wall(name,'RoomDivider','X',cut,a,b,floor,high,[(mid-5,mid+5,floor,floor+11,'door')],color='plaster',thick=.6)
             for begin,end in [(z0+1,z0+20),*zip(cuts,cuts[1:])]:
+                # These two rooms receive authored defensive interiors below.
+                if a<cx and ((name=='D_Warehouse' and level==0 and begin>=100)
+                             or (name=='A_Administration' and level==1 and begin==z0+1)):
+                    continue
                 outer=a+9 if a<cx else b-9
                 divided=b-a>55 and begin>=front
                 if divided:
@@ -448,8 +453,6 @@ def foundry(m):
         bench(m,g,x,180)
         m.lamp(g,x,11,180,range_=24)
         m.route(f'Welding booth {x}',[[x,1,148],[x,1,164]])
-    # Low timber barricade with a bypass: scenery, not a destructible system.
-    for z in (73,80):m.box(g,'LoadingTimberCover',(-105,-96,z-1,z+1),1,4.5,'wood','WoodPlanks')
     m.route('Foundry receiving to dispatch',[[-82,0,58],[-82,1,78],[-48,1,94],[-48,1,174],[-48,1,214],[-14,1,214],[-14,1,252]])
     m.route('Foundry west ground access',[[-150,0,158],[-131,1,158],[-112,1,174]])
     m.route('West gallery ascent',[[-131,1,92],[-131,1,96],[-131,15,128],[-131,15,136],[-131,15,160]],'stair')
@@ -465,7 +468,7 @@ def container(m,name,x,z,y=1,plate=True):
     m.box(g,'ContainerRoof',(x-16,x+16,z-7,z+7),y+11.5,y+12,'rust','Metal')
     for zz in (z-7,z+7):
         m.box(g,'ContainerSide',(x-16,x+16,zz-.2,zz+.2),y,y+11.5,'olive','CorrodedMetal')
-        for xx in range(round(x-15),round(x+16),5):m.box(g,'Corrugation',(xx-.12,xx+.12,zz-.35,zz+.35),y+.5,y+11,'rust','Metal',physical=False)
+        for xx in range(round(x-15),round(x+16),8):m.box(g,'Corrugation',(xx-.12,xx+.12,zz-.35,zz+.35),y+.5,y+11,'rust','Metal',physical=False)
     m.box(g,'FreightPackage',(x-6,x+1,z+3,z+6),y,y+3,'wood','Wood')
 
 
@@ -542,6 +545,8 @@ def exterior(m):
     container(m,'Freight01',-80,-82)
     container(m,'Freight02',-80,-50)
     container(m,'FreightUpper',-80,-82,13,plate=False)
+    container(m,'FreightEastBase',-48,-82)
+    container(m,'FreightEastUpper',-48,-82,13,plate=False)
     m.stair('L_FreightAccess','ContainerStair',-136,-82,'X',1,10,32,12,1,24)
     m.box('L_FreightAccess','StairFooting',(-139,-133,-88,-76),0,1)
     m.box('L_FreightAccess','ContainerLanding',(-104,-96,-88,-76),12.4,13,'steel','DiamondPlate')
@@ -571,7 +576,15 @@ def defenses(m):
         (14,'FreightContainer',[-80,13,-82],'Interior comprido e acesso elevado','Ataque pela escada; saída oposta exige queda',['Container stair']),
         (15,'PumpRoom',[-72,-24,144],'Sala técnica subterrânea com duas portas','Pode ser cercada pelos dois túneis',['West maintenance line','Central maintenance line']),
     ]
-    for row in data:m.defend(*row)
+    redesigned={r['id']:r for r in m.refuges}
+    for row in data:
+        id_,name,point,advantage,risk,approaches=row
+        if id_ in redesigned:
+            r=redesigned[id_];point=r['hold']
+            advantage='Cobertura, recuo e linha de tiro desenhados para defesa em grupo'
+            risk='Duas aproximações verificadas; cobertura e objetos podem ser contornados'
+            approaches=[a[0] for a in r['approaches']]
+        m.defend(id_,name,point,advantage,risk,approaches)
     # A real route to every named position, in addition to floor/stair circulation.
     for name,points in [
         ('D01 hall',[[-68,1,-150],[-108,1,-150],[-108,1,-144]]),
@@ -592,7 +605,8 @@ def defenses(m):
         ('D10 loading',[[-82,0,58],[-82,1,80]]),
         ('D10 rear',[[-48,1,94],[-82,1,94],[-82,1,80]]),
         ('D13 tower',[[210,43,33],[210,43,57],[230,43,57],[230,43,58]]),
-    ]:m.route(name,points,'defense')
+    ]:
+        if name[:3] not in ('D02','D07','D10'):m.route(name,points,'defense')
 
 
 def build():
@@ -608,6 +622,7 @@ def build():
     foundry(m)
     gantries(m)
     underground(m)
+    build_refuges(m)
     defenses(m)
     for name,point in [('HumanSpawn',(-68,1,-136)),('ZombieSpawn',(-217,1,136)),('LobbySpawn',(-30,.1,36))]:
         x,y,z=point;m.box('Spawns',name,(x-1,x+1,z-1,z+1),y,y+.1,physical=False,alpha=1)
@@ -642,10 +657,18 @@ def output_files():
     m=build();ET.indent(m.xml,space='  ')
     manifest={'map':'ZO_K17Foundry','bounds':[-300,300,-300,300],'avatar':{'radius':1.5,'height':5.5,'step':1},
               'parts':m.parts,'lights':m.lights,'shadow_lights':m.shadow_lights,'buildings':m.buildings,
-              'routes':m.routes,'defenses':m.defenses,'openings':m.openings,'underground':TUNNELS}
+              'routes':m.routes,'defenses':m.defenses,'openings':m.openings,'underground':TUNNELS,'refuges':m.refuges}
+    refuge_luau='--!strict\n-- Generated by scripts/build_k17.py; edit the authored refuge data.\nreturn {\n'
+    for r in m.refuges:
+        vec=lambda p:'{'+','.join(str(v) for v in p)+'}'
+        stands='{'+','.join(vec(p) for p in r['stands'])+'}'
+        sights='{'+','.join('{'+vec(a)+','+vec(b)+'}' for a,b in r['sights'])+'}'
+        refuge_luau+=f'    [{r["id"]}]={{Label={json.dumps(r["label"],ensure_ascii=False)},Model={json.dumps(r["model"])},View={vec(r["view"])},Look={vec(r["look"])},Stands={stands},Sights={sights}}},\n'
+    refuge_luau+='}\n'
     return {ROOT/'src/maps/k17/K17Foundry.rbxmx':ET.tostring(m.xml,encoding='unicode')+'\n',
             ROOT/'docs/k17-navigation.json':json.dumps(manifest,ensure_ascii=False,separators=(',',':'))+'\n',
-            ROOT/'docs/K17_PLAN.svg':plan_svg(m)}
+            ROOT/'docs/K17_PLAN.svg':plan_svg(m),
+            ROOT/'src/maps/k17/Refuges.luau':refuge_luau}
 
 
 def main():

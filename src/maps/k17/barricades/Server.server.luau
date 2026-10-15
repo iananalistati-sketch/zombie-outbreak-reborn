@@ -1,226 +1,143 @@
 --!strict
--- Reservation/preview/commit: props stay solid and damageable until a valid placement.
-local Players = game:GetService("Players")
-local RS = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local SS = game:GetService("ServerStorage")
-local shared = RS:WaitForChild("K17Barricades")
-local Config = require(shared:WaitForChild("Config"))
-local Rules = require(shared:WaitForChild("Rules"))
-local Placement = require(shared:WaitForChild("Placement"))
-local RoundConfig = require(RS:WaitForChild("Shared"):WaitForChild("RoundConfig"))
-local map = workspace:WaitForChild("ZO_K17Foundry")
-local folder = workspace:WaitForChild("ZO_Barricades")
-local remote = Instance.new("RemoteEvent")
-remote.Name = "ZO_BarricadeAction"
-remote.Parent = RS
-
-type Entry = {model: Model, hull: BasePart, kind: any, home: CFrame, health: number, holder: Player?}
-local entries: {[Model]: Entry} = {}
-local selected: {[Player]: Entry} = {}
-local expires: {[Player]: number} = {}
-local requests: {[Player]: number} = {}
-local attacks: {[Player]: number} = {}
-local release: (Player, string?) -> ()
+-- Sixteen server-owned assemblies; no placement preview or inventory construction.
+local Players=game:GetService("Players")
+local RS=game:GetService("ReplicatedStorage")
+local SS=game:GetService("ServerStorage")
+local RunService=game:GetService("RunService")
+local shared=RS:WaitForChild("K17Barricades")
+local Config=require(shared:WaitForChild("Config"))
+local Rules=require(shared:WaitForChild("Rules"))
+local Physics=require(shared:WaitForChild("Physics"))
+local Placement=require(shared:WaitForChild("Placement"))
+local folder=workspace:WaitForChild("ZO_Barricades")
+local internal=SS:WaitForChild("ZO_Gameplay")
+type Entry={model: Model,hull: BasePart,kind: any,health: number,template: Model}
+local entries: {[Model]: Entry}={}
+local attacks: {[Player]: number}={}
 
 local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
 end
-
-local function characterInfo(player: Player): (Model?, BasePart?, BasePart?, Humanoid?)
-    local char = player.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    local head = char and char:FindFirstChild("Head")
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not char or not root or not root:IsA("BasePart") or not head or not head:IsA("BasePart") or not hum or hum.Health<=0 then
-        return nil,nil,nil,nil
-    end
-    return char,root,head,hum
+local function character(player: Player): (Model?,BasePart?,Humanoid?)
+    local char=player.Character
+    local head=char and char:FindFirstChild("Head")
+    local hum=char and char:FindFirstChildOfClass("Humanoid")
+    if not char or not head or not head:IsA("BasePart") or not hum or hum.Health<=0 then return nil,nil,nil end
+    return char,head,hum
 end
-
 local function role(player: Player): string?
-    return if player.Team then player.Team.Name else nil
+    return player.Team and player.Team.Name
 end
-
-local function message(player: Player, value: string)
-    remote:FireClient(player,"Message",value)
+local function activate(model: Model,kind: any,template: Model): Entry
+    local hull=model:FindFirstChild("Hull") :: BasePart
+    model.PrimaryPart=hull;model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+    model:SetAttribute("ZO_Health",kind.Health);model:SetAttribute("ZO_MaxHealth",kind.Health)
+    model:SetAttribute("ZO_Destroyed",false);model:SetAttribute("ZO_Label",kind.Label)
+    hull.CustomPhysicalProperties=PhysicalProperties.new(kind.Mass/(hull.Size.X*hull.Size.Y*hull.Size.Z),Config.Physics.Friction,0,100,100)
+    hull.RootPriority=127
+    for _,part in model:GetDescendants() do
+        if part:IsA("BasePart") and part~=hull then
+            part.CanCollide=false;part.CanQuery=false;part.CanTouch=false;part.Massless=true
+            local weld=Instance.new("WeldConstraint");weld.Part0=hull;weld.Part1=part;weld.Parent=hull
+            part.Anchored=false
+        end
+    end
+    hull.Anchored=false;hull:SetNetworkOwner(nil)
+    local entry={model=model,hull=hull,kind=kind,health=kind.Health,template=template}
+    entries[model]=entry
+    return entry
 end
-
-release = function(player: Player, reason: string?)
-    local entry = selected[player]
-    if not entry then return end
-    selected[player],expires[player] = nil,nil
-    entry.holder = nil
-    entry.model:SetAttribute("ZO_Holder",nil)
-    player:SetAttribute("ZO_BarricadeSelection",nil)
-    local _,_,_,hum = characterInfo(player)
-    if hum then hum.WalkSpeed = if role(player)=="Zombies" then RoundConfig.ZombieWalkSpeed else RoundConfig.HumanWalkSpeed end
-    remote:FireClient(player,"Released",reason or "Seleção cancelada.")
+for name,prop in Config.Props do
+    local model=folder:WaitForChild(name) :: Model
+    local hull=model:WaitForChild("Hull") :: BasePart
+    local kind=Config.Kinds[prop.Kind]
+    assert((hull.Size-Vector3.new(kind.Width,kind.Height,kind.Depth)).Magnitude<.01,"Hull/catalog mismatch: "..name)
+    assert((hull.Position-Vector3.new(prop.X,prop.Y+kind.Height/2,prop.Z)).Magnitude<.01,"Home/catalog mismatch: "..name)
+    model:SetAttribute("ZO_Kind",prop.Kind);model:SetAttribute("ZO_Refuge",prop.Refuge)
+    activate(model,kind,model:Clone())
 end
-
-local function lineOfSight(char: Model, head: BasePart, entry: Entry): boolean
-    local point = Placement.closest(entry.hull,head.Position)
-    local delta = point-head.Position
-    if delta.Magnitude<.05 then return true end
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char}
-    local hit = workspace:Raycast(head.Position,delta.Unit*(delta.Magnitude+.15),params)
-    return hit~=nil and hit.Instance:IsDescendantOf(entry.model)
+local function entryFor(part: any): Entry?
+    if typeof(part)~="Instance" or not part:IsA("BasePart") or not part:IsDescendantOf(folder) then return nil end
+    local model=part:FindFirstAncestorOfClass("Model")
+    local entry=if model then entries[model] else nil
+    return if entry and entry.health>0 then entry else nil
 end
-
-local function setHealth(entry: Entry, health: number)
-    entry.health = health
-    entry.model:SetAttribute("ZO_Health",health)
-    if health<=0 then
-        if entry.holder then release(entry.holder,"O zumbi destruiu o objeto.") end
-        -- Keep the catalog/home for next round; remove collision and queries immediately.
-        for _, part in entry.model:GetDescendants() do
-            if part:IsA("BasePart") then
-                part.CanCollide=false;part.CanQuery=false;part.Transparency=1
-            end
+local function push(entry: Entry,direction: Vector3,force: number)
+    local hull=entry.hull
+    if hull.Anchored then return end
+    local velocity=hull.AssemblyLinearVelocity
+    local x,z=Physics.impulse(hull.AssemblyMass,velocity.X,velocity.Z,direction.X,direction.Z,force,Config.Physics.MaxSpeed)
+    hull:ApplyImpulse(Vector3.new(x,0,z))
+end
+-- Only Combat can invoke this, after consuming ammo and tracing the first hit.
+local bullet=internal:WaitForChild("PushBarricade") :: BindableFunction
+bullet.OnInvoke=function(player: Player,part: BasePart,direction: Vector3): boolean
+    local entry=entryFor(part)
+    local _,head,hum=character(player)
+    if not entry or not head or not Rules.canBuild(role(player),phase(),hum~=nil) then return false end
+    if typeof(direction)~="Vector3" or not Rules.finite(direction.X) or not Rules.finite(direction.Y) or not Rules.finite(direction.Z) then return false end
+    push(entry,direction,Config.Physics.BulletImpulse)
+    return true
+end
+local damage=internal:WaitForChild("DamageBarricade") :: BindableFunction
+damage.OnInvoke=function(player: Player,part: BasePart): number?
+    local entry=entryFor(part)
+    local char,head,hum=character(player)
+    if not entry or not char or not head or not Rules.canAttack(role(player),phase(),hum~=nil) then return nil end
+    local now=os.clock()
+    if now-(attacks[player] or -math.huge)<Config.MeleeCooldown then return nil end
+    local delta=Placement.closest(entry.hull,head.Position)-head.Position
+    if delta.Magnitude>Config.MeleeRange then return nil end
+    local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={char}
+    local hit=if delta.Magnitude>.05 then workspace:Raycast(head.Position,delta.Unit*(delta.Magnitude+.15),params) else nil
+    if delta.Magnitude>.05 and (not hit or not hit.Instance:IsDescendantOf(entry.model)) then return nil end
+    attacks[player]=now
+    push(entry,entry.hull.Position-head.Position,Config.Physics.MeleeImpulse)
+    entry.health=math.max(0,entry.health-Config.MeleeDamage);entry.model:SetAttribute("ZO_Health",entry.health)
+    if entry.health==0 then
+        entry.hull.AssemblyLinearVelocity=Vector3.zero;entry.hull.AssemblyAngularVelocity=Vector3.zero;entry.hull.Anchored=true
+        for _,part in entry.model:GetDescendants() do
+            if part:IsA("BasePart") then part.CanCollide=false;part.CanQuery=false;part.Transparency=1 end
         end
         entry.model:SetAttribute("ZO_Destroyed",true)
     end
-end
-
-local templates: {[Model]: Model} = {}
-for name, prop in Config.Props do
-    local model = folder:WaitForChild(name)
-    assert(model:IsA("Model"))
-    local hull = model:WaitForChild("Hull")
-    assert(hull:IsA("BasePart"))
-    local kind = Config.Kinds[prop.Kind]
-    assert((hull.Size-Vector3.new(kind.Width,kind.Height,kind.Depth)).Magnitude<.01,"Hull/catalog mismatch: "..name)
-    assert((hull.Position-Vector3.new(prop.X,Config.Zone.Floor+kind.Height/2,prop.Z)).Magnitude<.01,"Home/catalog mismatch: "..name)
-    model.PrimaryPart = hull
-    model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
-    model:SetAttribute("ZO_Kind",prop.Kind)
-    model:SetAttribute("ZO_Label",kind.Label)
-    model:SetAttribute("ZO_MaxHealth",kind.Health)
-    model:SetAttribute("ZO_Quarter",0)
-    model:SetAttribute("ZO_Destroyed",false)
-    local entry: Entry = {model=model,hull=hull,kind=kind,home=hull.CFrame,health=kind.Health,holder=nil}
-    entries[model]=entry
-    setHealth(entry,kind.Health)
-    templates[model]=model:Clone()
-end
-
-local function reset()
-    for player in selected do release(player) end
-    -- The round moves players away before this deferred reset. Use the original authored props.
-    local snapshot = {}
-    for old, template in templates do table.insert(snapshot,{old,template}) end
-    for _, pair in snapshot do
-        local old, template = pair[1],pair[2]
-        local model = template:Clone()
-        local previous = entries[old]
-        if previous then
-            entries[old]=nil
-            local hull = model:FindFirstChild("Hull") :: BasePart
-            local entry: Entry = {model=model,hull=hull,kind=previous.kind,home=previous.home,health=previous.kind.Health,holder=nil}
-            model.Parent=folder
-            entries[model]=entry
-            templates[old]=nil;templates[model]=template
-            old:Destroy()
-        end
-    end
-end
-
--- Internal only: the unified melee server must trace the first hit and validate cadence.
-local damage=SS:WaitForChild("ZO_Gameplay"):WaitForChild("DamageBarricade") :: BindableFunction
-damage.OnInvoke=function(player: Player,part: BasePart): number?
-    if typeof(part)~="Instance" or not part:IsA("BasePart") or not part:IsDescendantOf(folder) then return nil end
-    local now = os.clock()
-    local char,root,head,hum = characterInfo(player)
-    if not Rules.canAttack(role(player),phase(),hum~=nil) or not char or not root or not head then return nil end
-    local model=part:FindFirstAncestorOfClass("Model")
-    local entry=if model then entries[model] else nil
-    if not entry or entry.health<=0 or now-(attacks[player] or -math.huge)<Config.MeleeCooldown then return nil end
-    if (Placement.closest(entry.hull,head.Position)-head.Position).Magnitude>Config.MeleeRange or not lineOfSight(char,head,entry) then return nil end
-    attacks[player]=now
-    setHealth(entry,math.max(0,entry.health-Config.MeleeDamage))
     return entry.health
 end
-
-remote.OnServerEvent:Connect(function(player: Player, action: any, target: any, x: any, z: any, quarter: any)
-    if action=="Cancel" then release(player);return end
-    if not Config.EnablePlacement or (action~="Select" and action~="Place") then return end
-    local now = os.clock()
-    if now-(requests[player] or -math.huge)<Config.RequestInterval then return end
-    requests[player]=now
-    local char,root,head,hum = characterInfo(player)
-    local state = phase()
-    if not Rules.canBuild(role(player),state,hum~=nil) or not char or not root or not head or not hum then
-        release(player);return
-    end
-    if action=="Select" then
-        if selected[player] then return end
-        local entry = if typeof(target)=="Instance" then entries[target] else nil
-        if not entry or entry.health<=0 then return end
-        if entry.holder then message(player,"Outro sobrevivente está reposicionando esse objeto.");return end
-        if (Placement.closest(entry.hull,root.Position)-root.Position).Magnitude>Config.PickupRange or not lineOfSight(char,head,entry) then
-            message(player,"Aproxime-se do objeto com a passagem livre.");return
-        end
-        entry.holder=player;selected[player]=entry;expires[player]=now+Config.SelectionTimeout
-        entry.model:SetAttribute("ZO_Holder",player.UserId)
-        player:SetAttribute("ZO_BarricadeSelection",entry.model.Name)
-        hum.WalkSpeed=Config.CarrySpeed
-        remote:FireClient(player,"Selected",entry.model)
-    elseif action=="Place" then
-        local entry = selected[player]
-        if not entry or entry.health<=0 then return end
-        local ok, reason = Rules.candidate(Config.Zone,entry.kind,x,z,quarter,root.Position.X,root.Position.Y,root.Position.Z,Config.PlacementRange)
-        if not ok then message(player,reason);return end
-        if now>(expires[player] or 0) or (Placement.closest(entry.hull,root.Position)-root.Position).Magnitude>Config.PickupRange+2 then
-            release(player,"Selecione novamente perto do objeto.");return
-        end
-        local cf = CFrame.new(x,Config.Zone.Floor+entry.kind.Height/2,z)*CFrame.Angles(0,quarter*math.pi/2,0)
-        local clear, blocked = Placement.clear(entry.model,cf,entry.hull.Size,map)
-        if not clear then message(player,blocked);return end
-        if not Placement.sweep(entry.model,entry.hull,cf,quarter,map,folder) then
-            message(player,"O trajeto ou a rotação atravessaria um obstáculo. Faça movimentos menores.");return
-        end
-        -- Prevent moving an object through a remote wall even when both ends are visible to the client.
-        if not lineOfSight(char,head,entry) then message(player,"Você perdeu a linha de visão do objeto.");return end
-        entry.model:PivotTo(cf)
-        entry.model:SetAttribute("ZO_Quarter",quarter)
-        release(player,"Barricada posicionada.")
-    end
-end)
-
-local function connectPlayer(player: Player)
-    player:GetPropertyChangedSignal("Team"):Connect(function() release(player) end)
-    player.CharacterRemoving:Connect(function() release(player) end)
-    player.CharacterAdded:Connect(function(char)
-        local hum = char:WaitForChild("Humanoid",10)
-        if hum and hum:IsA("Humanoid") then hum.Died:Connect(function() release(player) end) end
-    end)
+local function resetEntry(entry: Entry)
+    local model=entry.template:Clone();model.Parent=folder
+    entries[entry.model]=nil;entry.model:Destroy()
+    activate(model,entry.kind,entry.template)
 end
-Players.PlayerAdded:Connect(connectPlayer)
-for _, player in Players:GetPlayers() do connectPlayer(player) end
-Players.PlayerRemoving:Connect(function(player)
-    release(player);requests[player]=nil;attacks[player]=nil
-end)
-
 RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(function()
-    local state = RS:GetAttribute("ZO_RoundState")
-    if state~="Preparation" and state~="Active" then for player in selected do release(player) end end
-    if state=="Preparation" then task.defer(reset) end
-end)
-task.spawn(function()
-    while true do
-        task.wait(.25)
-        for player, entry in selected do
-            local _,root,_,hum = characterInfo(player)
-            if not Rules.canBuild(role(player),phase(),hum~=nil) or not root
-                or os.clock()>(expires[player] or 0)
-                or (Placement.closest(entry.hull,root.Position)-root.Position).Magnitude>Config.PickupRange+2 then
-                release(player,"Seleção encerrada. Aproxime-se para reposicionar.")
-            end
-        end
+    if RS:GetAttribute("ZO_RoundState")=="Preparation" then
+        task.defer(function()
+            local snapshot={}
+            for _,entry in entries do table.insert(snapshot,entry) end
+            for _,entry in snapshot do resetEntry(entry) end
+            table.clear(attacks)
+        end)
     end
+end)
+Players.PlayerRemoving:Connect(function(player) attacks[player]=nil end)
+local elapsed=0
+RunService.Heartbeat:Connect(function(dt)
+    elapsed+=dt;if elapsed<.1 then return end;elapsed=0
+    local lost={}
+    for _,entry in entries do
+        local hull=entry.hull
+        if hull.Anchored then continue end
+        local p=hull.Position
+        if p.Y < -60 or math.abs(p.X)>310 or math.abs(p.Z)>310 then table.insert(lost,entry);continue end
+        local velocity=hull.AssemblyLinearVelocity
+        local horizontal=Vector3.new(velocity.X,0,velocity.Z)
+        if horizontal.Magnitude>Config.Physics.MaxSpeed or velocity.Y>8 then
+            if horizontal.Magnitude>Config.Physics.MaxSpeed then horizontal=horizontal.Unit*Config.Physics.MaxSpeed end
+            hull.AssemblyLinearVelocity=horizontal+Vector3.new(0,math.min(velocity.Y,8),0)
+        end
+        local spin=hull.AssemblyAngularVelocity
+        if spin.Magnitude>Config.Physics.MaxSpin then hull.AssemblyAngularVelocity=spin.Unit*Config.Physics.MaxSpin end
+    end
+    for _,entry in lost do resetEntry(entry) end
 end)
 RS:SetAttribute("ZO_BarricadesReady",true)
-RS:SetAttribute("ZO_BarricadePlacementEnabled",Config.EnablePlacement)
-print("[K17 BARRICADES] Five server-authoritative props ready in warehouse stockroom")
+print("[K17 BARRICADES] 16 physical props across five refuges; server ownership, shot impulse and zombie melee")

@@ -79,13 +79,11 @@ importados código, animações, sons ou assets dos repositórios examinados.
 
 ## Barricadas nesta etapa
 
-Os cinco objetos do estoque continuam ancorados e destrutíveis, com restauração
-na preparação seguinte. **Ainda não há barricadas com física equivalente ao CS.**
-Não é possível selecioná-los com E no perfil padrão: o protótipo anterior foi
-preservado com `EnablePlacement=false`. As resistências antigas continuam como
-configuração experimental desses cinco objetos, sem alegação de serem regras
-de Zombie:Reloaded. O golpe novo pode destruí-los; tiros humanos são bloqueados
-por eles, sem danificá-los.
+A atualização de [refúgios e barricadas](K17_REFUGES.md) distribui 16 objetos
+físicos entre cinco interiores reconstruídos. Tiros humanos empurram o primeiro
+objeto atingido; golpes de zumbi empurram e danificam. A preparação restaura os
+objetos. A prévia de posicionamento continua desativada. Contato, atrito e latência
+precisam de testes no Studio; não se afirma equivalência à física Source.
 
 ## Validação
 
@@ -96,9 +94,9 @@ Executado na nuvem:
   recarga, entrada inválida, papéis, fases, seleção e fatores de knockback.
 - **85 asserções** preservadas do protótipo de posicionamento; não significam
   que esse protótipo esteja habilitado no jogo.
-- Oito testes de geometria, geração determinística, 175 percursos com 33.341
+- 12 testes de geometria, geração determinística, 179 percursos com 34.096
   amostras, incluindo a disposição inicial dos objetos.
-- Build Rojo XML/binário. Verificação de nove fontes exatas, funções privadas
+- Build Rojo XML/binário. Verificação das fontes ativas exatas, funções privadas
   de servidor e carregamento de um único controlador novo de rodada/combate.
   O perfil K-17 não carrega os controladores antigos de infecção por proximidade.
 - Perfil Santa Aurora recompilado separadamente, com seus arquivos, scripts
@@ -114,7 +112,7 @@ Auditoria de integração preparada, durante Play em contexto **Server**:
 require(game.ServerStorage.ZO_Validation.GameplayAudit).run()
 ```
 
-São 11 verificações preparadas de carregamento, eventos, funções de servidor,
+São 12 verificações preparadas de carregamento, eventos, funções de servidor,
 configuração, passagem aberta e parede bloqueando raycast. Ainda não foram
 executadas aqui. As auditorias antigas de mapa e objetos continuam disponíveis.
 

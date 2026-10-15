@@ -24,9 +24,9 @@ referências verificadas de infecção, knockback e diferenças do protótipo at
 **Atual: [ajustes do ciclo clássico de Zombie Mod](docs/CLASSIC_GAMEPLAY.md).**
 Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
 recarga temporizada e knockback configurável. A prévia de construção anterior
-está desativada; os cinco objetos do estoque continuam como cobertura destrutível.
+está desativada. **[Cinco refúgios reconstruídos e 16 objetos físicos de barricada](docs/K17_REFUGES.md)**: estoque, arquivo, expedição, contêiner elevado e bombas.
 
-![Prévia geométrica externa; não é captura do Roblox Studio](docs/K17_OVERVIEW.png)
+![Cortes geométricos dos refúgios; não é captura do Roblox Studio](docs/K17_REFUGES.png)
 
 ## Abrir no Windows
 
@@ -38,16 +38,16 @@ está desativada; os cinco objetos do estoque continuam como cobertura destrutí
 4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
 5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
 
-Para experimentar o combate sozinho, durante Play use a Command Bar em
-contexto **Server**:
+Para visitar diretamente os locais alterados, durante **Play**, com um jogador,
+use a **Command Bar em contexto Server**:
 
 ```lua
-require(game.ServerStorage.ZO_Validation.GameplayAudit).practice("Humans")
+require(game.ServerStorage.ZO_Validation.RefugeAudit).visit(7)
 ```
 
-Isso leva você ao estoque com um alvo zumbi. Segure o clique para atirar e use
-R para recarregar. Repita com `"Zombies"` para atacar um alvo humano e testar
-infecção. Veja o [roteiro de teste](docs/CLASSIC_GAMEPLAY.md).
+Troque `7` por `2`, `10`, `14` ou `15` para visitar os demais. Empurre os objetos
+por contato ou tiros; **R** recarrega. Veja o [roteiro dos refúgios](docs/K17_REFUGES.md).
+O [treino com alvos de combate](docs/CLASSIC_GAMEPLAY.md) também está disponível.
 
 O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
 compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
@@ -57,9 +57,10 @@ compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
 
 ```text
 scripts/build_k17.py               construção original do mapa
+scripts/k17_refuges.py             cinco interiores defensivos
 src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
 src/maps/k17/*.luau                configurações e diagnóstico do K-17
-src/maps/k17/barricades/           objetos, autoridade, controles e posicionamento
+src/maps/k17/barricades/           catálogo único, modelos e física dos objetos
 src/maps/k17/gameplay/             combate, infecção por golpe, rodada e HUD atuais
 src/server/                       controladores anteriores usados por Santa Aurora
 src/client/                       cliente anterior e bootstrap compartilhado
@@ -90,6 +91,7 @@ python scripts/build_k17.py
 python scripts/build_k17.py --check
 python scripts/build_k17_barricades.py --check
 python scripts/validate_k17.py --quiet
+python scripts/validate_refuges.py
 python -m unittest discover -s tests -p 'test_*.py'
 rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
 ```
@@ -100,10 +102,10 @@ renderizados pelo Roblox Studio.
 
 ## Estado de validação
 
-**Executado na nuvem:** geração, compilação Luau/Rojo, 175 percursos com 33.341
-amostras de apoio/espaço livre, oito testes de geometria, 160 asserções do combate/
-rodada e 85 das regras de barricadas preservadas. Verificação das fontes ativas
-no place. Os percursos também foram checados com os cinco objetos presentes.
+**Executado na nuvem:** geração, compilação Luau/Rojo, 179 percursos com 34.096
+amostras de apoio/espaço livre, 12 testes de geometria, 160 asserções do combate/
+rodada, 190 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
+no place. Os percursos também foram checados com os 16 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao

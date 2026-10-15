@@ -22,6 +22,7 @@ jobs:
           python scripts/build_k17.py --check
           python scripts/build_k17_barricades.py --check
           python scripts/validate_k17.py --quiet
+          python scripts/validate_refuges.py
           python -m unittest discover -s tests -p 'test_*.py'
       - name: Compile Luau scripts
         run: |
@@ -32,6 +33,7 @@ jobs:
           unzip -q /tmp/luau.zip -d /tmp/luau_release
           find src tests -name '*.luau' -print0 | xargs -0 /tmp/luau_release/luau-compile --null
           /tmp/luau_release/luau tests/barricades/rules.spec.luau
+          /tmp/luau_release/luau tests/barricades/physics.spec.luau
           /tmp/luau_release/luau tests/gameplay/rules.spec.luau
       - name: Install Rojo 7.7.1
         run: |

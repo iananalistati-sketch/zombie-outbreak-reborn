@@ -30,6 +30,10 @@ def validate(path):
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Weapons':'src/maps/k17/gameplay/Weapons.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/RoundHUD':'src/maps/k17/gameplay/HUD.client.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
+        'ServerStorage/ZO_Validation/RefugeAudit':'tests/k17/RefugeAudit.luau',
+        'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
+        'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
+        **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
         **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules')},
     }
     for instance_path,source_path in bindings.items():
@@ -38,14 +42,14 @@ def validate(path):
         assert item.attrib['class']==expected,(instance_path,item.attrib['class'],expected)
         source=item.findtext('./Properties/*[@name="Source"]')
         assert source is not None and source.replace('\r\n','\n')==(ROOT/source_path).read_text(),instance_path
-    for name in ('Infect','DamageBarricade'):
+    for name in ('Infect','DamageBarricade','PushBarricade'):
         assert at(root,'ServerStorage/ZO_Gameplay/'+name).attrib['class']=='BindableFunction'
     legacy={(ROOT/p).read_text() for p in ('src/server/ZombieRound.server.luau','src/server/Combat.server.luau','src/client/Rifle.client.luau')}
     sources=[p.text or '' for p in root.findall('.//Properties/*[@name="Source"]')]
     assert not any(s in legacy for s in sources),'A legacy controller is still loaded in K-17'
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Combat.server.luau').read_text() for s in sources)==1
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Round.server.luau').read_text() for s in sources)==1
-    print('PASS classic profile: 9 exact source bindings, two private server functions, one round/combat controller, no legacy proximity/rifle controllers')
+    print(f'PASS classic profile: {len(bindings)} exact source bindings, three private server functions, one round/combat controller, no legacy proximity/rifle controllers')
 
 
 if __name__=='__main__':

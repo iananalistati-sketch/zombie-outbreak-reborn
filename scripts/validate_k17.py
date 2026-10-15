@@ -78,6 +78,9 @@ def validate(path,manifest,quiet=False):
         if aperture['kind']=='door':
             assert aperture['end']-aperture['start']>=9.9,aperture
             assert aperture['top']-aperture['bottom']>=9.9,aperture
+        elif aperture['kind']=='refugeDoor':
+            assert aperture['end']-aperture['start']>=6,aperture
+            assert aperture['top']-aperture['bottom']>=9,aperture
     index=CollisionIndex(boxes);errors=[];total=0
     for route in manifest['routes']:
         error,n=index.sweep(route,manifest['avatar']);total+=n
@@ -105,8 +108,11 @@ def main():
         assert {'ZO_K17Foundry','HumanSpawn','ZombieSpawn','LobbySpawn','K17Atmosphere','K17Audit'}<=names
         assert {'ZO_Barricades','Barricades','K17_Barricades','K17Barricades','BarricadeAudit'}<=names
         assert {'K17Gameplay','GameplayAudit','WeaponState','RoundRules','ZO_Gameplay','Infect','DamageBarricade'}<=names
+        assert {'RefugeAudit','RefugeData','PushBarricade','Physics'}<=names
+        assert {r['model'] for r in manifest['refuges']}<=names
         props_model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_Barricades')
-        assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}=={'Cabinet01','Cabinet02','Table01','Crate01','Crate02'}
+        catalog=json.loads((ROOT/'src/maps/k17/barricades/catalog.json').read_text())
+        assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}==set(catalog['Props'])
         assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&names
         model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_K17Foundry')
         assert len(model.findall('.//Item[@class="Part"]'))==manifest['parts']

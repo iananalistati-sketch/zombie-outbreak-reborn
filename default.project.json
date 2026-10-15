@@ -1,5 +1,5 @@
 {
-  "name": "Zombie Outbreak Reborn \u2014 K-17",
+  "name": "Zombie Outbreak Reborn — K-17",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -26,6 +26,9 @@
         },
         "Placement": {
           "$path": "src/maps/k17/barricades/Placement.luau"
+        },
+        "Physics": {
+          "$path": "src/maps/k17/barricades/Physics.luau"
         }
       },
       "K17Gameplay": {
@@ -75,7 +78,7 @@
             "$path": "src/client/Bootstrap.client.luau"
           },
           "RoundHUD": {
-          "$path": "src/maps/k17/gameplay/HUD.client.luau"
+            "$path": "src/maps/k17/gameplay/HUD.client.luau"
           },
           "Weapons": {
             "$path": "src/maps/k17/gameplay/Weapons.client.luau"
@@ -113,6 +116,12 @@
         },
         "GameplayAudit": {
           "$path": "tests/k17/GameplayAudit.luau"
+        },
+        "RefugeData": {
+          "$path": "src/maps/k17/Refuges.luau"
+        },
+        "RefugeAudit": {
+          "$path": "tests/k17/RefugeAudit.luau"
         }
       },
       "ZO_Gameplay": {
@@ -121,6 +130,9 @@
           "$className": "BindableFunction"
         },
         "DamageBarricade": {
+          "$className": "BindableFunction"
+        },
+        "PushBarricade": {
           "$className": "BindableFunction"
         }
       }

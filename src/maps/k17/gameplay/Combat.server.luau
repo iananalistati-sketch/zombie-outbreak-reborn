@@ -17,6 +17,7 @@ local effects=event("ZO_CombatFX")
 local internal=SS:WaitForChild("ZO_Gameplay")
 local infection=internal:WaitForChild("Infect") :: BindableFunction
 local barricadeDamage=internal:WaitForChild("DamageBarricade") :: BindableFunction
+local barricadePush=internal:WaitForChild("PushBarricade") :: BindableFunction
 local weapons: {[Player]: any}={}
 local lastRequest: {[Player]: {[string]: number}}={}
 local nextMelee: {[Player]: number}={}
@@ -119,6 +120,11 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
     local hit=trace(char,head,direction,Config.Rifle.Range)
     nearbyEffect(head.Position,if hit then hit.Position else head.Position+direction.Unit*Config.Rifle.Range,player)
     if not hit then return end
+    local props=workspace:FindFirstChild("ZO_Barricades")
+    if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesReady")==true then
+        barricadePush:Invoke(player,hit.Instance,direction)
+        return
+    end
     local model=hit.Instance:FindFirstAncestorOfClass("Model")
     if not model or targetRole(model)~="Zombies" then return end
     local hum=model:FindFirstChildOfClass("Humanoid")

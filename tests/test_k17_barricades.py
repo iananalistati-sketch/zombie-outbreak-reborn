@@ -16,13 +16,14 @@ class StockroomGeometry(unittest.TestCase):
         cls.props=ET.parse(ROOT/'src/maps/k17/barricades/Stockroom.rbxmx')
         cls.map=ET.parse(ROOT/'src/maps/k17/K17Foundry.rbxmx')
         cls.manifest=json.loads((ROOT/'docs/k17-navigation.json').read_text())
+        cls.catalog=json.loads((ROOT/'src/maps/k17/barricades/catalog.json').read_text())
         cls.boxes,_=validator.geometry(cls.props)
 
     def test_single_solid_hull_per_prop(self):
         models=self.props.findall('./Item/Item[@class="Model"]')
         self.assertEqual({validator.props(m)['Name'].text for m in models},
-                         {'Cabinet01','Cabinet02','Table01','Crate01','Crate02'})
-        self.assertEqual(len(self.boxes),5)
+                         set(self.catalog['Props']))
+        self.assertEqual(len(self.boxes),16)
         for model in models:
             primary=validator.props(model)['PrimaryPart'].text
             hulls=[p for p in model.findall('Item[@class="Part"]') if validator.props(p)['CanCollide'].text=='true']
@@ -44,11 +45,14 @@ class StockroomGeometry(unittest.TestCase):
                     self.assertGreaterEqual(center-half,hull[1][i]-.001)
                     self.assertLessEqual(center+half,hull[2][i]+.001)
 
-    def test_five_homes_have_floor_and_no_overlap(self):
+    def test_all_homes_have_floor_and_no_overlap(self):
         boxes,_=validator.geometry(self.map)
         for name,lo,hi in self.boxes:
-            self.assertAlmostEqual(lo[1],1)
-            self.assertTrue(any(a[0]<=lo[0] and b[0]>=hi[0] and a[2]<=lo[2] and b[2]>=hi[2] and abs(b[1]-1)<.01 for _,a,b in boxes),name+' floor')
+            prop=self.catalog['Props'][name.split('/')[2]]
+            self.assertAlmostEqual(lo[1],prop['Y'])
+            for x in (lo[0]+.05,hi[0]-.05):
+                for z in (lo[2]+.05,hi[2]-.05):
+                    self.assertTrue(any(a[0]<=x<=b[0] and a[2]<=z<=b[2] and abs(b[1]-prop['Y'])<.01 for _,a,b in boxes),name+' floor')
             for other,a,b in boxes+self.boxes:
                 if other==name:continue
                 overlap=all(min(hi[i],b[i])-max(lo[i],a[i])>.01 for i in range(3))
