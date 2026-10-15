@@ -1,3 +1,5 @@
+> Mapa anterior preservado. O projeto atual é K-17: use `ABRIR_K17.cmd` ou `builds/ZombieOutbreakReborn_K17.rbxl`. Este documento descreve apenas Santa Aurora.
+
 # Distrito Santa Aurora — primeira área urbana
 
 Uma rua comercial atende um pequeno quarteirão de serviços: mercearia com
@@ -41,7 +43,7 @@ com colisão; não são passagens ou janelas quebráveis nesta versão.
 - `scripts/build_santa_aurora.py`: planta e construção determinística em Python
   padrão. Gera o modelo XML e os dados de circulação sem baixar assets.
 - `src/maps/santa-aurora/SantaAurora.rbxmx`: mapa persistente e editável no Studio.
-- `default.project.json`: liga esse modelo ao Workspace e define a iluminação.
+- `santa-aurora.project.json`: liga esse modelo ao Workspace e define a iluminação.
 - `src/shared/MapConfig.luau`: nome do mapa e dos marcadores de spawn.
 - `docs/santa-aurora-geometry.json`: manifesto para verificação de circulação.
 - `scripts/validate_santa_aurora.py`: checagem de apoio e espaço livre baseada nas
@@ -104,13 +106,13 @@ Não publique por cima do jogo principal antes de conferir o teste local.
 ```sh
 python scripts/build_santa_aurora.py
 python scripts/build_santa_aurora.py --check
-rojo build default.project.json --output builds/ZombieOutbreakReborn_SantaAurora.rbxlx
+rojo build santa-aurora.project.json --output builds/ZombieOutbreakReborn_SantaAurora.rbxlx
 python scripts/validate_santa_aurora.py --place builds/ZombieOutbreakReborn_SantaAurora.rbxlx
 ```
 
 No Windows, `py` pode substituir `python`. A geração não precisa de NumPy,
-trimesh, Blender ou Studio. A CI também disponibiliza o `.rbxlx` compilado como
-artifact em cada execução bem-sucedida; não confundir compilação com playtest.
+trimesh, Blender ou Studio. A CI atual recompila Santa Aurora para conferir sua preservação; o artifact
+disponibilizado ao usuário contém K-17. Compilação não é playtest.
 
 ## Preservação do projeto anterior
 

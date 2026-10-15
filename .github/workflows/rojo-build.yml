@@ -23,6 +23,7 @@ jobs:
           python scripts/build_k17_barricades.py --check
           python scripts/validate_k17.py --quiet
           python scripts/validate_refuges.py
+          python scripts/check_studio_file.py
           python -m unittest discover -s tests -p 'test_*.py'
       - name: Compile Luau scripts
         run: |
@@ -50,6 +51,7 @@ jobs:
         run: |
           rojo build default.project.json --output /tmp/k17.rbxlx
           rojo build default.project.json --output /tmp/ZombieOutbreakReborn_K17.rbxl
+          python scripts/check_studio_file.py --binary /tmp/ZombieOutbreakReborn_K17.rbxl --manifest /tmp/K17.release.json --write
           rojo build santa-aurora.project.json --output /tmp/santa-aurora.rbxlx
       - name: Validate generated map
         run: |
@@ -60,4 +62,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ZombieOutbreakReborn-K17
-          path: /tmp/ZombieOutbreakReborn_K17.rbxl
+          path: |
+            /tmp/ZombieOutbreakReborn_K17.rbxl
+            /tmp/K17.release.json

@@ -32,11 +32,24 @@ está desativada. **Oito refúgios, quatro dutos com curvas e 40 objetos de barr
 
 1. No GitHub Desktop, selecione **main**, faça **Fetch origin → Pull origin**.
    Preserve eventuais alterações locais antes de atualizar.
-2. Salve uma cópia do seu place atual como backup.
-3. No Studio, use **File → Open from File** e abra:
-   **`builds/ZombieOutbreakReborn_K17.rbxl`**.
+2. Salve uma cópia do seu place atual como backup. Desconecte o plugin Rojo se
+   estiver ligado ao projeto anterior.
+3. Use **Repository → Show in Explorer** no GitHub Desktop e dê dois cliques
+   em **`ABRIR_K17.cmd`**, na raiz do repositório. Ele confere o SHA-256 da
+   entrega e abre o caminho completo de `builds/ZombieOutbreakReborn_K17.rbxl`.
 4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
 5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
+
+**“Recentes” reabre o place salvo anteriormente.** O Pull atualiza os arquivos
+do Git e não troca o mapa de um place já aberto. O mapa urbano de dois prédios
+e rua central é Santa Aurora, disponível no arquivo de nome `SantaAurora`.
+O arquivo do K-17 tem `ZO_K17Foundry`, os 40 objetos e os quatro dutos; seu
+binário foi decodificado para conferir esses itens e a ausência de Santa Aurora.
+
+Se a associação de arquivos do Windows não abrir o Studio, o atalho mostra o
+caminho exato. Use **File → Open from File** no Studio e selecione esse arquivo.
+O atalho Windows ainda precisa ser executado no computador do usuário; esta
+nuvem validou o conteúdo e o checksum, sem abrir o Studio.
 
 Para visitar diretamente os locais alterados, durante **Play**, com um jogador,
 use a **Command Bar em contexto Server**:
@@ -95,6 +108,7 @@ python scripts/validate_k17.py --quiet
 python scripts/validate_refuges.py
 python -m unittest discover -s tests -p 'test_*.py'
 rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
+python scripts/check_studio_file.py --write
 ```
 
 A CI compila e disponibiliza um artifact atualizado do place. As imagens são
@@ -135,3 +149,6 @@ O projeto anterior está no commit `63b3546` e na branch de backup
 `default.project.json` para Santa Aurora deve usar o perfil preservado acima.
 
 Os GLBs e modelos antigos permanecem no histórico e não são carregados no K-17.
+O Rojo preserva instâncias desconhecidas no Workspace: sincronizar sobre um
+place antigo pode manter os dois cenários. Abra o arquivo K-17 separado para
+validar sem apagar seu mapa anterior.

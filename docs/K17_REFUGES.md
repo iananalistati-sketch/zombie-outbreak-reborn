@@ -107,6 +107,7 @@ python scripts/validate_k17.py --quiet
 python scripts/validate_refuges.py
 python -m unittest discover -s tests -p 'test_*.py'
 rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
+python scripts/check_studio_file.py --write
 ```
 
 Prévia opcional: `python scripts/render_k17_refuges.py` (NumPy e Pillow).
