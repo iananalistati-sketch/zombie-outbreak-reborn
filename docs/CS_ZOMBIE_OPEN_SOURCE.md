@@ -1,5 +1,8 @@
 # Projetos públicos examinados — Zombie Mod / Survival de CS2 e CS:GO
 
+> Pesquisa anterior aos [ajustes de combate e rodada do perfil atual](CLASSIC_GAMEPLAY.md).
+> A seção de diferenças abaixo registra o protótipo que motivou esses ajustes.
+
 ## Resultado
 
 **Zombie:Reloaded Franug Edition (CS:GO/CS:S)** é a referência principal

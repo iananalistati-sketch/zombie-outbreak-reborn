@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SS = game:GetService("ServerStorage")
 local shared = RS:WaitForChild("K17Barricades")
 local Config = require(shared:WaitForChild("Config"))
 local Rules = require(shared:WaitForChild("Rules"))
@@ -126,27 +127,30 @@ local function reset()
     end
 end
 
+-- Internal only: the unified melee server must trace the first hit and validate cadence.
+local damage=SS:WaitForChild("ZO_Gameplay"):WaitForChild("DamageBarricade") :: BindableFunction
+damage.OnInvoke=function(player: Player,part: BasePart): number?
+    if typeof(part)~="Instance" or not part:IsA("BasePart") or not part:IsDescendantOf(folder) then return nil end
+    local now = os.clock()
+    local char,root,head,hum = characterInfo(player)
+    if not Rules.canAttack(role(player),phase(),hum~=nil) or not char or not root or not head then return nil end
+    local model=part:FindFirstAncestorOfClass("Model")
+    local entry=if model then entries[model] else nil
+    if not entry or entry.health<=0 or now-(attacks[player] or -math.huge)<Config.MeleeCooldown then return nil end
+    if (Placement.closest(entry.hull,head.Position)-head.Position).Magnitude>Config.MeleeRange or not lineOfSight(char,head,entry) then return nil end
+    attacks[player]=now
+    setHealth(entry,math.max(0,entry.health-Config.MeleeDamage))
+    return entry.health
+end
+
 remote.OnServerEvent:Connect(function(player: Player, action: any, target: any, x: any, z: any, quarter: any)
     if action=="Cancel" then release(player);return end
+    if not Config.EnablePlacement or (action~="Select" and action~="Place") then return end
     local now = os.clock()
     if now-(requests[player] or -math.huge)<Config.RequestInterval then return end
     requests[player]=now
     local char,root,head,hum = characterInfo(player)
     local state = phase()
-    if action=="Attack" then
-        if not Rules.canAttack(role(player),state,hum~=nil) or not char or not root or not head then return end
-        if now-(attacks[player] or -math.huge)<Config.MeleeCooldown then return end
-        attacks[player]=now
-        local entry = if typeof(target)=="Instance" then entries[target] else nil
-        if not entry or entry.health<=0 then remote:FireClient(player,"Miss");return end
-        local distance = (Placement.closest(entry.hull,head.Position)-head.Position).Magnitude
-        if distance>Config.MeleeRange or not lineOfSight(char,head,entry) then
-            remote:FireClient(player,"Miss");return
-        end
-        setHealth(entry,math.max(0,entry.health-Config.MeleeDamage))
-        remote:FireClient(player,"Hit",entry.health)
-        return
-    end
     if not Rules.canBuild(role(player),state,hum~=nil) or not char or not root or not head or not hum then
         release(player);return
     end
@@ -218,4 +222,5 @@ task.spawn(function()
     end
 end)
 RS:SetAttribute("ZO_BarricadesReady",true)
+RS:SetAttribute("ZO_BarricadePlacementEnabled",Config.EnablePlacement)
 print("[K17 BARRICADES] Five server-authoritative props ready in warehouse stockroom")

@@ -25,6 +25,11 @@ corrigir infecção e knockback sem depender da pesquisa de vídeo bloqueada.
 
 ## Diferenças verificadas no código atual
 
+> Revisão original do protótipo `65fad8b`. A etapa seguinte já implementa ajustes
+> específicos de infecção, rodada, rifle e HUD: veja o
+> [estado atual e roteiro de validação](CLASSIC_GAMEPLAY.md). As pendências de
+> física de barricadas e identidade visual continuam abertas.
+
 | Área | Comportamento implementado | O que falta estabelecer |
 | --- | --- | --- |
 | Infecção | Automática por distância e linha de visão, verificada a cada 0,15 s | Ação de ataque, alcance, ritmo e transformação conforme a referência |

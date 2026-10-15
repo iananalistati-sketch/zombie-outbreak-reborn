@@ -1,5 +1,11 @@
 # Estoque do depósito — primeira defesa interativa
 
+> **Documento histórico do protótipo `65fad8b`.** A prévia e seus controles de
+> posicionamento estão desativados no perfil atual. O ataque agora é unificado
+> com a infecção por golpe. Para testar a versão atual, use
+> [Ciclo clássico de Zombie Mod](CLASSIC_GAMEPLAY.md). As instruções de E/R/X
+> abaixo descrevem o protótipo preservado, não o padrão atual.
+
 O esconderijo **07**, no térreo do setor **D**, recebeu cinco objetos modelados:
 dois armários metálicos, uma mesa de oficina tombada e duas caixas industriais.
 A porta do corredor e o acesso pela sala vizinha continuam utilizáveis. A mudança

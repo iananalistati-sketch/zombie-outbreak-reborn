@@ -27,6 +27,21 @@
         "Placement": {
           "$path": "src/maps/k17/barricades/Placement.luau"
         }
+      },
+      "K17Gameplay": {
+        "$className": "Folder",
+        "Config": {
+          "$path": "src/maps/k17/gameplay/Config.luau"
+        },
+        "Rules": {
+          "$path": "src/maps/k17/gameplay/Rules.luau"
+        },
+        "WeaponState": {
+          "$path": "src/maps/k17/gameplay/WeaponState.luau"
+        },
+        "RoundRules": {
+          "$path": "src/maps/k17/gameplay/RoundRules.luau"
+        }
       }
     },
     "ServerScriptService": {
@@ -37,10 +52,10 @@
           "$path": "src/server/Bootstrap.server.luau"
         },
         "Combat": {
-          "$path": "src/server/Combat.server.luau"
+          "$path": "src/maps/k17/gameplay/Combat.server.luau"
         },
         "ZombieRound": {
-          "$path": "src/server/ZombieRound.server.luau"
+          "$path": "src/maps/k17/gameplay/Round.server.luau"
         },
         "MapDiagnostics": {
           "$path": "src/maps/k17/Diagnostics.server.luau"
@@ -55,7 +70,16 @@
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "ZO_Client": {
-          "$path": "src/client"
+          "$className": "Folder",
+          "Bootstrap": {
+            "$path": "src/client/Bootstrap.client.luau"
+          },
+          "RoundHUD": {
+          "$path": "src/maps/k17/gameplay/HUD.client.luau"
+          },
+          "Weapons": {
+            "$path": "src/maps/k17/gameplay/Weapons.client.luau"
+          }
         },
         "K17_Barricades": {
           "$path": "src/maps/k17/barricades/Client.client.luau"
@@ -86,6 +110,18 @@
         },
         "BarricadeAudit": {
           "$path": "tests/k17/BarricadeAudit.luau"
+        },
+        "GameplayAudit": {
+          "$path": "tests/k17/GameplayAudit.luau"
+        }
+      },
+      "ZO_Gameplay": {
+        "$className": "Folder",
+        "Infect": {
+          "$className": "BindableFunction"
+        },
+        "DamageBarricade": {
+          "$className": "BindableFunction"
         }
       }
     },

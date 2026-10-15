@@ -6,6 +6,7 @@ local CAS = game:GetService("ContextActionService")
 local player = Players.LocalPlayer
 local shared = RS:WaitForChild("K17Barricades")
 local Config = require(shared:WaitForChild("Config"))
+if not Config.EnablePlacement then return end
 local Rules = require(shared:WaitForChild("Rules"))
 local Placement = require(shared:WaitForChild("Placement"))
 local remote = RS:WaitForChild("ZO_BarricadeAction") :: RemoteEvent
@@ -18,8 +19,6 @@ local candidateX,candidateZ = 0,0
 local valid = false
 local aiming: Model? = nil
 local lastPreview = 0
-local lastAttack = 0
-local holdingAttack = false
 local notice,noticeUntil = "",0
 
 local gui = Instance.new("ScreenGui")
@@ -86,11 +85,6 @@ local function aimed(hit: RaycastResult?): Model?
     if model and model.Parent==folder and model:GetAttribute("ZO_Destroyed")~=true then return model end
     return nil
 end
-local function attack()
-    if not Rules.canAttack(role(),phase(),alive()) or os.clock()-lastAttack<Config.MeleeCooldown+.03 then return end
-    lastAttack=os.clock();remote:FireServer("Attack",aimed(ray()))
-end
-
 remote.OnClientEvent:Connect(function(action: string, value: any)
     if action=="Selected" and typeof(value)=="Instance" and value:IsA("Model") and value:IsDescendantOf(folder) then
         clear();selection=value;quarter=value:GetAttribute("ZO_Quarter") or 0
@@ -131,28 +125,20 @@ local function cancel(_, state: Enum.UserInputState): Enum.ContextActionResult
     if state==Enum.UserInputState.Begin then remote:FireServer("Cancel");clear() end
     return Enum.ContextActionResult.Sink
 end
-local function melee(_, state: Enum.UserInputState): Enum.ContextActionResult
-    if not Rules.canAttack(role(),phase(),alive()) then holdingAttack=false;return Enum.ContextActionResult.Pass end
-    if state==Enum.UserInputState.Begin then holdingAttack=true;attack()
-    elseif state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then holdingAttack=false end
-    return Enum.ContextActionResult.Sink
-end
 CAS:BindActionAtPriority("ZO_BarricadeUse",interact,true,3000,Enum.KeyCode.E,Enum.KeyCode.ButtonX)
 CAS:BindActionAtPriority("ZO_BarricadeRotate",rotate,true,3000,Enum.KeyCode.R,Enum.KeyCode.ButtonY)
 CAS:BindActionAtPriority("ZO_BarricadeCancel",cancel,true,3000,Enum.KeyCode.X,Enum.KeyCode.ButtonB)
-CAS:BindActionAtPriority("ZO_ZombieMelee",melee,true,3000,Enum.UserInputType.MouseButton1,Enum.KeyCode.ButtonR2)
-for name,title in {ZO_BarricadeUse="Mover",ZO_BarricadeRotate="Girar",ZO_BarricadeCancel="Cancelar",ZO_ZombieMelee="Atacar"} do
+-- Zombie melee is owned by K17Gameplay/Weapons; no second attack remote/input path.
+for name,title in {ZO_BarricadeUse="Mover",ZO_BarricadeRotate="Girar",ZO_BarricadeCancel="Cancelar"} do
     CAS:SetTitle(name,title)
 end
 CAS:SetPosition("ZO_BarricadeUse",UDim2.new(1,-150,1,-170))
 CAS:SetPosition("ZO_BarricadeRotate",UDim2.new(1,-235,1,-170))
 CAS:SetPosition("ZO_BarricadeCancel",UDim2.new(1,-235,1,-255))
-CAS:SetPosition("ZO_ZombieMelee",UDim2.new(1,-150,1,-170))
-player.CharacterRemoving:Connect(function() clear();holdingAttack=false end)
-player:GetPropertyChangedSignal("Team"):Connect(function() clear();holdingAttack=false end)
+player.CharacterRemoving:Connect(clear)
+player:GetPropertyChangedSignal("Team"):Connect(clear)
 
 RunService.RenderStepped:Connect(function()
-    if holdingAttack then attack() end
     if os.clock()-lastPreview<.1 then return end
     lastPreview=os.clock()
     local build=Rules.canBuild(role(),phase(),alive())
@@ -198,7 +184,7 @@ RunService.RenderStepped:Connect(function()
     end
     panel.Visible=(build and (selection~=nil or aiming~=nil or phase()=="Preparation" or os.clock()<noticeUntil)) or (zombie and (aiming~=nil or os.clock()<noticeUntil))
     cross.Visible=zombie or selection~=nil or (build and RS:GetAttribute("ZO_RoundState")~="Active")
-    for name,show in {ZO_BarricadeUse=build,ZO_BarricadeRotate=selection~=nil,ZO_BarricadeCancel=selection~=nil,ZO_ZombieMelee=zombie} do
+    for name,show in {ZO_BarricadeUse=build,ZO_BarricadeRotate=selection~=nil,ZO_BarricadeCancel=selection~=nil} do
         local button=CAS:GetButton(name)
         if button then button.Visible=show end
     end

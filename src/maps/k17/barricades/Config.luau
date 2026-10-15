@@ -1,6 +1,7 @@
 --!strict
 -- Initial tuning, not a measured multiplayer balance. Plain data also runs in Luau CLI.
 return table.freeze({
+    EnablePlacement = false, -- Legacy preview prototype; not part of the classic profile.
     Zone = table.freeze({MinX=-261.5, MaxX=-218, MinZ=96, MaxZ=145, Floor=1}),
     PickupRange = 9,
     PlacementRange = 9,

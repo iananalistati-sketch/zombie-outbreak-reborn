@@ -63,7 +63,7 @@ function Audit.practice(teamName: string?)
     hum.Health=hum.MaxHealth
     hum.WalkSpeed=if name=="Zombies" then round.ZombieWalkSpeed else round.HumanWalkSpeed
     char:PivotTo(CFrame.new(-247,4,124))
-    print("[BARRICADE PRACTICE] "..name.." — solo Studio only. Round HUD remains Waiting; rifle/infection require multiplayer. Stop Play to restore props.")
+    print("[BARRICADE PRACTICE] "..name.." — solo Studio. Placement preview is disabled in the classic profile. Use GameplayAudit.practice for rifle/melee targets. Stop Play restores props.")
 end
 
 return Audit

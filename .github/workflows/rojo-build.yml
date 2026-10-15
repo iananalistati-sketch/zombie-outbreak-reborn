@@ -32,6 +32,7 @@ jobs:
           unzip -q /tmp/luau.zip -d /tmp/luau_release
           find src tests -name '*.luau' -print0 | xargs -0 /tmp/luau_release/luau-compile --null
           /tmp/luau_release/luau tests/barricades/rules.spec.luau
+          /tmp/luau_release/luau tests/gameplay/rules.spec.luau
       - name: Install Rojo 7.7.1
         run: |
           curl --fail --location --retry 3 --silent --show-error \
@@ -49,6 +50,7 @@ jobs:
       - name: Validate generated map
         run: |
           python scripts/validate_k17.py --quiet --place /tmp/k17.rbxlx --binary /tmp/ZombieOutbreakReborn_K17.rbxl
+          python scripts/validate_gameplay.py --place /tmp/k17.rbxlx
           python scripts/validate_santa_aurora.py --place /tmp/santa-aurora.rbxlx
       - name: Upload playable Studio place
         uses: actions/upload-artifact@v4

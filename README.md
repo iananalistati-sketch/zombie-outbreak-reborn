@@ -21,10 +21,10 @@ galerias, contêineres e 15 posições de resistência identificadas.
 [Revisão de projetos abertos de Zombie Mod para CS2 e CS:GO](docs/CS_ZOMBIE_OPEN_SOURCE.md):
 referências verificadas de infecção, knockback e diferenças do protótipo atual.
 
-**Novo: [barricadas interativas no estoque do depósito](docs/BARRICADES.md).**
-Dois armários, uma mesa tombada e duas caixas podem ser reposicionados por humanos
-e destruídos pelos zumbis. E seleciona/confirma, R gira e X cancela.
-Preparação de 35 segundos; reset dos objetos a cada nova rodada.
+**Atual: [ajustes do ciclo clássico de Zombie Mod](docs/CLASSIC_GAMEPLAY.md).**
+Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
+recarga temporizada e knockback configurável. A prévia de construção anterior
+está desativada; os cinco objetos do estoque continuam como cobertura destrutível.
 
 ![Prévia geométrica externa; não é captura do Roblox Studio](docs/K17_OVERVIEW.png)
 
@@ -38,15 +38,16 @@ Preparação de 35 segundos; reset dos objetos a cada nova rodada.
 4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
 5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
 
-Para experimentar as barricadas sozinho, durante Play use a Command Bar em
+Para experimentar o combate sozinho, durante Play use a Command Bar em
 contexto **Server**:
 
 ```lua
-require(game.ServerStorage.ZO_Validation.BarricadeAudit).practice("Humans")
+require(game.ServerStorage.ZO_Validation.GameplayAudit).practice("Humans")
 ```
 
-Isso leva você ao estoque em treino exclusivo do Studio. Para testar os golpes,
-repita com `"Zombies"`. Veja os controles e limites em [Barricadas](docs/BARRICADES.md).
+Isso leva você ao estoque com um alvo zumbi. Segure o clique para atirar e use
+R para recarregar. Repita com `"Zombies"` para atacar um alvo humano e testar
+infecção. Veja o [roteiro de teste](docs/CLASSIC_GAMEPLAY.md).
 
 O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
 compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
@@ -59,8 +60,9 @@ scripts/build_k17.py               construção original do mapa
 src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
 src/maps/k17/*.luau                configurações e diagnóstico do K-17
 src/maps/k17/barricades/           objetos, autoridade, controles e posicionamento
-src/server/                       combate e rodadas compartilhados
-src/client/                       interface, rifle e controles
+src/maps/k17/gameplay/             combate, infecção por golpe, rodada e HUD atuais
+src/server/                       controladores anteriores usados por Santa Aurora
+src/client/                       cliente anterior e bootstrap compartilhado
 scripts/validate_k17.py            checagem de colisão e circulação
 tests/k17/K17Audit.luau            auditoria preparada para o Studio
 ```
@@ -99,8 +101,9 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 175 percursos com 33.341
-amostras de apoio/espaço livre, oito testes de geometria e 85 asserções das regras
-de barricadas. Os percursos também foram checados com os cinco objetos presentes.
+amostras de apoio/espaço livre, oito testes de geometria, 160 asserções do combate/
+rodada e 85 das regras de barricadas preservadas. Verificação das fontes ativas
+no place. Os percursos também foram checados com os cinco objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
