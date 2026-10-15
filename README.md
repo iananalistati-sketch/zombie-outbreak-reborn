@@ -18,6 +18,9 @@ galerias, contêineres e 15 posições de resistência identificadas.
 [Documentação e roteiro de teste](docs/K17.md) · [Planta](docs/K17_PLAN.svg) ·
 [Pesquisa realizada e limitações](docs/K17_REFERENCES.md)
 
+[Revisão de projetos abertos de Zombie Mod para CS2 e CS:GO](docs/CS_ZOMBIE_OPEN_SOURCE.md):
+referências verificadas de infecção, knockback e diferenças do protótipo atual.
+
 **Novo: [barricadas interativas no estoque do depósito](docs/BARRICADES.md).**
 Dois armários, uma mesa tombada e duas caixas podem ser reposicionados por humanos
 e destruídos pelos zumbis. E seleciona/confirma, R gira e X cancela.
