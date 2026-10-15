@@ -15,6 +15,18 @@
         "RoundConfig": {
           "$path": "src/maps/k17/RoundConfig.luau"
         }
+      },
+      "K17Barricades": {
+        "$className": "Folder",
+        "Config": {
+          "$path": "src/maps/k17/barricades/Config.luau"
+        },
+        "Rules": {
+          "$path": "src/maps/k17/barricades/Rules.luau"
+        },
+        "Placement": {
+          "$path": "src/maps/k17/barricades/Placement.luau"
+        }
       }
     },
     "ServerScriptService": {
@@ -32,6 +44,9 @@
         },
         "MapDiagnostics": {
           "$path": "src/maps/k17/Diagnostics.server.luau"
+        },
+        "Barricades": {
+          "$path": "src/maps/k17/barricades/Server.server.luau"
         }
       }
     },
@@ -41,6 +56,9 @@
         "$className": "StarterPlayerScripts",
         "ZO_Client": {
           "$path": "src/client"
+        },
+        "K17_Barricades": {
+          "$path": "src/maps/k17/barricades/Client.client.luau"
         }
       }
     },
@@ -54,6 +72,9 @@
       },
       "ZO_K17Foundry": {
         "$path": "src/maps/k17/K17Foundry.rbxmx"
+      },
+      "ZO_Barricades": {
+        "$path": "src/maps/k17/barricades/Stockroom.rbxmx"
       }
     },
     "ServerStorage": {
@@ -62,6 +83,9 @@
         "$className": "Folder",
         "K17Audit": {
           "$path": "tests/k17/K17Audit.luau"
+        },
+        "BarricadeAudit": {
+          "$path": "tests/k17/BarricadeAudit.luau"
         }
       }
     },

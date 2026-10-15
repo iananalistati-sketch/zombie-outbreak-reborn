@@ -18,6 +18,11 @@ galerias, contêineres e 15 posições de resistência identificadas.
 [Documentação e roteiro de teste](docs/K17.md) · [Planta](docs/K17_PLAN.svg) ·
 [Pesquisa realizada e limitações](docs/K17_REFERENCES.md)
 
+**Novo: [barricadas interativas no estoque do depósito](docs/BARRICADES.md).**
+Dois armários, uma mesa tombada e duas caixas podem ser reposicionados por humanos
+e destruídos pelos zumbis. E seleciona/confirma, R gira e X cancela.
+Preparação de 35 segundos; reset dos objetos a cada nova rodada.
+
 ![Prévia geométrica externa; não é captura do Roblox Studio](docs/K17_OVERVIEW.png)
 
 ## Abrir no Windows
@@ -30,6 +35,16 @@ galerias, contêineres e 15 posições de resistência identificadas.
 4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
 5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
 
+Para experimentar as barricadas sozinho, durante Play use a Command Bar em
+contexto **Server**:
+
+```lua
+require(game.ServerStorage.ZO_Validation.BarricadeAudit).practice("Humans")
+```
+
+Isso leva você ao estoque em treino exclusivo do Studio. Para testar os golpes,
+repita com `"Zombies"`. Veja os controles e limites em [Barricadas](docs/BARRICADES.md).
+
 O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
 compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
 É uma compilação desta entrega: depois de editar os fontes, recompile ou sincronize.
@@ -40,6 +55,7 @@ compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
 scripts/build_k17.py               construção original do mapa
 src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
 src/maps/k17/*.luau                configurações e diagnóstico do K-17
+src/maps/k17/barricades/           objetos, autoridade, controles e posicionamento
 src/server/                       combate e rodadas compartilhados
 src/client/                       interface, rifle e controles
 scripts/validate_k17.py            checagem de colisão e circulação
@@ -67,6 +83,7 @@ Python padrão basta para gerar/verificar; no Windows, `py` pode substituir `pyt
 ```sh
 python scripts/build_k17.py
 python scripts/build_k17.py --check
+python scripts/build_k17_barricades.py --check
 python scripts/validate_k17.py --quiet
 python -m unittest discover -s tests -p 'test_*.py'
 rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
@@ -79,10 +96,11 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 175 percursos com 33.341
-amostras de apoio/espaço livre e três controles negativos do verificador.
+amostras de apoio/espaço livre, oito testes de geometria e 85 asserções das regras
+de barricadas. Os percursos também foram checados com os cinco objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
-multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
+controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
 Counter-Strike ou desempenho aprovado.
 
 Durante Play, na Command Bar em contexto **Server**:

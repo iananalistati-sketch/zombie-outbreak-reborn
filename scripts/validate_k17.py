@@ -103,6 +103,9 @@ def main():
         tree=ET.parse(args.place)
         names={x.text for x in tree.findall('.//string[@name="Name"]')}
         assert {'ZO_K17Foundry','HumanSpawn','ZombieSpawn','LobbySpawn','K17Atmosphere','K17Audit'}<=names
+        assert {'ZO_Barricades','Barricades','K17_Barricades','K17Barricades','BarricadeAudit'}<=names
+        props_model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_Barricades')
+        assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}=={'Cabinet01','Cabinet02','Table01','Crate01','Crate02'}
         assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&names
         model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_K17Foundry')
         assert len(model.findall('.//Item[@class="Part"]'))==manifest['parts']

@@ -35,6 +35,7 @@ Players.PlayerRemoving:Connect(function(p)
     lastShot[p]=nil
 end)
 Remote.OnServerEvent:Connect(function(p:Player,action:any,direction:any)
+    if p:GetAttribute("ZO_BarricadeSelection")~=nil then return end
     if not p.Team or p.Team.Name~="Humans" then return end
     if ReplicatedStorage:GetAttribute("ZO_RoundState")~="Active" then return end
     local character=p.Character
@@ -51,7 +52,7 @@ Remote.OnServerEvent:Connect(function(p:Player,action:any,direction:any)
     end
     if action~="Fire" or typeof(direction)~="Vector3" then return end
     local magnitude=direction.Magnitude
-    if magnitude<.98 or magnitude>1.02 then return end
+    if magnitude~=magnitude or magnitude<.98 or magnitude>1.02 then return end
     if direction:Dot(head.CFrame.LookVector)<0.55 then return end
     local now=os.clock()
     if now-(lastShot[p] or 0)<SHOT_DELAY then return end

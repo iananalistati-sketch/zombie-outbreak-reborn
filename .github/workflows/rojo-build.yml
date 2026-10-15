@@ -20,6 +20,7 @@ jobs:
           python scripts/build_santa_aurora.py --check
           python scripts/validate_santa_aurora.py
           python scripts/build_k17.py --check
+          python scripts/build_k17_barricades.py --check
           python scripts/validate_k17.py --quiet
           python -m unittest discover -s tests -p 'test_*.py'
       - name: Compile Luau scripts
@@ -30,6 +31,7 @@ jobs:
           echo '152058b98c60ff1f5b5ec9bca0b8eb37793cae161dd3a05608cc3d8738ba1a4d  /tmp/luau.zip' | sha256sum --check
           unzip -q /tmp/luau.zip -d /tmp/luau_release
           find src tests -name '*.luau' -print0 | xargs -0 /tmp/luau_release/luau-compile --null
+          /tmp/luau_release/luau tests/barricades/rules.spec.luau
       - name: Install Rojo 7.7.1
         run: |
           curl --fail --location --retry 3 --silent --show-error \

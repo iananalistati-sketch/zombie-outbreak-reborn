@@ -53,6 +53,7 @@ local lastFire=0
 local hitUntil=0
 local function human():boolean
     return p.Team~=nil and p.Team.Name=="Humans" and ReplicatedStorage:GetAttribute("ZO_RoundState")=="Active"
+        and p:GetAttribute("ZO_BarricadeSelection")==nil
 end
 local function update()
     ammo.Visible=human()
@@ -61,6 +62,7 @@ local function update()
 end
 p:GetAttributeChangedSignal("ZO_Ammo"):Connect(update)
 p:GetAttributeChangedSignal("ZO_Reserve"):Connect(update)
+p:GetAttributeChangedSignal("ZO_BarricadeSelection"):Connect(update)
 p:GetPropertyChangedSignal("Team"):Connect(update)
 ReplicatedStorage:GetAttributeChangedSignal("ZO_RoundState"):Connect(update)
 remote.OnClientEvent:Connect(function(action:any,_damage:any)
@@ -78,7 +80,12 @@ RunService.RenderStepped:Connect(function()
     camera=workspace.CurrentCamera
     if vm.Parent~=camera then vm.Parent=camera end
     local visible=human()
-    p.CameraMode=if visible then Enum.CameraMode.LockFirstPerson else Enum.CameraMode.Classic
+    local state=ReplicatedStorage:GetAttribute("ZO_RoundState")
+    local k17=ReplicatedStorage:GetAttribute("ZO_BarricadesReady")==true
+    local practice=k17 and RunService:IsStudio() and workspace:GetAttribute("ZO_BarricadePractice")==true
+    local firstPerson=visible or (k17 and p.Team~=nil and p.Team.Name~="Lobby"
+        and (state=="Active" or state=="Preparation" or practice))
+    p.CameraMode=if firstPerson then Enum.CameraMode.LockFirstPerson else Enum.CameraMode.Classic
     local origin=camera.CFrame
     for _,obj in ipairs(vm:GetChildren()) do
         if obj:IsA("BasePart") then

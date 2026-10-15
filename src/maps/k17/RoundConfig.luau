@@ -3,7 +3,7 @@
 return table.freeze({
     MinimumPlayers = 2,
     Intermission = 12,
-    Preparation = 10,
+    Preparation = 35,
     Duration = 240,
     Results = 7,
     InfectionDistance = 4.5,
