@@ -43,6 +43,9 @@
 <circle cx="230" cy="58" r="8" fill="#c5a862"/><text x="230" y="61" text-anchor="middle" style="fill:#182626;font-weight:bold">13</text>
 <circle cx="-56" cy="-82" r="8" fill="#c5a862"/><text x="-56" y="-79" text-anchor="middle" style="fill:#182626;font-weight:bold">14</text>
 <circle cx="-70" cy="158" r="8" fill="#c5a862"/><text x="-70" y="161" text-anchor="middle" style="fill:#182626;font-weight:bold">15</text>
-<text x="-300" y="323">15 posições registradas · circuitos vertical e subterrâneo independentes</text>
+<circle cx="-94" cy="193" r="8" fill="#c5a862"/><text x="-94" y="196" text-anchor="middle" style="fill:#182626;font-weight:bold">16</text>
+<circle cx="84" cy="43" r="8" fill="#c5a862"/><text x="84" y="46" text-anchor="middle" style="fill:#182626;font-weight:bold">17</text>
+<circle cx="62" cy="210" r="8" fill="#c5a862"/><text x="62" y="213" text-anchor="middle" style="fill:#182626;font-weight:bold">18</text>
+<text x="-300" y="323">18 posições registradas · circuitos vertical e subterrâneo independentes</text>
 <text x="-300" y="339">Diagrama de arquitetura; não é captura de tela nem teste de jogabilidade.</text>
 </svg>

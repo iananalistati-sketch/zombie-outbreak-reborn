@@ -1,5 +1,5 @@
 --!strict
--- Sixteen server-owned assemblies; no placement preview or inventory construction.
+-- Server-owned assemblies. One malformed prop must not stop round startup.
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local SS=game:GetService("ServerStorage")
@@ -14,6 +14,38 @@ local internal=SS:WaitForChild("ZO_Gameplay")
 type Entry={model: Model,hull: BasePart,kind: any,health: number,template: Model}
 local entries: {[Model]: Entry}={}
 local attacks: {[Player]: number}={}
+local templates: {[string]: Model}={}
+local failures: {[string]: string}={}
+local expected=0
+for _ in Config.Props do expected+=1 end
+RS:SetAttribute("ZO_BarricadesReady",false)
+RS:SetAttribute("ZO_BarricadesAvailable",false)
+RS:SetAttribute("ZO_BarricadesStatus","Starting")
+RS:SetAttribute("ZO_BarricadesExpected",expected)
+
+local function publishStatus()
+    local active,errors=0,0
+    for _ in entries do active+=1 end
+    for _ in failures do errors+=1 end
+    RS:SetAttribute("ZO_BarricadesActive",active)
+    RS:SetAttribute("ZO_BarricadesErrors",errors)
+    RS:SetAttribute("ZO_BarricadesReady",active==expected and errors==0)
+    RS:SetAttribute("ZO_BarricadesAvailable",active>0)
+    RS:SetAttribute("ZO_BarricadesStatus",if active==expected and errors==0 then "Ready" else "Degraded")
+end
+local function quarantine(model: Model?,name: string,message: string)
+    failures[name]=message
+    RS:SetAttribute("ZO_BarricadesLastError",name..": "..string.sub(message,1,400))
+    if model then
+        entries[model]=nil
+        model:SetAttribute("ZO_ActivationError",string.sub(message,1,400))
+        -- Leave a failed assembly anchored so it cannot fall or become client-owned.
+        for _,part in model:GetDescendants() do
+            if part:IsA("BasePart") then part.Anchored=true end
+        end
+    end
+    warn("[K17 BARRICADES] Failed "..name..": "..message)
+end
 
 local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
@@ -42,19 +74,13 @@ local function activate(model: Model,kind: any,template: Model): Entry
             part.Anchored=false
         end
     end
-    hull.Anchored=false;hull:SetNetworkOwner(nil)
+    hull.Anchored=false
+    local canOwn,reason=hull:CanSetNetworkOwnership()
+    assert(canOwn,"Cannot set server ownership: "..tostring(reason))
+    hull:SetNetworkOwner(nil)
     local entry={model=model,hull=hull,kind=kind,health=kind.Health,template=template}
     entries[model]=entry
     return entry
-end
-for name,prop in Config.Props do
-    local model=folder:WaitForChild(name) :: Model
-    local hull=model:WaitForChild("Hull") :: BasePart
-    local kind=Config.Kinds[prop.Kind]
-    assert((hull.Size-Vector3.new(kind.Width,kind.Height,kind.Depth)).Magnitude<.01,"Hull/catalog mismatch: "..name)
-    assert((hull.Position-Vector3.new(prop.X,prop.Y+kind.Height/2,prop.Z)).Magnitude<.01,"Home/catalog mismatch: "..name)
-    model:SetAttribute("ZO_Kind",prop.Kind);model:SetAttribute("ZO_Refuge",prop.Refuge)
-    activate(model,kind,model:Clone())
 end
 local function entryFor(part: any): Entry?
     if typeof(part)~="Instance" or not part:IsA("BasePart") or not part:IsDescendantOf(folder) then return nil end
@@ -103,18 +129,49 @@ damage.OnInvoke=function(player: Player,part: BasePart): number?
     end
     return entry.health
 end
+-- Install both private callbacks before touching any physical props. Combat may
+-- invoke them during startup; an unknown or failed prop simply has no entry.
+local function loadProp(name: string,prop: any,reset: boolean)
+    local model: Model?=nil
+    local ok,message=pcall(function()
+        local template=templates[name]
+        if reset and template then
+            local previous=folder:FindFirstChild(name)
+            if previous then entries[previous :: Model]=nil;previous:Destroy() end
+            model=template:Clone();(model :: Model).Parent=folder
+        else
+            local found=folder:FindFirstChild(name)
+            assert(found and found:IsA("Model"),"Missing authored Model")
+            model=found :: Model
+        end
+        local current=model :: Model
+        local hull=current:FindFirstChild("Hull")
+        assert(hull and hull:IsA("BasePart"),"Missing solid Hull")
+        local kind=Config.Kinds[prop.Kind]
+        assert(kind,"Unknown prop kind "..tostring(prop.Kind))
+        assert((hull.Size-Vector3.new(kind.Width,kind.Height,kind.Depth)).Magnitude<.01,"Hull/catalog mismatch")
+        assert((hull.Position-Vector3.new(prop.X,prop.Y+kind.Height/2,prop.Z)).Magnitude<.01,"Home/catalog mismatch")
+        current:SetAttribute("ZO_Kind",prop.Kind);current:SetAttribute("ZO_Refuge",prop.Refuge)
+        if not template then template=current:Clone();templates[name]=template end
+        activate(current,kind,template)
+        failures[name]=nil
+    end)
+    if not ok then quarantine(model,name,tostring(message)) end
+end
 local function resetEntry(entry: Entry)
-    local model=entry.template:Clone();model.Parent=folder
-    entries[entry.model]=nil;entry.model:Destroy()
-    activate(model,entry.kind,entry.template)
+    -- A removed model is no longer discoverable in folder; drop its old entry
+    -- explicitly so recovery cannot retain a second, orphaned assembly record.
+    entries[entry.model]=nil
+    loadProp(entry.model.Name,Config.Props[entry.model.Name],true)
 end
 RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(function()
     if RS:GetAttribute("ZO_RoundState")=="Preparation" then
         task.defer(function()
-            local snapshot={}
-            for _,entry in entries do table.insert(snapshot,entry) end
-            for _,entry in snapshot do resetEntry(entry) end
+            -- Retry previously failed entries too; successful entries restore from
+            -- their original anchored template, including full health and home.
+            for name,prop in Config.Props do loadProp(name,prop,true) end
             table.clear(attacks)
+            publishStatus()
         end)
     end
 end)
@@ -125,6 +182,7 @@ RunService.Heartbeat:Connect(function(dt)
     local lost={}
     for _,entry in entries do
         local hull=entry.hull
+        if not hull.Parent or entry.model.Parent~=folder then table.insert(lost,entry);continue end
         if hull.Anchored then continue end
         local p=hull.Position
         if p.Y < -60 or math.abs(p.X)>310 or math.abs(p.Z)>310 then table.insert(lost,entry);continue end
@@ -138,6 +196,8 @@ RunService.Heartbeat:Connect(function(dt)
         if spin.Magnitude>Config.Physics.MaxSpin then hull.AssemblyAngularVelocity=spin.Unit*Config.Physics.MaxSpin end
     end
     for _,entry in lost do resetEntry(entry) end
+    if #lost>0 then publishStatus() end
 end)
-RS:SetAttribute("ZO_BarricadesReady",true)
-print("[K17 BARRICADES] 16 physical props across five refuges; server ownership, shot impulse and zombie melee")
+for name,prop in Config.Props do loadProp(name,prop,false) end
+publishStatus()
+print(string.format("[K17 BARRICADES] %d/%d physical props active; status=%s",RS:GetAttribute("ZO_BarricadesActive"),expected,RS:GetAttribute("ZO_BarricadesStatus")))

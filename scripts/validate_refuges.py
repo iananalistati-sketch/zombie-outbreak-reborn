@@ -26,7 +26,7 @@ def ray_blocker(a,b,boxes):
 
 def validate(data,boxes):
     errors=[];index=CollisionIndex(boxes)
-    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15}
+    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15,16,17,18}
     for r in data['refuges']:
         prefix=f'Refuge {r["id"]}'
         assert len(r['approaches'])>=2 and len(r['stands'])>=4
@@ -45,6 +45,12 @@ def validate(data,boxes):
             eye=lambda p:[p[0],p[1]+5.5,p[2]]
             blocker=ray_blocker(eye(a),eye(b),boxes)
             if blocker:errors.append(prefix+f' firing line {i}: '+blocker)
+    assert len(data['ducts'])==4
+    for duct in data['ducts']:
+        error,_=index.sweep({'points':duct['points']},data['avatar'])
+        if error:errors.append(duct['name']+': '+error)
+        a,b=duct['hidden'];eye=lambda p:[p[0],p[1]+5.5,p[2]]
+        if ray_blocker(eye(a),eye(b),boxes) is None:errors.append(duct['name']+': bend does not break sight')
     return errors
 
 
@@ -54,4 +60,4 @@ if __name__=='__main__':
     boxes+=geometry(ET.parse(ROOT/'src/maps/k17/barricades/Stockroom.rbxmx'))[0]
     errors=validate(data,boxes)
     if errors:raise SystemExit('\n'.join(errors))
-    print('PASS five refuges: ten approaches, twenty group positions and ten firing lines, including props')
+    print('PASS eight refuges: 16 approaches, 32 group positions, 16 firing lines and four bent ducts, including props')

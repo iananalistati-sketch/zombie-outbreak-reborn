@@ -15,7 +15,7 @@ end
 function Audit.visit(id: number)
     studio()
     assert(#Players:GetPlayers()==1 and RS:GetAttribute("ZO_RoundState")=="Waiting","Solo tour: one player, Waiting state")
-    local data=Data[id];assert(data,"Use 2 (archive), 7 (stockroom), 10 (dispatch), 14 (container), 15 (pumps)")
+    local data=Data[id];assert(data,"Use 2, 7, 10, 14, 15, 16 (filters), 17 (yard), 18 (coolant)")
     local player=Players:GetPlayers()[1]
     local char=player.Character;local hum=char and char:FindFirstChildOfClass("Humanoid")
     assert(char and hum and hum.Health>0,"Wait for a living character")

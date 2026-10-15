@@ -23,7 +23,7 @@ class StockroomGeometry(unittest.TestCase):
         models=self.props.findall('./Item/Item[@class="Model"]')
         self.assertEqual({validator.props(m)['Name'].text for m in models},
                          set(self.catalog['Props']))
-        self.assertEqual(len(self.boxes),16)
+        self.assertEqual(len(self.boxes),40)
         for model in models:
             primary=validator.props(model)['PrimaryPart'].text
             hulls=[p for p in model.findall('Item[@class="Part"]') if validator.props(p)['CanCollide'].text=='true']

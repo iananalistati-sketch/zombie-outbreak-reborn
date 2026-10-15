@@ -28,4 +28,13 @@ local x,z=Physics.impulse(24,0,0,3,4,force,cap)
 expect(near(x,force*.6) and near(z,force*.8))
 local x,z=Physics.impulse(math.huge,0,0,1,0,force,cap)
 expect(x==0 and z==0)
+for _,args in {
+    {0,0,0,1,0,force,cap}, {-1,0,0,1,0,force,cap},
+    {0/0,0,0,1,0,force,cap}, {24,0/0,0,1,0,force,cap},
+    {24,0,math.huge,1,0,force,cap}, {24,0,0,math.huge,0,force,cap},
+    {24,0,0,1,0,-1,cap}, {24,0,0,1,0,force,0},
+} do
+    local ix,iz=Physics.impulse(table.unpack(args))
+    expect(ix==0 and iz==0)
+end
 print("PASS prop physics policy: "..checks.." assertions; engine contacts/friction not executed")

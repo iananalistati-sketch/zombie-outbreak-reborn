@@ -60,6 +60,9 @@
         "ZombieRound": {
           "$path": "src/maps/k17/gameplay/Round.server.luau"
         },
+        "Startup": {
+          "$path": "src/maps/k17/gameplay/Startup.server.luau"
+        },
         "MapDiagnostics": {
           "$path": "src/maps/k17/Diagnostics.server.luau"
         },

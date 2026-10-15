@@ -1,3 +1,5 @@
+> Atualização: [início da partida, quatro dutos, três abrigos adicionais e 40 objetos](K17_START_AND_DUCTS.md). As descrições abaixo detalham os cinco refúgios originais; os três novos estão no roteiro atualizado.
+
 # K-17 — refúgios e barricadas
 
 Cinco posições foram reconstruídas na arquitetura persistente, com cobertura,
@@ -27,15 +29,15 @@ repõe munição. **Stop e Play** restauram o cenário e os objetos.
 
 | ID | Mudança arquitetônica | Objetos móveis | O que observar |
 | --- | --- | --- | --- |
-| 07 — Estoque | Duas portas internas de 6 studs, bancada de embalagem, pilhas de pallets e área de recuo | 2 armários, 1 mesa tombada, 2 caixas | Entrada pelo corredor e flanco pela sala vizinha; os armários ficam próximos da entrada |
-| 02 — Arquivo, andar 2 | Divisórias com duas portas, arquivos metálicos na parede e balcão de triagem | 1 armário, 2 caixas | Linha de tiro comprida até o corredor; um defensor precisa vigiar a porta de serviço |
-| 10 — Expedição | Posto de alvenaria com teto, duas portas, mesa de conferência e balcão com abertura real de tiro | 1 armário, 1 mesa tombada, 1 caixa | Porta de carga, flanco da produção e exposição pela abertura do balcão |
-| 14 — Contêiner elevado | Dois módulos superiores contínuos, divisória interna de 6 studs e escadas nas duas extremidades | 2 caixas | Ambos os acessos chegam ao piso superior sem exigir salto; nenhum lado é seguro por altura |
-| 15 — Bombas | Duas entradas estreitas, três conjuntos de bombas, plataforma elevada com dois acessos e guarda-corpo | 3 caixas | Passagem central permanece livre; é preciso defender os dois túneis |
+| 07 — Estoque | Duas portas internas, bancada, pallets, recuo e duto com curva | 3 armários, 1 mesa, 4 caixas | Entrada pelo corredor e flanco pela sala vizinha; os armários ficam próximos da entrada |
+| 02 — Arquivo, andar 2 | Divisórias com duas portas, arquivos metálicos na parede e balcão de triagem | 2 armários, 1 mesa, 3 caixas | Linha de tiro comprida até o corredor; um defensor precisa vigiar a porta de serviço |
+| 10 — Expedição | Posto de alvenaria com teto, duas portas, mesa de conferência e balcão com abertura real de tiro | 2 armários, 1 mesa, 3 caixas | Porta de carga, flanco da produção e exposição pela abertura do balcão |
+| 14 — Contêiner elevado | Dois módulos superiores contínuos, divisória interna de 6 studs e escadas nas duas extremidades | 1 armário, 3 caixas | Ambos os acessos chegam ao piso superior sem exigir salto; nenhum lado é seguro por altura |
+| 15 — Bombas | Duas entradas estreitas, três conjuntos de bombas, plataforma elevada com dois acessos e guarda-corpo | 1 armário, 4 caixas | Passagem central permanece livre; é preciso defender os dois túneis |
 
 No modo de edição, os interiores novos estão em `Workspace.ZO_K17Foundry`,
 nos modelos `R07_Stockroom`, `R02_Archive`, `R10_ReceivingOffice`,
-`R14_ContainerPost` e `R15_PumpBay`. Os 16 objetos estão em `Workspace.ZO_Barricades`.
+`R14_ContainerPost` e `R15_PumpBay`. Os 40 objetos estão em `Workspace.ZO_Barricades`.
 
 ## Barricadas físicas
 
@@ -60,17 +62,17 @@ multiplayer. Não há mecanismo de agarrar objetos nesta entrega.
 
 ## Validação executada na nuvem
 
-- 179 percursos / 34.096 amostras de apoio e espaço livre.
-- 10 aproximações, 20 posições de defensores e 10 linhas de tiro verificadas
-  contra paredes e os 16 objetos na disposição inicial.
-- 12 testes Python, incluindo controles negativos: fechar uma porta, remover
+- 189 percursos / 34.927 amostras de apoio e espaço livre.
+- 16 aproximações, 32 posições de defensores, 16 linhas de tiro e quatro dutos verificadas
+  contra paredes e os 40 objetos na disposição inicial.
+- 15 testes Python, incluindo controles negativos: fechar uma porta, remover
   o patamar do contêiner e bloquear a abertura do balcão.
-- 190 asserções da política de impulso: direção, massa, disparos repetidos e
+- 198 asserções da política de impulso: direção, massa, disparos repetidos e
   limite de velocidade. Mais 160 do combate/rodada e 85 das regras preservadas.
 - Compilação Luau e build Rojo XML/binário; integração de módulos e funções
   privadas. Santa Aurora e seus controladores permanecem preservados.
-- 5.492 peças estáticas de arquitetura, 94 luzes, apenas 8 com sombras;
-  16 conjuntos físicos móveis separados. Não há medição de FPS nesta nuvem.
+- 5.415 peças estáticas de arquitetura, 94 luzes, apenas 8 com sombras;
+  40 conjuntos físicos móveis separados. Não há medição de FPS nesta nuvem.
 
 ## Validar no Studio
 

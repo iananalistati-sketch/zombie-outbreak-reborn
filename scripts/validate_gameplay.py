@@ -26,6 +26,7 @@ def validate(path):
     root=ET.parse(path).getroot()
     bindings={
         'ServerScriptService/ZO_Server/ZombieRound':'src/maps/k17/gameplay/Round.server.luau',
+        'ServerScriptService/ZO_Server/Startup':'src/maps/k17/gameplay/Startup.server.luau',
         'ServerScriptService/ZO_Server/Combat':'src/maps/k17/gameplay/Combat.server.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Weapons':'src/maps/k17/gameplay/Weapons.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/RoundHUD':'src/maps/k17/gameplay/HUD.client.luau',

@@ -60,7 +60,7 @@ os controles e a legibilidade ainda precisam ser testados nos dispositivos.
 
 ## Parâmetros iniciais
 
-- Mínimo de dois jogadores; intervalo 12 s; preparação 35 s; rodada 240 s.
+- Mínimo de dois jogadores; intervalo 5 s; preparação 15 s; rodada 240 s.
 - Primeiros infectados: `floor(vivos / 7)`, com mínimo de um e pelo menos um
   humano restante. Seleção aleatória, com preferência por não repetir mães.
 - Vida humana 100; zumbi 450; velocidades 16 e 19 studs/s; respawn 5 s.
@@ -79,8 +79,8 @@ importados código, animações, sons ou assets dos repositórios examinados.
 
 ## Barricadas nesta etapa
 
-A atualização de [refúgios e barricadas](K17_REFUGES.md) distribui 16 objetos
-físicos entre cinco interiores reconstruídos. Tiros humanos empurram o primeiro
+A atualização de [refúgios e barricadas](K17_REFUGES.md) distribui 40 objetos
+físicos entre oito interiores, incluindo três salas novas e quatro dutos. Tiros humanos empurram o primeiro
 objeto atingido; golpes de zumbi empurram e danificam. A preparação restaura os
 objetos. A prévia de posicionamento continua desativada. Contato, atrito e latência
 precisam de testes no Studio; não se afirma equivalência à física Source.
@@ -94,7 +94,7 @@ Executado na nuvem:
   recarga, entrada inválida, papéis, fases, seleção e fatores de knockback.
 - **85 asserções** preservadas do protótipo de posicionamento; não significam
   que esse protótipo esteja habilitado no jogo.
-- 12 testes de geometria, geração determinística, 179 percursos com 34.096
+- 15 testes de geometria, geração determinística, 189 percursos com 34.927
   amostras, incluindo a disposição inicial dos objetos.
 - Build Rojo XML/binário. Verificação das fontes ativas exatas, funções privadas
   de servidor e carregamento de um único controlador novo de rodada/combate.

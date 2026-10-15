@@ -27,7 +27,7 @@ verts=np.array([[x,y,z] for x in (-.5,.5) for y in (-.5,.5) for z in (-.5,.5)])
 faces=[[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]]
 font_path=next((str(p) for p in (Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'),Path('C:/Windows/Fonts/arial.ttf')) if p.exists()),'DejaVuSans.ttf')
 manifest=json.loads((ROOT/'docs/k17-navigation.json').read_text())
-sheet=Image.new('RGB',(1800,1840),'#172424')
+sheet=Image.new('RGB',(1800,2440),'#172424')
 for number,refuge in enumerate(sorted(manifest['refuges'],key=lambda r:r['id'])):
  bounds=refuge['bounds'];floor=refuge['floor']
  target=np.array([(bounds[0]+bounds[1])/2,floor+1.5,(bounds[2]+bounds[3])/2])
@@ -73,15 +73,14 @@ for number,refuge in enumerate(sorted(manifest['refuges'],key=lambda r:r['id']))
   return (float(v@right*scale+W/2),float(H*.53-v@up*scale))
  for name,points in refuge['approaches']:
   d.line([project(p) for p in points],fill='#69c7c0',width=3)
+ for duct in manifest['ducts']:
+  if any(bounds[0]<=p[0]<=bounds[1] and bounds[2]<=p[2]<=bounds[3] for p in duct['points']):
+   d.line([project(p) for p in duct['points']],fill='#d08c69',width=3)
  for p in refuge['stands']:
   x,y=project(p);d.ellipse((x-5,y-5,x+5,y+5),fill='#edca70',outline='#302c22',width=1)
  d.text((24,H-28),'Corte técnico: ciano = aproximação · amarelo = posição de defesa',font=ImageFont.truetype(font_path,15),fill='#c0cbbd')
  sheet.paste(image,((number%2)*W,(number//2)*H+65))
 d=ImageDraw.Draw(sheet)
 d.text((24,16),'K-17 / REFÚGIOS RECONSTRUÍDOS',font=ImageFont.truetype(font_path,30),fill='#e4ddc8')
-d.text((930,1320),'5 interiores · 16 objetos móveis',font=ImageFont.truetype(font_path,25),fill='#e4ddc8')
-d.text((930,1370),'Prévia calculada a partir dos modelos XML.',font=ImageFont.truetype(font_path,21),fill='#c0cbbd')
-d.text((930,1405),'Tetos e paredes cortados para inspeção.',font=ImageFont.truetype(font_path,21),fill='#c0cbbd')
-d.text((930,1465),'Não é uma captura do Roblox Studio.',font=ImageFont.truetype(font_path,21),fill='#c0cbbd')
-d.text((930,1500),'Luz, materiais e física exigem teste no motor.',font=ImageFont.truetype(font_path,21),fill='#c0cbbd')
+d.text((24,2405),'8 refúgios · 40 objetos · 4 dutos com curvas (laranja). Corte do XML; não é captura do Studio.',font=ImageFont.truetype(font_path,20),fill='#c0cbbd')
 output=ROOT/'docs/K17_REFUGES.png';sheet.save(output);print(output)

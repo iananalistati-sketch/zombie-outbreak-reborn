@@ -21,7 +21,7 @@ function Audit.run()
         else failed+=1;warn("[BARRICADE AUDIT] FAIL "..name) end
     end
     record(RS:GetAttribute("ZO_BarricadesReady")==true,"server ready")
-    record(#folder:GetChildren()==16,"sixteen catalog props")
+    record(#folder:GetChildren()==40,"forty catalog props")
     for name,prop in Config.Props do
         local model=folder:FindFirstChild(name)
         local hull=model and model:FindFirstChild("Hull")

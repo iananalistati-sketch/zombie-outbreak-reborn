@@ -71,7 +71,7 @@ def validate(path,manifest,quiet=False):
     lights=tree.findall('.//Item[@class="PointLight"]')
     assert len(lights)==manifest['lights'] and len(lights)<=96
     assert sum(props(l)['Shadows'].text=='true' for l in lights)<=8
-    assert len(manifest['defenses'])==15
+    assert {d['id'] for d in manifest['defenses']}==set(range(1,19))
     assert len(manifest['buildings'])==5
     assert {2,3,4} <= {b['floors'] for b in manifest['buildings']}
     for aperture in manifest['openings']:
@@ -81,6 +81,9 @@ def validate(path,manifest,quiet=False):
         elif aperture['kind']=='refugeDoor':
             assert aperture['end']-aperture['start']>=6,aperture
             assert aperture['top']-aperture['bottom']>=9,aperture
+        elif aperture['kind']=='ductPortal':
+            assert aperture['end']-aperture['start']>=7.19,aperture
+            assert aperture['top']-aperture['bottom']>=7.19,aperture
     index=CollisionIndex(boxes);errors=[];total=0
     for route in manifest['routes']:
         error,n=index.sweep(route,manifest['avatar']);total+=n
@@ -128,7 +131,7 @@ def main():
             assert instances==len(items),(instances,len(items))
             print(f'PASS native binary: {len(data)} bytes, {instances} instances matching XML build')
     if errors:raise SystemExit('\n'.join(errors))
-    print(f'PASS K-17: {len(manifest["routes"])} routes, {total} clearance samples, 15 supported defenses, {manifest["parts"]} anchored parts')
+    print(f'PASS K-17: {len(manifest["routes"])} routes, {total} clearance samples, 18 supported defenses, {manifest["parts"]} anchored parts')
 
 
 if __name__=='__main__':main()

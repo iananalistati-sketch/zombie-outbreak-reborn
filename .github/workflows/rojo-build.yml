@@ -35,6 +35,8 @@ jobs:
           /tmp/luau_release/luau tests/barricades/rules.spec.luau
           /tmp/luau_release/luau tests/barricades/physics.spec.luau
           /tmp/luau_release/luau tests/gameplay/rules.spec.luau
+          python scripts/test_round_controller.py --luau /tmp/luau_release/luau
+          python tests/barricades/run_runtime.py --luau /tmp/luau_release/luau
       - name: Install Rojo 7.7.1
         run: |
           curl --fail --location --retry 3 --silent --show-error \

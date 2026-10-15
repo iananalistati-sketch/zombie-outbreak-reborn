@@ -36,5 +36,20 @@ class Refuges(unittest.TestCase):
         errors=validate(self.data,boxes)
         self.assertTrue(any('R14 leste: no support' in e for e in errors),errors)
 
+    def test_bent_stockroom_duct_really_breaks_sight(self):
+        boxes=[b for b in self.boxes if '/V_StockroomVent/DuctWall' not in b[0]]
+        errors=validate(self.data,boxes)
+        self.assertIn('StockroomVent: bend does not break sight',errors)
+
+    def test_sealing_duct_entry_is_rejected(self):
+        closed=self.boxes+[('sealed_vent',[-252.3,1,105],[-251.7,8.5,113])]
+        self.assertTrue(any('sealed_vent' in e for e in validate(self.data,closed)))
+
+    def test_ducts_have_solid_roofs(self):
+        for duct in self.data['ducts']:
+            p=duct['points'][1]
+            roofs=[b for b in self.boxes if '/'+duct['model']+'/DuctRoof' in b[0]]
+            self.assertIsNotNone(ray_blocker([p[0],p[1]+5,p[2]],[p[0],p[1]+9,p[2]],roofs),duct['name'])
+
 
 if __name__=='__main__':unittest.main()

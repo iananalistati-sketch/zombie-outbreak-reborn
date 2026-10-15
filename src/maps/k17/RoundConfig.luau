@@ -2,8 +2,8 @@
 -- Initial K-17 survival settings; multiplayer balance still requires Studio tests.
 return table.freeze({
     MinimumPlayers = 2,
-    Intermission = 12,
-    Preparation = 35,
+    Intermission = 5,
+    Preparation = 15,
     Duration = 240,
     Results = 7,
     InitialZombieRatio = 1/7,

@@ -28,7 +28,7 @@ return function()
         else record(false, "missing " .. name) end
     end
     local defenses = map:FindFirstChild("DefensePoints")
-    record(defenses ~= nil and #defenses:GetChildren() == 15, "15 registered defense positions")
+    record(defenses ~= nil and #defenses:GetChildren() == 18, "18 registered defense positions")
     local routes: {Route} = {
         {name="admin west stair", origin=Vector3.new(-132,3,-221), target=Vector3.new(-132,17,-181)},
         {name="admin east stair to roof", origin=Vector3.new(-4,31,-221), target=Vector3.new(-4,45,-181)},

@@ -121,7 +121,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
     nearbyEffect(head.Position,if hit then hit.Position else head.Position+direction.Unit*Config.Rifle.Range,player)
     if not hit then return end
     local props=workspace:FindFirstChild("ZO_Barricades")
-    if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesReady")==true then
+    if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesAvailable")==true then
         barricadePush:Invoke(player,hit.Instance,direction)
         return
     end
@@ -158,7 +158,7 @@ melee.OnServerEvent:Connect(function(player: Player,direction: any)
         return
     end
     local props=workspace:FindFirstChild("ZO_Barricades")
-    if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesReady")==true then
+    if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesAvailable")==true then
         local remaining=barricadeDamage:Invoke(player,hit.Instance)
         if typeof(remaining)=="number" then melee:FireClient(player,"Barricade",remaining);return end
     end

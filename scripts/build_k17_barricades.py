@@ -60,4 +60,4 @@ if __name__=='__main__':
     for path,output in outputs.items():
         if args.check:assert path.read_text()==output,str(path)+' is stale; run scripts/build_k17_barricades.py'
         else:path.write_text(output)
-    print(f'PASS barricade authoring: {len(CATALOG["Props"])} props across five refuges, one catalog')
+    print(f'PASS barricade authoring: {len(CATALOG["Props"])} props across {len({p["Refuge"] for p in CATALOG["Props"].values()})} refuges, one catalog')

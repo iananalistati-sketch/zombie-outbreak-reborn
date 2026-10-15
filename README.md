@@ -6,7 +6,7 @@ Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
 Mapa novo, independente de Santa Aurora e Harbor, com aproximadamente **600 × 600
 studs**. Cinco edifícios com interiores, três acessos ao subterrâneo, coberturas,
-galerias, contêineres e 15 posições de resistência identificadas.
+galerias, contêineres e 18 posições de resistência identificadas.
 
 - Administração com três andares e escritórios subdivididos.
 - Estação de energia com dois andares e ligação elevada à administração.
@@ -21,10 +21,10 @@ galerias, contêineres e 15 posições de resistência identificadas.
 [Revisão de projetos abertos de Zombie Mod para CS2 e CS:GO](docs/CS_ZOMBIE_OPEN_SOURCE.md):
 referências verificadas de infecção, knockback e diferenças do protótipo atual.
 
-**Atual: [ajustes do ciclo clássico de Zombie Mod](docs/CLASSIC_GAMEPLAY.md).**
+**Atual: [início da partida, quatro dutos e novos abrigos](docs/K17_START_AND_DUCTS.md).**
 Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
 recarga temporizada e knockback configurável. A prévia de construção anterior
-está desativada. **[Cinco refúgios reconstruídos e 16 objetos físicos de barricada](docs/K17_REFUGES.md)**: estoque, arquivo, expedição, contêiner elevado e bombas.
+está desativada. **Oito refúgios, quatro dutos com curvas e 40 objetos de barricada**. Os novos abrigos são filtros, oficina do pátio e refrigeração.
 
 ![Cortes geométricos dos refúgios; não é captura do Roblox Studio](docs/K17_REFUGES.png)
 
@@ -42,10 +42,10 @@ Para visitar diretamente os locais alterados, durante **Play**, com um jogador,
 use a **Command Bar em contexto Server**:
 
 ```lua
-require(game.ServerStorage.ZO_Validation.RefugeAudit).visit(7)
+require(game.ServerStorage.ZO_Validation.RefugeAudit).visit(16)
 ```
 
-Troque `7` por `2`, `10`, `14` ou `15` para visitar os demais. Empurre os objetos
+Troque `16` por `17`, `18`, `7`, `2`, `10`, `14` ou `15` para visitar os demais. Empurre os objetos
 por contato ou tiros; **R** recarrega. Veja o [roteiro dos refúgios](docs/K17_REFUGES.md).
 O [treino com alvos de combate](docs/CLASSIC_GAMEPLAY.md) também está disponível.
 
@@ -57,7 +57,8 @@ compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
 
 ```text
 scripts/build_k17.py               construção original do mapa
-scripts/k17_refuges.py             cinco interiores defensivos
+scripts/k17_refuges.py             interiores defensivos
+scripts/k17_shelters.py            três abrigos novos e quatro dutos
 src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
 src/maps/k17/*.luau                configurações e diagnóstico do K-17
 src/maps/k17/barricades/           catálogo único, modelos e física dos objetos
@@ -102,10 +103,10 @@ renderizados pelo Roblox Studio.
 
 ## Estado de validação
 
-**Executado na nuvem:** geração, compilação Luau/Rojo, 179 percursos com 34.096
-amostras de apoio/espaço livre, 12 testes de geometria, 160 asserções do combate/
-rodada, 190 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
-no place. Os percursos também foram checados com os 16 objetos presentes.
+**Executado na nuvem:** geração, compilação Luau/Rojo, 189 percursos com 34.927
+amostras de apoio/espaço livre, 15 testes de geometria, 160 asserções do combate/
+rodada, testes de execução dos controladores com APIs simuladas, 198 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
+no place. Os percursos também foram checados com os 40 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao

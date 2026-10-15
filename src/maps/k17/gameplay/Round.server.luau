@@ -5,10 +5,31 @@ local Teams=game:GetService("Teams")
 local RS=game:GetService("ReplicatedStorage")
 local SS=game:GetService("ServerStorage")
 local RunService=game:GetService("RunService")
-local Config=require(RS.Shared.RoundConfig)
-local MapConfig=require(RS.Shared.MapConfig)
-local RoundRules=require(RS.K17Gameplay.RoundRules)
-local Rules=require(RS.K17Gameplay.Rules)
+local function fail(message: string)
+    RS:SetAttribute("ZO_GameplayRoundReady",false)
+    RS:SetAttribute("ZO_GameplayStatus","Error")
+    RS:SetAttribute("ZO_GameplayError",("ZombieRound: "..message):sub(1,1500))
+    RS:SetAttribute("ZO_RoundState","Error")
+    warn("[K17] Round stopped: "..message)
+end
+local function main()
+RS:SetAttribute("ZO_GameplayRoundReady",false)
+RS:SetAttribute("ZO_RoundState","Starting")
+local function step(message: string) RS:SetAttribute("ZO_StartupStep",message) end
+local function dependency(parent: Instance,name: string,class: string?): Instance
+    step("Carregando "..name)
+    local child=parent:WaitForChild(name,12)
+    assert(child,"Dependência ausente: "..parent.Name.."/"..name.." (12s)")
+    assert(not class or child:IsA(class),"Classe inválida: "..parent.Name.."/"..name)
+    return child
+end
+local shared=dependency(RS,"Shared","Folder")
+local gameplay=dependency(RS,"K17Gameplay","Folder")
+local Config=require(dependency(shared,"RoundConfig","ModuleScript"))
+local MapConfig=require(dependency(shared,"MapConfig","ModuleScript"))
+local RoundRules=require(dependency(gameplay,"RoundRules","ModuleScript"))
+local Rules=require(dependency(gameplay,"Rules","ModuleScript"))
+RS:SetAttribute("ZO_MinimumPlayers",Config.MinimumPlayers)
 local rng=Random.new()
 local function ensureTeam(name: string,color: string): Team
     local team=Teams:FindFirstChild(name)
@@ -19,12 +40,12 @@ end
 local lobby=ensureTeam("Lobby","Medium stone grey")
 local humans=ensureTeam("Humans","Bright blue")
 local zombies=ensureTeam("Zombies","Bright green")
-local world=workspace:WaitForChild(MapConfig.ModelName)
-local spawns=world:WaitForChild("Spawns")
-local humanSpawn=spawns:WaitForChild(MapConfig.HumanSpawn) :: BasePart
-local zombieSpawn=spawns:WaitForChild(MapConfig.ZombieSpawn) :: BasePart
-local lobbySpawn=spawns:WaitForChild(MapConfig.LobbySpawn) :: BasePart
-local infection=SS:WaitForChild("ZO_Gameplay"):WaitForChild("Infect") :: BindableFunction
+local world=dependency(workspace,MapConfig.ModelName,"Model")
+local spawns=dependency(world,"Spawns","Model")
+local humanSpawn=dependency(spawns,MapConfig.HumanSpawn,"BasePart") :: BasePart
+local zombieSpawn=dependency(spawns,MapConfig.ZombieSpawn,"BasePart") :: BasePart
+local lobbySpawn=dependency(spawns,MapConfig.LobbySpawn,"BasePart") :: BasePart
+local infection=dependency(dependency(SS,"ZO_Gameplay","Folder"),"Infect","BindableFunction") :: BindableFunction
 local state="Waiting"
 local roundId=0
 local participants: {[Player]: boolean}={}
@@ -33,6 +54,21 @@ local previousMothers: {[Player]: boolean}={}
 local function alive(model: Model?): boolean
     local hum=model and model:FindFirstChildOfClass("Humanoid")
     return hum~=nil and hum.Health>0
+end
+local function characterReady(player: Player): boolean
+    local char=player.Character
+    local root=char and char:FindFirstChild("HumanoidRootPart")
+    return player.Parent==Players and alive(char) and root~=nil and root:IsA("BasePart")
+end
+local function readyCount(): number
+    local ready=0
+    for _,player in Players:GetPlayers() do if characterReady(player) then ready+=1 end end
+    RS:SetAttribute("ZO_ReadyPlayers",ready)
+    RS:SetAttribute("ZO_ConnectedPlayers",#Players:GetPlayers())
+    return ready
+end
+local function health()
+    assert(RS:GetAttribute("ZO_GameplayStatus")~="Error",RS:GetAttribute("ZO_GameplayError") or "Falha em outro controlador")
 end
 local function counts(): (number,number)
     local h,z=0,0
@@ -135,9 +171,10 @@ local function countdown(value: string,seconds: number): boolean
     -- Deadline-based: a configured 35-second phase lasts 35 seconds, not 36.
     local deadline=os.clock()+seconds
     while true do
+        health()
         local remaining=math.max(0,math.ceil(deadline-os.clock()))
         setState(value,remaining)
-        if #Players:GetPlayers()<Config.MinimumPlayers then return false end
+        if #Players:GetPlayers()<Config.MinimumPlayers or (value=="Intermission" and readyCount()<Config.MinimumPlayers) then return false end
         if remaining==0 then return true end
         task.wait(math.min(.25,math.max(.01,deadline-os.clock())))
     end
@@ -153,16 +190,32 @@ local function cleanup(winner: string)
         task.wait(.25)
     end
 end
+step("Aguardando controlador de combate")
+local startupDeadline=os.clock()+20
+while RS:GetAttribute("ZO_GameplayCombatReady")~=true do
+    health()
+    assert(os.clock()<startupDeadline,"Combat não iniciou em 20s; confira Output do servidor")
+    task.wait(.1)
+end
+step("Controladores prontos")
 setState("Waiting",0)
 RS:SetAttribute("ZO_GameplayRoundReady",true)
 while true do
-    while #Players:GetPlayers()<Config.MinimumPlayers do setState("Waiting",0);task.wait(.5) end
+    health()
+    while readyCount()<Config.MinimumPlayers do
+        health()
+        RS:SetAttribute("ZO_WaitingReason",if #Players:GetPlayers()<Config.MinimumPlayers then "Players" else "Characters")
+        setState("Waiting",0);task.wait(.5)
+    end
+    RS:SetAttribute("ZO_WaitingReason","")
     if not countdown("Intermission",Config.Intermission) then continue end
     participants={};roundId+=1;RS:SetAttribute("ZO_RoundId",roundId)
     workspace:SetAttribute("ZO_BarricadePractice",false)
     local practice=workspace:FindFirstChild("ZO_PracticeTargets")
     if practice then practice:Destroy() end
-    for _,player in Players:GetPlayers() do participants[player]=true;setRole(player,humans,true) end
+    for _,player in Players:GetPlayers() do
+        if characterReady(player) then participants[player]=true;setRole(player,humans,true) end
+    end
     if not countdown("Preparation",Config.Preparation) then cleanup("Cancelled");continue end
     local eligible={}
     for player in participants do
@@ -178,6 +231,7 @@ while true do
     local deadline=os.clock()+Config.Duration
     local result=nil
     repeat
+        health()
         local remaining=math.max(0,math.ceil(deadline-os.clock()))
         setState("Active",remaining)
         local h,z=counts()
@@ -186,3 +240,6 @@ while true do
     until result~=nil
     cleanup(result :: string)
 end
+end
+local ok,message=xpcall(main,debug.traceback)
+if not ok then fail(tostring(message)) end
