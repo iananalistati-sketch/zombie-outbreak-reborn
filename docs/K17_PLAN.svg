@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-330 -350 660 720" width="1100" height="1200">
+<style>text{font:9px sans-serif;fill:#e6dec9}.label{font-weight:bold;font-size:10px}.route{fill:none;stroke:#7cad9c;stroke-width:2;stroke-dasharray:6 4}</style>
+<rect x="-330" y="-350" width="660" height="720" fill="#182626"/>
+<text x="-300" y="-326" style="font-size:19px">K-17 / COMPLEXO DE CONTENÇÃO</text>
+<text x="-300" y="-308">Planta medida · 600 × 600 studs · norte = -Z</text>
+<rect x="-300" y="-300" width="600" height="600" fill="#66706a" stroke="#b4b09a" stroke-width="2"/>
+<rect x="-292" y="-292" width="584" height="24" fill="#354340"/>
+<rect x="-292" y="268" width="584" height="24" fill="#354340"/>
+<rect x="-292" y="-268" width="24" height="536" fill="#354340"/>
+<rect x="268" y="-268" width="24" height="536" fill="#354340"/>
+<rect x="-148" y="-250" width="160" height="126" fill="#927b61" stroke="#ded1b5"/>
+<text class="label" x="-68.0" y="-187.0" text-anchor="middle">A_Administration</text>
+<text x="-68.0" y="-174.0" text-anchor="middle">3 pavimentos + cobertura</text>
+<rect x="40" y="-250" width="208" height="126" fill="#927b61" stroke="#ded1b5"/>
+<text class="label" x="144.0" y="-187.0" text-anchor="middle">B_PowerStation</text>
+<text x="144.0" y="-174.0" text-anchor="middle">2 pavimentos + cobertura</text>
+<rect x="-264" y="-68" width="94" height="216" fill="#927b61" stroke="#ded1b5"/>
+<text class="label" x="-217.0" y="40.0" text-anchor="middle">D_Warehouse</text>
+<text x="-217.0" y="53.0" text-anchor="middle">2 pavimentos + cobertura</text>
+<rect x="172" y="-36" width="76" height="112" fill="#927b61" stroke="#ded1b5"/>
+<text class="label" x="210.0" y="20.0" text-anchor="middle">T_ControlTower</text>
+<text x="210.0" y="33.0" text-anchor="middle">4 pavimentos + cobertura</text>
+<rect x="-142" y="68" width="266" height="178" fill="#927b61" stroke="#ded1b5"/>
+<text class="label" x="-9.0" y="157.0" text-anchor="middle">C_FoundryHall</text>
+<text x="-9.0" y="170.0" text-anchor="middle">2 pavimentos + cobertura</text>
+<rect x="22" y="-112" width="16" height="52" fill="#334b53" stroke="#cba564"/>
+<rect x="132" y="122" width="16" height="52" fill="#334b53" stroke="#cba564"/>
+<rect x="-260" y="180" width="52" height="16" fill="#334b53" stroke="#cba564"/>
+<polyline class="route" points="-280,-280 280,-280 280,280 -280,280 -280,-280"/>
+<polyline class="route" points="0,-112 0,56 -154,56 -154,-112 -68,-112"/>
+<circle cx="-108" cy="-144" r="8" fill="#c5a862"/><text x="-108" y="-141" text-anchor="middle" style="fill:#182626;font-weight:bold">1</text>
+<circle cx="-104" cy="-239" r="8" fill="#c5a862"/><text x="-104" y="-236" text-anchor="middle" style="fill:#182626;font-weight:bold">2</text>
+<circle cx="-68" cy="-190" r="8" fill="#c5a862"/><text x="-68" y="-187" text-anchor="middle" style="fill:#182626;font-weight:bold">3</text>
+<circle cx="108" cy="-146" r="8" fill="#c5a862"/><text x="108" y="-143" text-anchor="middle" style="fill:#182626;font-weight:bold">4</text>
+<circle cx="144" cy="-190" r="8" fill="#c5a862"/><text x="144" y="-187" text-anchor="middle" style="fill:#182626;font-weight:bold">5</text>
+<circle cx="48" cy="0" r="8" fill="#c5a862"/><text x="48" y="3" text-anchor="middle" style="fill:#182626;font-weight:bold">6</text>
+<circle cx="-238" cy="116" r="8" fill="#c5a862"/><text x="-238" y="119" text-anchor="middle" style="fill:#182626;font-weight:bold">7</text>
+<circle cx="-217" cy="108" r="8" fill="#c5a862"/><text x="-217" y="111" text-anchor="middle" style="fill:#182626;font-weight:bold">8</text>
+<circle cx="-217" cy="24" r="8" fill="#c5a862"/><text x="-217" y="27" text-anchor="middle" style="fill:#182626;font-weight:bold">9</text>
+<circle cx="-82" cy="80" r="8" fill="#c5a862"/><text x="-82" y="83" text-anchor="middle" style="fill:#182626;font-weight:bold">10</text>
+<circle cx="-131" cy="160" r="8" fill="#c5a862"/><text x="-131" y="163" text-anchor="middle" style="fill:#182626;font-weight:bold">11</text>
+<circle cx="-80" cy="183" r="8" fill="#c5a862"/><text x="-80" y="186" text-anchor="middle" style="fill:#182626;font-weight:bold">12</text>
+<circle cx="230" cy="58" r="8" fill="#c5a862"/><text x="230" y="61" text-anchor="middle" style="fill:#182626;font-weight:bold">13</text>
+<circle cx="-80" cy="-82" r="8" fill="#c5a862"/><text x="-80" y="-79" text-anchor="middle" style="fill:#182626;font-weight:bold">14</text>
+<circle cx="-72" cy="144" r="8" fill="#c5a862"/><text x="-72" y="147" text-anchor="middle" style="fill:#182626;font-weight:bold">15</text>
+<text x="-300" y="323">15 posições registradas · circuitos vertical e subterrâneo independentes</text>
+<text x="-300" y="339">Diagrama de arquitetura; não é captura de tela nem teste de jogabilidade.</text>
+</svg>

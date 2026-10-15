@@ -1,91 +1,110 @@
 # Zombie Outbreak Reborn
 
-Survival multiplayer em Luau para Roblox Studio, sincronizado com **Rojo 7.7.1**.
+Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-## Mapa ativo: Distrito Santa Aurora
+## K-17 — Complexo de Contenção
 
-Um quarteirão urbano de serviços com arquitetura conectada:
+Mapa novo, independente de Santa Aurora e Harbor, com aproximadamente **600 × 600
+studs**. Cinco edifícios com interiores, três acessos ao subterrâneo, coberturas,
+galerias, contêineres e 15 posições de resistência identificadas.
 
-- **Mercearia Aurora:** loja mobiliada, caixa, estoque e saída lateral.
-- **Administração:** escritórios no segundo andar, escada interna e escada de incêndio.
-- **Oficina Luz:** garagem, recepção, bancada e acessos de serviço.
-- **Armazém Ferrovia:** área de carga, estantes e mezanino com duas escadas.
-- Rua com calçadas, faixa de pedestres, drenagem, iluminação e estacionamento.
+- Administração com três andares e escritórios subdivididos.
+- Estação de energia com dois andares e ligação elevada à administração.
+- Fundição com prensas, esteiras, ponte rolante, postos de solda e mezanino.
+- Depósito de dois andares com estantes e ligação à galeria da fundição.
+- Torre de controle com quatro andares.
+- Pátio industrial, tubulações, estacionamento, vans e circuito de manutenção.
 
-O mapa usa objetos nativos do Roblox e materiais do motor. **Aparece fora de Play
-e não exige importar GLB**, buscar modelos no Toolbox ou publicar meshes.
-As janelas têm vidro com colisão; portas e acessos são vãos reais.
+[Documentação e roteiro de teste](docs/K17.md) · [Planta](docs/K17_PLAN.svg) ·
+[Pesquisa realizada e limitações](docs/K17_REFERENCES.md)
 
-[Planta e documentação](docs/SANTA_AURORA.md) · [Planta do térreo](docs/SANTA_AURORA_PLAN.svg)
+![Prévia geométrica externa; não é captura do Roblox Studio](docs/K17_OVERVIEW.png)
 
-## Abrir no Windows sem Codex local
+## Abrir no Windows
 
-1. No GitHub Desktop, use **Fetch origin**, selecione a branch
-   `feat/santa-aurora-urban-map` e faça Pull se houver atualização.
-   Preserve suas alterações locais antes de trocar de branch.
-2. No Roblox Studio, salve uma cópia do seu place atual como backup.
-3. Use **File → Open from File** para abrir
-   `builds/ZombieOutbreakReborn_SantaAurora.rbxlx` da pasta do repositório.
-4. Em Explorer, selecione `Workspace → ZO_SantaAurora` e pressione **F**.
-5. Faça Play para explorar; use teste local com **dois jogadores** para iniciar rodadas.
+1. No GitHub Desktop, selecione **main**, faça **Fetch origin → Pull origin**.
+   Preserve eventuais alterações locais antes de atualizar.
+2. Salve uma cópia do seu place atual como backup.
+3. No Studio, use **File → Open from File** e abra:
+   **`builds/ZombieOutbreakReborn_K17.rbxl`**.
+4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
+5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
 
-Esse arquivo já contém o mapa, a iluminação e os scripts. Abra-o como place de
-teste separado: ele não precisa ser importado como modelo nem publicado por cima
-do jogo existente.
+O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
+compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
+É uma compilação desta entrega: depois de editar os fontes, recompile ou sincronize.
 
-O arquivo em `builds/` é uma compilação desta entrega. Depois de editar os scripts,
-recompile com Rojo ou use a sincronização para ver as alterações.
+## Onde estão os fontes
 
-## Sincronizar com Rojo
+```text
+scripts/build_k17.py               construção original do mapa
+src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
+src/maps/k17/*.luau                configurações e diagnóstico do K-17
+src/server/                       combate e rodadas compartilhados
+src/client/                       interface, rifle e controles
+scripts/validate_k17.py            checagem de colisão e circulação
+tests/k17/K17Audit.luau            auditoria preparada para o Studio
+```
 
-No terminal, na raiz do repositório:
+A geração acontece no desenvolvimento; não há gerador de cenário rodando durante
+as partidas. Edite o construtor para mudanças permanentes na arquitetura.
+
+## Sincronizar e compilar
+
+Instale Rojo **7.7.1**. Na raiz do repositório:
 
 ```sh
 rojo serve default.project.json
 ```
 
-Conecte o plugin Rojo no Studio ao servidor local. O Codex desktop não é
-necessário. **Antes de sincronizar em um place antigo**, faça backup e mova os
-mapas antigos para ServerStorage, incluindo `HarborLocks_Survival_Visual`,
-`ZO_HarborCollision`, `ZO_Survival` e `ZO_TestSpawns`, caso existam.
-O projeto preserva objetos desconhecidos no Workspace; ele não apaga suas
-importações automaticamente.
+Conecte o plugin Rojo no Studio. Use um place de teste separado para evitar
+sobreposição com mapas antigos preservados no seu Workspace.
+Se o servidor Rojo já estava aberto antes do Pull, encerre-o e inicie novamente
+com o comando acima; depois reconecte o plugin para carregar o perfil novo.
 
-## Compilar e verificar
-
-Python padrão e Rojo 7.7.1:
+Python padrão basta para gerar/verificar; no Windows, `py` pode substituir `python`:
 
 ```sh
-python scripts/build_santa_aurora.py --check
-rojo build default.project.json --output builds/ZombieOutbreakReborn_SantaAurora.rbxlx
-python scripts/validate_santa_aurora.py --place builds/ZombieOutbreakReborn_SantaAurora.rbxlx
+python scripts/build_k17.py
+python scripts/build_k17.py --check
+python scripts/validate_k17.py --quiet
+python -m unittest discover -s tests -p 'test_*.py'
+rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
 ```
 
-No Windows, `py` pode substituir `python`. Para mudar a arquitetura, edite
-`scripts/build_santa_aurora.py` e execute-o sem `--check` antes de recompilar.
-Não edite o modelo gerado esperando que as mudanças sobrevivam à regeneração.
+A CI compila e disponibiliza um artifact atualizado do place. As imagens são
+prévias geométricas do modelo: não representam materiais, iluminação ou gameplay
+renderizados pelo Roblox Studio.
 
-**Validação na nuvem:** compilação Luau e Rojo; 14 percursos conferidos contra as
-colisões do modelo. **Ainda pendente:** física Humanoid, PathfindingService,
-qualidade visual, FPS e multiplayer no Roblox Studio.
+## Estado de validação
+
+**Executado na nuvem:** geração, compilação Luau/Rojo, 175 percursos com 33.341
+amostras de apoio/espaço livre e três controles negativos do verificador.
+
+**Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
+multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
+Counter-Strike ou desempenho aprovado.
 
 Durante Play, na Command Bar em contexto **Server**:
 
 ```lua
-require(game.ServerStorage.ZO_Validation.SantaAuroraAudit)()
+require(game.ServerStorage.ZO_Validation.K17Audit)()
 ```
 
-A auditoria imprime `[ZO AUDIT]` com resultados de spawn, portas/paredes e
-navegação. Veja o [roteiro de teste](docs/SANTA_AURORA.md) para inspeção manual.
+Envie as linhas `[K17 AUDIT]` e os erros do Output para investigar falhas.
+A navegação calculada não substitui caminhar pelos acessos nem testar com jogadores.
 
-## Código e arquivos anteriores
+## Mapa anterior preservado
 
-- `src/server`, `src/client`, `src/shared`: sistemas Luau existentes e configuração.
-- `src/maps/santa-aurora`: modelo do mapa ativo.
-- `tests/studio`: auditoria executável no Studio.
-- `assets/maps`, `third_party` e os modelos antigos em `src/maps`: histórico
-  preservado; não são carregados pelo projeto ativo.
-- Fontes/licenças do Harbor anterior: [HARBOR_LOCKS_SOURCES.md](docs/HARBOR_LOCKS_SOURCES.md).
+Santa Aurora continua disponível, sem alteração em seu modelo, gerador ou build:
 
-O projeto anterior foi preservado antes da edição; base Git:
-`34b08175968a5420e35229037b64bb7ca933110b`.
+```sh
+rojo serve santa-aurora.project.json
+```
+
+Ou abra `builds/ZombieOutbreakReborn_SantaAurora.rbxlx` diretamente.
+O projeto anterior está no commit `63b3546` e na branch de backup
+`backup/before-k17-63b3546`. A documentação histórica que menciona
+`default.project.json` para Santa Aurora deve usar o perfil preservado acima.
+
+Os GLBs e modelos antigos permanecem no histórico e não são carregados no K-17.

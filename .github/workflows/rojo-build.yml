@@ -15,10 +15,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Check authored map and circulation
+      - name: Check independent maps and circulation
         run: |
           python scripts/build_santa_aurora.py --check
           python scripts/validate_santa_aurora.py
+          python scripts/build_k17.py --check
+          python scripts/validate_k17.py --quiet
+          python -m unittest discover -s tests -p 'test_*.py'
       - name: Compile Luau scripts
         run: |
           curl --fail --location --retry 3 --silent --show-error \
@@ -37,12 +40,16 @@ jobs:
           sudo install /tmp/rojo_release/rojo /usr/local/bin/rojo
           rojo --version
       - name: Build game
-        run: rojo build default.project.json --output /tmp/zombie-outbreak.rbxlx
+        run: |
+          rojo build default.project.json --output /tmp/k17.rbxlx
+          rojo build default.project.json --output /tmp/ZombieOutbreakReborn_K17.rbxl
+          rojo build santa-aurora.project.json --output /tmp/santa-aurora.rbxlx
       - name: Validate generated map
         run: |
-          python scripts/validate_santa_aurora.py --place /tmp/zombie-outbreak.rbxlx
+          python scripts/validate_k17.py --quiet --place /tmp/k17.rbxlx --binary /tmp/ZombieOutbreakReborn_K17.rbxl
+          python scripts/validate_santa_aurora.py --place /tmp/santa-aurora.rbxlx
       - name: Upload playable Studio place
         uses: actions/upload-artifact@v4
         with:
-          name: ZombieOutbreakReborn-SantaAurora
-          path: /tmp/zombie-outbreak.rbxlx
+          name: ZombieOutbreakReborn-K17
+          path: /tmp/ZombieOutbreakReborn_K17.rbxl
