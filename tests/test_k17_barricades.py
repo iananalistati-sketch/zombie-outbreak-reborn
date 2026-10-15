@@ -17,13 +17,14 @@ class StockroomGeometry(unittest.TestCase):
         cls.map=ET.parse(ROOT/'src/maps/k17/K17Foundry.rbxmx')
         cls.manifest=json.loads((ROOT/'docs/k17-navigation.json').read_text())
         cls.catalog=json.loads((ROOT/'src/maps/k17/barricades/catalog.json').read_text())
+        cls.catalog['Props']=cls.manifest['barricades']
         cls.boxes,_=validator.geometry(cls.props)
 
     def test_single_solid_hull_per_prop(self):
         models=self.props.findall('./Item/Item[@class="Model"]')
         self.assertEqual({validator.props(m)['Name'].text for m in models},
                          set(self.catalog['Props']))
-        self.assertEqual(len(self.boxes),40)
+        self.assertGreaterEqual(len(self.boxes),160)
         for model in models:
             primary=validator.props(model)['PrimaryPart'].text
             hulls=[p for p in model.findall('Item[@class="Part"]') if validator.props(p)['CanCollide'].text=='true']

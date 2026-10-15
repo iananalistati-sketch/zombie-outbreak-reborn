@@ -5,7 +5,7 @@ local Workspace = game:GetService("Workspace")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig"))
 local map = Workspace:WaitForChild(Config.ModelName, 15)
 if not map then
-    warn("[ZO MAP] Santa Aurora missing. Open the supplied .rbxlx or sync default.project.json.")
+    warn("[ZO MAP] K-17 missing. Use ABRIR_K17.cmd or open builds/ZombieOutbreakReborn_K17.rbxl.")
     return
 end
 local parts, unanchored, lights = 0, 0, 0
@@ -23,8 +23,8 @@ if unanchored > 0 then
 end
 for _, name in {"ZO_HarborCollision", "HarborLocks_Survival_Visual", "ZO_Survival", "ZO_TestSpawns"} do
     if Workspace:FindFirstChild(name) then
-        warn("[ZO MAP] Legacy scene still in Workspace: " .. name .. ". Archive it before validating Santa Aurora; see README.")
+        warn("[ZO MAP] Legacy scene still in Workspace: " .. name .. ". Use the separate K-17 place; see README.")
     end
 end
-print("[ZO MAP] Studio audit: require(game.ServerStorage.ZO_Validation.SantaAuroraAudit)() in the SERVER Command Bar during Play.")
+print("[ZO MAP] Studio audit: require(game.ServerStorage.ZO_Validation.K17Audit)() in the SERVER Command Bar during Play.")
 print("[ZO MAP] Geometry loaded. Visual quality, movement, combat and multiplayer still need Studio playtests.")

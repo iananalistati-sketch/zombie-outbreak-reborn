@@ -1,9 +1,9 @@
 {
   "file": "ZombieOutbreakReborn_K17.rbxl",
   "map": "ZO_K17Foundry",
-  "sha256": "ed2b49c9100b3d01b6cc170bbff85f076efee8cabb24583222da6a46c3e7050e",
-  "bytes": 104461,
-  "instances": 6109,
-  "barricades": 40,
+  "sha256": "8dae350554619e786507e248a4dce764488a8542f0bcdb1b72a801a809ec0f68",
+  "bytes": 138393,
+  "instances": 7697,
+  "barricades": 164,
   "ducts": 4
 }

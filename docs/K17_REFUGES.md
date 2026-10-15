@@ -1,4 +1,7 @@
-> Atualização: [início da partida, quatro dutos, três abrigos adicionais e 40 objetos](K17_START_AND_DUCTS.md). As descrições abaixo detalham os cinco refúgios originais; os três novos estão no roteiro atualizado.
+> Registro dos primeiros refúgios. O mapa atual e seu roteiro de validação estão
+> em [densidade de refúgios e barricadas](K17_DEFENSE_DENSITY.md). As descrições e
+> contagens abaixo registram a etapa anterior. Santa Aurora foi removida dos
+> arquivos atuais, com backup na branch `backup/before-remove-santa-5b9ac4d`.
 
 # K-17 — refúgios e barricadas
 
@@ -70,7 +73,7 @@ multiplayer. Não há mecanismo de agarrar objetos nesta entrega.
 - 198 asserções da política de impulso: direção, massa, disparos repetidos e
   limite de velocidade. Mais 160 do combate/rodada e 85 das regras preservadas.
 - Compilação Luau e build Rojo XML/binário; integração de módulos e funções
-  privadas. Santa Aurora e seus controladores permanecem preservados.
+  privadas no perfil K-17.
 - 5.415 peças estáticas de arquitetura, 94 luzes, apenas 8 com sombras;
   40 conjuntos físicos móveis separados. Não há medição de FPS nesta nuvem.
 

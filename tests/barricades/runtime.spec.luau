@@ -11,7 +11,8 @@ for name in Config.Props do expected+=1;table.insert(names,name) end
 table.sort(names)
 local Vector={}
 local vmt={__type="Vector3"}
-function Vector.new(x,y,z) return setmetatable({X=x,Y=y,Z=z},vmt) end
+local vectorAllocations=0
+function Vector.new(x,y,z) vectorAllocations+=1;return setmetatable({X=x,Y=y,Z=z},vmt) end
 Vector.zero=Vector.new(0,0,0)
 vmt.__add=function(a,b) return Vector.new(a.X+b.X,a.Y+b.Y,a.Z+b.Z) end
 vmt.__sub=function(a,b) return Vector.new(a.X-b.X,a.Y-b.Y,a.Z-b.Z) end
@@ -28,6 +29,7 @@ local function signal()
 end
 local function simulation(options)
     options=options or {}
+    local catalog=options.catalog or Config
     local now=0
     local deferred={}
     local warnings={}
@@ -91,9 +93,9 @@ local function simulation(options)
         activated+=1;self.ServerOwned=true
     end
     function methods:ApplyImpulse(impulse) self.AssemblyLinearVelocity=self.AssemblyLinearVelocity+impulse/self.AssemblyMass end
-    for name,prop in Config.Props do
+    for name,prop in catalog.Props do
         if name==options.missingName then continue end
-        local kind=Config.Kinds[prop.Kind]
+        local kind=catalog.Kinds[prop.Kind]
         local model=instance("Model",name);model.Parent=folder
         local hull=instance("Part","Hull");hull.Parent=model
         hull.Size=Vector.new(kind.Width,kind.Height,kind.Depth)
@@ -102,12 +104,12 @@ local function simulation(options)
         hull.AssemblyLinearVelocity=Vector.zero;hull.AssemblyAngularVelocity=Vector.zero
         local skin=instance("Part","Skin");skin.Parent=model;skin.Anchored=true;skin.CanCollide=false
     end
-    local players=instance("Players","Players");players.PlayerRemoving=signal()
+    local players=instance("Players","Players");players.PlayerAdded=signal();players.PlayerRemoving=signal()
     local list={}
     function players:GetPlayers() return list end
     local shared=instance("Folder","K17Barricades");shared.Parent=rs
     local modules={}
-    for name,result in {Config=Config,Rules=Rules,Physics=Physics,Placement={closest=function(hull) return hull.Position end}} do
+    for name,result in {Config=catalog,Rules=Rules,Physics=Physics,Placement={closest=function(hull) return hull.Position end}} do
         local m=instance("ModuleScript",name);m.Parent=shared;modules[m]=result
     end
     local heartbeat=signal()
@@ -127,12 +129,16 @@ local function simulation(options)
     local function flush() while #deferred>0 do table.remove(deferred,1)() end end
     return {rs=rs,folder=folder,internal=internal,warnings=warnings,heartbeat=heartbeat,options=options,flush=flush,
         advance=function(seconds) now+=seconds end,world=world,
+        remove=function(player)
+            local index=table.find(list,player);if index then table.remove(list,index) end
+            players.PlayerRemoving:Fire(player)
+        end,
         actor=function(role)
             local p=instance("Player","TestPlayer");p.Team={Name=role}
             local char=instance("Model","Character");p.Character=char
             local head=instance("Part","Head");head.Parent=char;head.Position=Vector.new(0,2,0)
             local hum=instance("Humanoid","Humanoid");hum.Parent=char;hum.Health=100
-            table.insert(list,p);return p
+            table.insert(list,p);players.PlayerAdded:Fire(p);return p
         end}
 end
 
@@ -189,4 +195,36 @@ do
     check(s.rs:GetAttribute("ZO_BarricadesStatus")=="Degraded" and s.rs:GetAttribute("ZO_BarricadesActive")==expected-1,"missing authored model is reported without infinite yield")
     check(type(s.internal.DamageBarricade.OnInvoke)=="function" and type(s.internal.PushBarricade.OnInvoke)=="function","private callbacks remain callable after missing model")
 end
-print(("PASS actual barricade controller: %d assertions; startup, API failure isolation, diagnostics, resets and callbacks; engine physics not executed"):format(checks))
+
+do
+    local catalog=table.clone(Config);catalog.Props={}
+    local kinds={"Cabinet","Crate","Table"}
+    for index=1,180 do
+        catalog.Props[string.format("Stress%03d",index)]={Kind=kinds[(index-1)%#kinds+1],X=((index-1)%30)*8-120,Y=1,Z=math.floor((index-1)/30)*8-24,Refuge=7}
+    end
+    local s=simulation({catalog=catalog})
+    check(s.rs:GetAttribute("ZO_BarricadesReady") and s.rs:GetAttribute("ZO_BarricadesActive")==180,"180-prop catalogue initializes without fixed count assumptions")
+    check(s.rs:GetAttribute("ZO_BarricadesMaintenanceHz")==1,"empty server uses one safety pass per second")
+    local allocations=vectorAllocations
+    s.heartbeat:Fire(1)
+    check(vectorAllocations==allocations,"stationary safety pass allocates no temporary vectors across 180 props")
+    local human=s.actor("Humans")
+    check(s.rs:GetAttribute("ZO_BarricadesMaintenanceHz")==10,"joining player restores ten safety passes per second")
+    allocations=vectorAllocations
+    for _=1,100 do s.heartbeat:Fire(.1) end
+    check(vectorAllocations==allocations,"100 populated safety passes preserve allocation-free stationary path")
+    local hull=s.folder:FindFirstChild("Stress001").Hull
+    hull.AssemblyLinearVelocity=Vector.new(25,20,0);hull.AssemblyAngularVelocity=Vector.new(0,15,0)
+    s.heartbeat:Fire(.1)
+    check(hull.AssemblyLinearVelocity.X<=catalog.Physics.MaxSpeed and hull.AssemblyLinearVelocity.Y==8,"safety pass still caps excessive horizontal and upward velocity")
+    check(hull.AssemblyAngularVelocity.Magnitude<=catalog.Physics.MaxSpin+.000001,"safety pass still caps excessive angular velocity")
+    for _,model in s.folder:GetChildren() do check(not model.Hull.Anchored,"distant valid props remain physical instead of frozen by distance") end
+    s.remove(human)
+    check(s.rs:GetAttribute("ZO_BarricadesMaintenanceHz")==1,"last disconnect restores empty-server cadence")
+    local old=s.folder:FindFirstChild("Stress002");old.Hull.Position=Vector.new(400,0,0)
+    s.heartbeat:Fire(.5)
+    check(s.folder:FindFirstChild("Stress002")==old,"empty-server pass is not run on every frame")
+    s.heartbeat:Fire(.5)
+    check(s.folder:FindFirstChild("Stress002")~=old and s.rs:GetAttribute("ZO_BarricadesReady"),"empty server still recovers lost props at one-second cadence")
+end
+print(("PASS actual barricade controller: %d assertions; startup, isolation, resets, 180-prop safety passes and callbacks; engine physics not executed"):format(checks))

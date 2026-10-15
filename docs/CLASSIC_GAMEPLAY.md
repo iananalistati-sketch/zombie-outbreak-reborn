@@ -1,5 +1,10 @@
 # K-17 — ajustes do ciclo clássico de Zombie Mod
 
+> Registro da etapa de combate. O mapa e o roteiro de validação atuais estão em
+> [densidade de refúgios e barricadas](K17_DEFENSE_DENSITY.md). Santa Aurora foi
+> removida dos arquivos atuais; a versão anterior está na branch
+> `backup/before-remove-santa-5b9ac4d`.
+
 Implementação original em Luau baseada nos comportamentos verificados em
 [Zombie:Reloaded e nas comparações de CS2](CS_ZOMBIE_OPEN_SOURCE.md).
 O objetivo desta etapa é corrigir combate, infecção e rodada; a aparência das
@@ -99,8 +104,6 @@ Executado na nuvem:
 - Build Rojo XML/binário. Verificação das fontes ativas exatas, funções privadas
   de servidor e carregamento de um único controlador novo de rodada/combate.
   O perfil K-17 não carrega os controladores antigos de infecção por proximidade.
-- Perfil Santa Aurora recompilado separadamente, com seus arquivos, scripts
-  compartilhados e arquitetura preservados nesta mudança.
 
 Esses testes não executam o motor Roblox. **Pendente no Studio:** precisão da
 mira, inputs, rigs, animações, impulso real, colisões, latência, streaming, FPS e
@@ -138,8 +141,9 @@ executadas aqui. As auditorias antigas de mapa e objetos continuam disponíveis.
 
 `src/maps/k17/gameplay/`: Config, Rules, WeaponState e RoundRules; autoridades
 Round/Combat; controles/viewmodels Weapons e HUD. `default.project.json` mapeia
-explicitamente esses arquivos. Santa Aurora continua usando os controladores
-anteriores em `src/server` e `src/client`.
+explicitamente esses arquivos. Os controladores anteriores em `src/server` e
+`src/client` não são carregados pelo perfil K-17; alguns continuam como referência
+para verificar regressões. O perfil e o build de Santa Aurora foram removidos.
 
 ```sh
 luau tests/gameplay/rules.spec.luau

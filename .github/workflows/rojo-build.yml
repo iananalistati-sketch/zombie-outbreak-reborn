@@ -15,10 +15,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Check independent maps and circulation
+      - name: Check K-17 map and circulation
         run: |
-          python scripts/build_santa_aurora.py --check
-          python scripts/validate_santa_aurora.py
           python scripts/build_k17.py --check
           python scripts/build_k17_barricades.py --check
           python scripts/validate_k17.py --quiet
@@ -52,12 +50,10 @@ jobs:
           rojo build default.project.json --output /tmp/k17.rbxlx
           rojo build default.project.json --output /tmp/ZombieOutbreakReborn_K17.rbxl
           python scripts/check_studio_file.py --binary /tmp/ZombieOutbreakReborn_K17.rbxl --manifest /tmp/K17.release.json --write
-          rojo build santa-aurora.project.json --output /tmp/santa-aurora.rbxlx
       - name: Validate generated map
         run: |
           python scripts/validate_k17.py --quiet --place /tmp/k17.rbxlx --binary /tmp/ZombieOutbreakReborn_K17.rbxl
           python scripts/validate_gameplay.py --place /tmp/k17.rbxlx
-          python scripts/validate_santa_aurora.py --place /tmp/santa-aurora.rbxlx
       - name: Upload playable Studio place
         uses: actions/upload-artifact@v4
         with:

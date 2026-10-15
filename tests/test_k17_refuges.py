@@ -51,5 +51,13 @@ class Refuges(unittest.TestCase):
             roofs=[b for b in self.boxes if '/'+duct['model']+'/DuctRoof' in b[0]]
             self.assertIsNotNone(ray_blocker([p[0],p[1]+5,p[2]],[p[0],p[1]+9,p[2]],roofs),duct['name'])
 
+    def test_removing_bus_roof_exposes_its_defense(self):
+        boxes=[b for b in self.boxes if '/R42_StaffBus/BusRoof' not in b[0]]
+        self.assertIn('Refuge 42: no overhead cover',validate(self.data,boxes))
+
+    def test_under_stair_return_really_conceals_players(self):
+        boxes=[b for b in self.boxes if '/R48_UnderStair/InnerReturn' not in b[0]]
+        self.assertIn('Refuge 48: protected bay exposed to entry',validate(self.data,boxes))
+
 
 if __name__=='__main__':unittest.main()

@@ -6,7 +6,8 @@ Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
 Mapa novo, independente de Santa Aurora e Harbor, com aproximadamente **600 × 600
 studs**. Cinco edifícios com interiores, três acessos ao subterrâneo, coberturas,
-galerias, contêineres e 18 posições de resistência identificadas.
+galerias, contêineres e 44 marcadores de resistência, dos quais 34 identificam
+refúgios com interiores detalhados.
 
 - Administração com três andares e escritórios subdivididos.
 - Estação de energia com dois andares e ligação elevada à administração.
@@ -21,12 +22,12 @@ galerias, contêineres e 18 posições de resistência identificadas.
 [Revisão de projetos abertos de Zombie Mod para CS2 e CS:GO](docs/CS_ZOMBIE_OPEN_SOURCE.md):
 referências verificadas de infecção, knockback e diferenças do protótipo atual.
 
-**Atual: [início da partida, quatro dutos e novos abrigos](docs/K17_START_AND_DUCTS.md).**
+**Atual: [34 refúgios detalhados e 164 objetos de barricada](docs/K17_DEFENSE_DENSITY.md).**
 Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
 recarga temporizada e knockback configurável. A prévia de construção anterior
-está desativada. **Oito refúgios, quatro dutos com curvas e 40 objetos de barricada**. Os novos abrigos são filtros, oficina do pátio e refrigeração.
+está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
 
-![Cortes geométricos dos refúgios; não é captura do Roblox Studio](docs/K17_REFUGES.png)
+![Oito exemplos dos 34 refúgios, em cortes geométricos; não é captura do Roblox Studio](docs/K17_REFUGES.png)
 
 ## Abrir no Windows
 
@@ -42,8 +43,8 @@ está desativada. **Oito refúgios, quatro dutos com curvas e 40 objetos de barr
 
 **“Recentes” reabre o place salvo anteriormente.** O Pull atualiza os arquivos
 do Git e não troca o mapa de um place já aberto. O mapa urbano de dois prédios
-e rua central é Santa Aurora, disponível no arquivo de nome `SantaAurora`.
-O arquivo do K-17 tem `ZO_K17Foundry`, os 40 objetos e os quatro dutos; seu
+e rua central é o Santa Aurora antigo, removido dos arquivos atuais.
+O arquivo do K-17 tem `ZO_K17Foundry`, os 164 objetos e os quatro dutos; seu
 binário foi decodificado para conferir esses itens e a ausência de Santa Aurora.
 
 Se a associação de arquivos do Windows não abrir o Studio, o atalho mostra o
@@ -58,8 +59,8 @@ use a **Command Bar em contexto Server**:
 require(game.ServerStorage.ZO_Validation.RefugeAudit).visit(16)
 ```
 
-Troque `16` por `17`, `18`, `7`, `2`, `10`, `14` ou `15` para visitar os demais. Empurre os objetos
-por contato ou tiros; **R** recarrega. Veja o [roteiro dos refúgios](docs/K17_REFUGES.md).
+Troque `16` por `19`–`34` ou `40`–`49` para visitar as novas posições. Use **M** para localizar todos os refúgios. Empurre os objetos
+por contato ou tiros; **R** recarrega. Veja o [roteiro atual dos refúgios](docs/K17_DEFENSE_DENSITY.md).
 O [treino com alvos de combate](docs/CLASSIC_GAMEPLAY.md) também está disponível.
 
 O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
@@ -72,11 +73,18 @@ compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
 scripts/build_k17.py               construção original do mapa
 scripts/k17_refuges.py             interiores defensivos
 scripts/k17_shelters.py            três abrigos novos e quatro dutos
+scripts/k17_extra_refuges.py       dezesseis interiores defensivos adicionais
+scripts/k17_covered_routes.py      oito abrigos e passagens cobertas
+scripts/k17_stair_niches.py        dois recuos sob escadas
+scripts/k17_catalog.py             reúne o catálogo-base e os objetos dos refúgios
+scripts/build_k17_barricades.py    gera os modelos e a configuração dos 164 objetos
 src/maps/k17/K17Foundry.rbxmx       cena persistente gerada
 src/maps/k17/*.luau                configurações e diagnóstico do K-17
+src/maps/k17/barricades/catalog.json catálogo-base de objetos e parâmetros físicos
 src/maps/k17/barricades/           catálogo único, modelos e física dos objetos
 src/maps/k17/gameplay/             combate, infecção por golpe, rodada e HUD atuais
-src/server/                       controladores anteriores usados por Santa Aurora
+src/maps/k17/gameplay/TacticalMap.client.luau mapa tático com filtros, aberto por M
+src/server/                       bootstrap compartilhado e protótipos desativados
 src/client/                       cliente anterior e bootstrap compartilhado
 scripts/validate_k17.py            checagem de colisão e circulação
 tests/k17/K17Audit.luau            auditoria preparada para o Studio
@@ -102,6 +110,7 @@ Python padrão basta para gerar/verificar; no Windows, `py` pode substituir `pyt
 
 ```sh
 python scripts/build_k17.py
+python scripts/build_k17_barricades.py
 python scripts/build_k17.py --check
 python scripts/build_k17_barricades.py --check
 python scripts/validate_k17.py --quiet
@@ -117,10 +126,10 @@ renderizados pelo Roblox Studio.
 
 ## Estado de validação
 
-**Executado na nuvem:** geração, compilação Luau/Rojo, 189 percursos com 34.927
-amostras de apoio/espaço livre, 15 testes de geometria, 160 asserções do combate/
+**Executado na nuvem:** geração, compilação Luau/Rojo, 213 percursos com 37.291
+amostras de apoio/espaço livre, 17 testes de geometria, 160 asserções do combate/
 rodada, testes de execução dos controladores com APIs simuladas, 198 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
-no place. Os percursos também foram checados com os 40 objetos presentes.
+no place. Os percursos também foram checados com os 164 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
@@ -135,20 +144,13 @@ require(game.ServerStorage.ZO_Validation.K17Audit)()
 Envie as linhas `[K17 AUDIT]` e os erros do Output para investigar falhas.
 A navegação calculada não substitui caminhar pelos acessos nem testar com jogadores.
 
-## Mapa anterior preservado
+## Mapa antigo removido
 
-Santa Aurora continua disponível, sem alteração em seu modelo, gerador ou build:
+Santa Aurora foi removido dos arquivos atuais: cena, build, perfil, gerador,
+auditoria e documentação próprios. Há backup na branch
+`backup/before-remove-santa-5b9ac4d` e um tar verificado na nuvem.
+O K-17 é o único place pronto em `builds`; use `ABRIR_K17.cmd`.
 
-```sh
-rojo serve santa-aurora.project.json
-```
-
-Ou abra `builds/ZombieOutbreakReborn_SantaAurora.rbxlx` diretamente.
-O projeto anterior está no commit `63b3546` e na branch de backup
-`backup/before-k17-63b3546`. A documentação histórica que menciona
-`default.project.json` para Santa Aurora deve usar o perfil preservado acima.
-
-Os GLBs e modelos antigos permanecem no histórico e não são carregados no K-17.
-O Rojo preserva instâncias desconhecidas no Workspace: sincronizar sobre um
-place antigo pode manter os dois cenários. Abra o arquivo K-17 separado para
-validar sem apagar seu mapa anterior.
+A remoção pelo Git não fecha uma cópia antiga já aberta no Studio. Salve e
+feche esse place e abra o K-17. O Rojo preserva objetos desconhecidos, portanto
+use um place separado para não manter cenas antigas de arquivos locais.

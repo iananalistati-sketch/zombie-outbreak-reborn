@@ -46,6 +46,32 @@
 <circle cx="-94" cy="193" r="8" fill="#c5a862"/><text x="-94" y="196" text-anchor="middle" style="fill:#182626;font-weight:bold">16</text>
 <circle cx="84" cy="43" r="8" fill="#c5a862"/><text x="84" y="46" text-anchor="middle" style="fill:#182626;font-weight:bold">17</text>
 <circle cx="62" cy="210" r="8" fill="#c5a862"/><text x="62" y="213" text-anchor="middle" style="fill:#182626;font-weight:bold">18</text>
-<text x="-300" y="323">18 posições registradas · circuitos vertical e subterrâneo independentes</text>
+<circle cx="-137.5" cy="-164" r="8" fill="#c5a862"/><text x="-137.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">19</text>
+<circle cx="1.5" cy="-164" r="8" fill="#c5a862"/><text x="1.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">20</text>
+<circle cx="-137.5" cy="-164" r="8" fill="#c5a862"/><text x="-137.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">21</text>
+<circle cx="1.5" cy="-164" r="8" fill="#c5a862"/><text x="1.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">22</text>
+<circle cx="-137.5" cy="-164" r="8" fill="#c5a862"/><text x="-137.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">23</text>
+<circle cx="1.5" cy="-164" r="8" fill="#c5a862"/><text x="1.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">24</text>
+<circle cx="50.5" cy="-164" r="8" fill="#c5a862"/><text x="50.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">25</text>
+<circle cx="237.5" cy="-164" r="8" fill="#c5a862"/><text x="237.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">26</text>
+<circle cx="50.5" cy="-164" r="8" fill="#c5a862"/><text x="50.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">27</text>
+<circle cx="237.5" cy="-164" r="8" fill="#c5a862"/><text x="237.5" y="-161" text-anchor="middle" style="fill:#182626;font-weight:bold">28</text>
+<circle cx="-253.5" cy="18" r="8" fill="#c5a862"/><text x="-253.5" y="21" text-anchor="middle" style="fill:#182626;font-weight:bold">29</text>
+<circle cx="-180.5" cy="18" r="8" fill="#c5a862"/><text x="-180.5" y="21" text-anchor="middle" style="fill:#182626;font-weight:bold">30</text>
+<circle cx="-253.5" cy="64" r="8" fill="#c5a862"/><text x="-253.5" y="67" text-anchor="middle" style="fill:#182626;font-weight:bold">31</text>
+<circle cx="-180.5" cy="64" r="8" fill="#c5a862"/><text x="-180.5" y="67" text-anchor="middle" style="fill:#182626;font-weight:bold">32</text>
+<circle cx="180.5" cy="-30" r="8" fill="#c5a862"/><text x="180.5" y="-27" text-anchor="middle" style="fill:#182626;font-weight:bold">33</text>
+<circle cx="239.5" cy="-30" r="8" fill="#c5a862"/><text x="239.5" y="-27" text-anchor="middle" style="fill:#182626;font-weight:bold">34</text>
+<circle cx="-133" cy="-31" r="8" fill="#c5a862"/><text x="-133" y="-28" text-anchor="middle" style="fill:#182626;font-weight:bold">40</text>
+<circle cx="48" cy="-94" r="8" fill="#c5a862"/><text x="48" y="-91" text-anchor="middle" style="fill:#182626;font-weight:bold">41</text>
+<circle cx="57" cy="-40" r="8" fill="#c5a862"/><text x="57" y="-37" text-anchor="middle" style="fill:#182626;font-weight:bold">42</text>
+<circle cx="-133" cy="38" r="8" fill="#c5a862"/><text x="-133" y="41" text-anchor="middle" style="fill:#182626;font-weight:bold">43</text>
+<circle cx="-129" cy="198" r="8" fill="#c5a862"/><text x="-129" y="201" text-anchor="middle" style="fill:#182626;font-weight:bold">44</text>
+<circle cx="60" cy="106" r="8" fill="#c5a862"/><text x="60" y="109" text-anchor="middle" style="fill:#182626;font-weight:bold">45</text>
+<circle cx="2" cy="-47" r="8" fill="#c5a862"/><text x="2" y="-44" text-anchor="middle" style="fill:#182626;font-weight:bold">46</text>
+<circle cx="0" cy="79" r="8" fill="#c5a862"/><text x="0" y="82" text-anchor="middle" style="fill:#182626;font-weight:bold">47</text>
+<circle cx="-135" cy="-197" r="8" fill="#c5a862"/><text x="-135" y="-194" text-anchor="middle" style="fill:#182626;font-weight:bold">48</text>
+<circle cx="229" cy="-197" r="8" fill="#c5a862"/><text x="229" y="-194" text-anchor="middle" style="fill:#182626;font-weight:bold">49</text>
+<text x="-300" y="323">44 posições registradas · circuitos vertical e subterrâneo independentes</text>
 <text x="-300" y="339">Diagrama de arquitetura; não é captura de tela nem teste de jogabilidade.</text>
 </svg>

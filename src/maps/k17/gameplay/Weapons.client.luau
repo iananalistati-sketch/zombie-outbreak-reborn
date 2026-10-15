@@ -66,10 +66,12 @@ local function humanoid(): Humanoid?
     return player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 end
 local function canShoot(): boolean
+    if player:GetAttribute("ZO_TacticalMapOpen")==true then return false end
     local hum=humanoid()
     return Rules.canFire(role(),phase(),hum~=nil and hum.Health>0,player:GetAttribute("ZO_BarricadeSelection")~=nil)
 end
 local function canMelee(): boolean
+    if player:GetAttribute("ZO_TacticalMapOpen")==true then return false end
     local hum=humanoid()
     return Rules.canMelee(role(),phase(),hum~=nil and hum.Health>0)
 end
@@ -103,6 +105,9 @@ CAS:BindActionAtPriority("ZO_Reload",reload,true,2200,Enum.KeyCode.R,Enum.KeyCod
 CAS:SetTitle("ZO_Trigger","Atacar");CAS:SetPosition("ZO_Trigger",UDim2.new(1,-150,1,-170))
 CAS:SetTitle("ZO_Reload","Recarregar");CAS:SetPosition("ZO_Reload",UDim2.new(1,-235,1,-170))
 local function stop() held=false;nextAction=0;recoil=0 end
+player:GetAttributeChangedSignal("ZO_TacticalMapOpen"):Connect(function()
+    if player:GetAttribute("ZO_TacticalMapOpen")==true then stop() end
+end)
 UIS.WindowFocusReleased:Connect(stop);UIS.TextBoxFocused:Connect(stop);GuiService.MenuOpened:Connect(stop)
 player.CharacterRemoving:Connect(stop);player:GetPropertyChangedSignal("Team"):Connect(stop)
 RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(function()

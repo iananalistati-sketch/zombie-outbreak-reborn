@@ -6,9 +6,8 @@ local function finite(value: number): boolean
 end
 function Physics.impulse(mass: number,vx: number,vz: number,dx: number,dz: number,force: number,cap: number): (number,number)
     -- Reject invalid state instead of feeding NaN/infinity into a live assembly.
-    for _,value in {mass,vx,vz,dx,dz,force,cap} do
-        if not finite(value) then return 0,0 end
-    end
+    if not finite(mass) or not finite(vx) or not finite(vz) or not finite(dx)
+        or not finite(dz) or not finite(force) or not finite(cap) then return 0,0 end
     local length=math.sqrt(dx*dx+dz*dz)
     if length<.001 or mass<=0 or force<=0 or cap<=0 then return 0,0 end
     local x,z=vx+dx/length*force/mass,vz+dz/length*force/mass

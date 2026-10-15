@@ -1,5 +1,10 @@
 # K-17 — início da partida e refúgios com dutos
 
+> Registro histórico da etapa `576dd80`, com oito refúgios e 40 objetos. O mapa
+> atual tem 34 refúgios detalhados e 164 objetos; siga o
+> [roteiro atualizado de defesa](K17_DEFENSE_DENSITY.md). As contagens e testes
+> abaixo descrevem a entrega daquela etapa.
+
 Esta revisão atende ao relato de dois jogadores sem progressão e de posições
 abertas demais. A versão anterior está em `backup/before-ducts-0a38374` e em um
 tar verificado no ambiente da nuvem.
@@ -31,7 +36,7 @@ vermelho do Output do **servidor**. Não remova o erro para forçar a rodada.
 
 ## Dutos e novas posições
 
-![Oito interiores e quatro dutos, calculados a partir do XML](K17_REFUGES.png)
+![Oito exemplos dos 34 refúgios atuais, calculados a partir do XML](K17_REFUGES.png)
 
 Os tetos foram cortados nesta prévia para inspecionar os interiores. No place,
 as três salas novas e todos os dutos têm teto e paredes com colisão.
@@ -45,8 +50,8 @@ as três salas novas e todos os dutos têm teto e paredes com colisão.
   quatro objetos e duto lateral sob a galeria.
 - **Estoque:** ganhou passagem metálica em L e oito objetos ao todo.
 - **Arquivo, expedição, contêiner e bombas:** receberam mais objetos; são
-  **40 objetos físicos** distribuídos entre **oito refúgios detalhados**.
-  O mapa tem 18 posições de resistência registradas ao todo.
+  naquela etapa, havia **40 objetos físicos** distribuídos entre **oito refúgios
+  detalhados**, com 18 posições de resistência registradas ao todo.
 
 Os dutos têm vãos de **7,2 studs de largura e altura**, próprios para o avatar
 de verificação andar sem agachar. Há piso, teto, duas extremidades abertas e uma

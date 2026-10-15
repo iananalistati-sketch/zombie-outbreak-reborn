@@ -45,6 +45,9 @@
         "RoundRules": {
           "$path": "src/maps/k17/gameplay/RoundRules.luau"
         }
+      },
+      "K17Refuges": {
+        "$path": "src/maps/k17/Refuges.luau"
       }
     },
     "ServerScriptService": {
@@ -85,6 +88,9 @@
           },
           "Weapons": {
             "$path": "src/maps/k17/gameplay/Weapons.client.luau"
+          },
+          "TacticalMap": {
+            "$path": "src/maps/k17/gameplay/TacticalMap.client.luau"
           }
         },
         "K17_Barricades": {

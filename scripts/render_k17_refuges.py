@@ -28,7 +28,8 @@ faces=[[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]]
 font_path=next((str(p) for p in (Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'),Path('C:/Windows/Fonts/arial.ttf')) if p.exists()),'DejaVuSans.ttf')
 manifest=json.loads((ROOT/'docs/k17-navigation.json').read_text())
 sheet=Image.new('RGB',(1800,2440),'#172424')
-for number,refuge in enumerate(sorted(manifest['refuges'],key=lambda r:r['id'])):
+examples={21,25,31,33,42,44,46,48}
+for number,refuge in enumerate(r for r in sorted(manifest['refuges'],key=lambda r:r['id']) if r['id'] in examples):
  bounds=refuge['bounds'];floor=refuge['floor']
  target=np.array([(bounds[0]+bounds[1])/2,floor+1.5,(bounds[2]+bounds[3])/2])
  camera=target+np.array([50.,110.,70.]);forward=target-camera;forward/=np.linalg.norm(forward)
@@ -82,5 +83,5 @@ for number,refuge in enumerate(sorted(manifest['refuges'],key=lambda r:r['id']))
  sheet.paste(image,((number%2)*W,(number//2)*H+65))
 d=ImageDraw.Draw(sheet)
 d.text((24,16),'K-17 / REFÚGIOS RECONSTRUÍDOS',font=ImageFont.truetype(font_path,30),fill='#e4ddc8')
-d.text((24,2405),'8 refúgios · 40 objetos · 4 dutos com curvas (laranja). Corte do XML; não é captura do Studio.',font=ImageFont.truetype(font_path,20),fill='#c0cbbd')
+d.text((24,2405),'8 exemplos dos 34 refúgios · 164 objetos no mapa. Corte do XML; não é captura do Studio.',font=ImageFont.truetype(font_path,20),fill='#c0cbbd')
 output=ROOT/'docs/K17_REFUGES.png';sheet.save(output);print(output)

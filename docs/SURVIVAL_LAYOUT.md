@@ -1,4 +1,7 @@
-> Documento histórico do layout Riverside desativado. O mapa ativo e os testes atuais estão em [SANTA_AURORA.md](SANTA_AURORA.md).
+> Documento histórico do layout Riverside desativado. O mapa ativo é o [K-17](K17.md);
+> use o roteiro atual de [refúgios e barricadas](K17_DEFENSE_DENSITY.md). Santa Aurora
+> foi removida dos arquivos atuais, com backup na branch
+> `backup/before-remove-santa-5b9ac4d`.
 
 # Zombie Outbreak Reborn — Riverside Transit (Survival v0.2)
 

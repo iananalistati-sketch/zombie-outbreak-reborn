@@ -4,12 +4,13 @@ import argparse
 import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from build_k17 import Map
+from build_k17 import Map, build as build_map
+from k17_catalog import load_catalog
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT/'src/maps/k17/barricades/Stockroom.rbxmx'
 CONFIG = TARGET.with_name('Config.luau')
-CATALOG = json.loads(TARGET.with_name('catalog.json').read_text())
+CATALOG = load_catalog(build_map().refuges)
 
 
 def lua(value):

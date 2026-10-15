@@ -3,7 +3,7 @@
 > **Documento histórico do protótipo `65fad8b`.** A prévia e seus controles de
 > posicionamento estão desativados no perfil atual. O ataque agora é unificado
 > com a infecção por golpe. Para testar a versão atual, use
-> [Ciclo clássico de Zombie Mod](CLASSIC_GAMEPLAY.md). As instruções de E/R/X
+> [densidade de refúgios e barricadas](K17_DEFENSE_DENSITY.md). As instruções de E/R/X
 > abaixo descrevem o protótipo preservado, não o padrão atual.
 
 O esconderijo **07**, no térreo do setor **D**, recebeu cinco objetos modelados:
@@ -149,6 +149,8 @@ rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
 ```
 
 Backup anterior à mudança: commit `352ce55`, branch
-`backup/before-barricades-352ce55`. Santa Aurora mantém seu perfil e sua construção;
-o rifle compartilhado recebeu apenas a proteção de seleção e o ajuste de câmera
-condicionado ao K-17. O combate compartilhado bloqueia disparos durante seleção.
+`backup/before-barricades-352ce55`. Naquela etapa, o rifle compartilhado recebeu a
+proteção de seleção e o ajuste de câmera condicionado ao K-17, e o combate
+compartilhado passou a bloquear disparos durante seleção. Santa Aurora foi
+removida dos arquivos atuais; sua versão anterior está na branch
+`backup/before-remove-santa-5b9ac4d`.

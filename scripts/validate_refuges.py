@@ -26,10 +26,20 @@ def ray_blocker(a,b,boxes):
 
 def validate(data,boxes):
     errors=[];index=CollisionIndex(boxes)
-    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15,16,17,18}
+    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15,16,17,18}|set(range(19,35))|set(range(40,50))
+    assert len(data['barricades'])>=164
     for r in data['refuges']:
         prefix=f'Refuge {r["id"]}'
-        assert len(r['approaches'])>=2 and len(r['stands'])>=4
+        capacity=r.get('capacity',4)
+        assert capacity>=2 and len(r['approaches'])>=1 and len(r['stands'])>=capacity
+        if r['id']>=19:
+            minimum=2 if r['id'] in (48,49) else 5
+            assert len(r['props'])>=minimum and 'hidden' in r,r['id']
+            assert sum(p['Refuge']==r['id'] for p in data['barricades'].values())>=minimum
+            a,b=r['hidden'];eye=lambda p:[p[0],p[1]+5.5,p[2]]
+            if ray_blocker(eye(a),eye(b),boxes) is None:errors.append(prefix+': protected bay exposed to entry')
+            p=r['hold']
+            if ray_blocker([p[0],p[1]+6,p[2]],[p[0],p[1]+15,p[2]],boxes) is None:errors.append(prefix+': no overhead cover')
         for name,points in r['approaches']:
             assert math.dist(points[-1],r['hold'])<.01
             error,_=index.sweep({'points':points},data['avatar'])
@@ -60,4 +70,4 @@ if __name__=='__main__':
     boxes+=geometry(ET.parse(ROOT/'src/maps/k17/barricades/Stockroom.rbxmx'))[0]
     errors=validate(data,boxes)
     if errors:raise SystemExit('\n'.join(errors))
-    print('PASS eight refuges: 16 approaches, 32 group positions, 16 firing lines and four bent ducts, including props')
+    print(f'PASS {len(data["refuges"])} refuges, {sum(len(r["stands"]) for r in data["refuges"])} group positions, {len(data["barricades"])} props, four bent ducts and protected bays')

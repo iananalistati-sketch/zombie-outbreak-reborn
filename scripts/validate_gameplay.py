@@ -30,6 +30,8 @@ def validate(path):
         'ServerScriptService/ZO_Server/Combat':'src/maps/k17/gameplay/Combat.server.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Weapons':'src/maps/k17/gameplay/Weapons.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/RoundHUD':'src/maps/k17/gameplay/HUD.client.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_Client/TacticalMap':'src/maps/k17/gameplay/TacticalMap.client.luau',
+        'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
         'ServerStorage/ZO_Validation/RefugeAudit':'tests/k17/RefugeAudit.luau',
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',

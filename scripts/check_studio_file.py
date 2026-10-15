@@ -14,12 +14,14 @@ MANIFEST=ROOT/'builds/K17.release.json'
 def release(binary):
     classes,names,sources=parse(binary)
     required={'ZO_K17Foundry','R16_FilterRoom','R17_YardWorkshop','R18_CoolantRoom',
-              'V_StockroomVent','V_FilterVent','V_YardVent','V_CoolantVent','Startup','RefugeAudit'}
+              'V_StockroomVent','V_FilterVent','V_YardVent','V_CoolantVent','Startup','RefugeAudit','TacticalMap','K17Refuges',
+              'R48_UnderStair','R49_UnderStair'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
+    assert names.count('Hull')>=164,'The expanded barricade catalog is missing'
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
     assert len(names)==sum(count for _,count in classes.values()),'Incomplete native Name properties'
-    for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau'):
+    for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau'):
         assert sources.count((ROOT/path).read_text(encoding='utf-8'))==1,'Outdated/missing native source: '+path
     data=binary.read_bytes()
     return {'file':BINARY.name,'map':'ZO_K17Foundry','sha256':hashlib.sha256(data).hexdigest(),

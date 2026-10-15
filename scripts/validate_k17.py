@@ -71,7 +71,7 @@ def validate(path,manifest,quiet=False):
     lights=tree.findall('.//Item[@class="PointLight"]')
     assert len(lights)==manifest['lights'] and len(lights)<=96
     assert sum(props(l)['Shadows'].text=='true' for l in lights)<=8
-    assert {d['id'] for d in manifest['defenses']}==set(range(1,19))
+    assert {d['id'] for d in manifest['defenses']}==set(range(1,35))|set(range(40,50))
     assert len(manifest['buildings'])==5
     assert {2,3,4} <= {b['floors'] for b in manifest['buildings']}
     for aperture in manifest['openings']:
@@ -83,6 +83,9 @@ def validate(path,manifest,quiet=False):
             assert aperture['top']-aperture['bottom']>=9,aperture
         elif aperture['kind']=='ductPortal':
             assert aperture['end']-aperture['start']>=7.19,aperture
+            assert aperture['top']-aperture['bottom']>=7.19,aperture
+        elif aperture['kind']=='alcoveDoor':
+            assert aperture['end']-aperture['start']>=6,aperture
             assert aperture['top']-aperture['bottom']>=7.19,aperture
     index=CollisionIndex(boxes);errors=[];total=0
     for route in manifest['routes']:
@@ -114,8 +117,7 @@ def main():
         assert {'RefugeAudit','RefugeData','PushBarricade','Physics'}<=names
         assert {r['model'] for r in manifest['refuges']}<=names
         props_model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_Barricades')
-        catalog=json.loads((ROOT/'src/maps/k17/barricades/catalog.json').read_text())
-        assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}==set(catalog['Props'])
+        assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}==set(manifest['barricades'])
         assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&names
         model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_K17Foundry')
         assert len(model.findall('.//Item[@class="Part"]'))==manifest['parts']
@@ -131,7 +133,7 @@ def main():
             assert instances==len(items),(instances,len(items))
             print(f'PASS native binary: {len(data)} bytes, {instances} instances matching XML build')
     if errors:raise SystemExit('\n'.join(errors))
-    print(f'PASS K-17: {len(manifest["routes"])} routes, {total} clearance samples, 18 supported defenses, {manifest["parts"]} anchored parts')
+    print(f'PASS K-17: {len(manifest["routes"])} routes, {total} clearance samples, {len(manifest["defenses"])} supported defenses, {manifest["parts"]} anchored parts')
 
 
 if __name__=='__main__':main()

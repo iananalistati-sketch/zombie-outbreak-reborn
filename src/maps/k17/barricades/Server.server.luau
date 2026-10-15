@@ -16,12 +16,14 @@ local entries: {[Model]: Entry}={}
 local attacks: {[Player]: number}={}
 local templates: {[string]: Model}={}
 local failures: {[string]: string}={}
+local playerCount=#Players:GetPlayers()
 local expected=0
 for _ in Config.Props do expected+=1 end
 RS:SetAttribute("ZO_BarricadesReady",false)
 RS:SetAttribute("ZO_BarricadesAvailable",false)
 RS:SetAttribute("ZO_BarricadesStatus","Starting")
 RS:SetAttribute("ZO_BarricadesExpected",expected)
+RS:SetAttribute("ZO_BarricadesMaintenanceHz",if playerCount==0 then 1 else 10)
 
 local function publishStatus()
     local active,errors=0,0
@@ -48,7 +50,7 @@ local function quarantine(model: Model?,name: string,message: string)
 end
 
 local function phase(): string?
-    return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
+    return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,playerCount)
 end
 local function character(player: Player): (Model?,BasePart?,Humanoid?)
     local char=player.Character
@@ -175,11 +177,25 @@ RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(function()
         end)
     end
 end)
-Players.PlayerRemoving:Connect(function(player) attacks[player]=nil end)
+Players.PlayerAdded:Connect(function()
+    playerCount+=1
+    RS:SetAttribute("ZO_BarricadesMaintenanceHz",10)
+end)
+Players.PlayerRemoving:Connect(function(player)
+    attacks[player]=nil;playerCount=math.max(0,playerCount-1)
+    RS:SetAttribute("ZO_BarricadesMaintenanceHz",if playerCount==0 then 1 else 10)
+end)
 local elapsed=0
+local maxSpeedSquared=Config.Physics.MaxSpeed*Config.Physics.MaxSpeed
+local maxSpinSquared=Config.Physics.MaxSpin*Config.Physics.MaxSpin
+local lost: {Entry}={}
 RunService.Heartbeat:Connect(function(dt)
-    elapsed+=dt;if elapsed<.1 then return end;elapsed=0
-    local lost={}
+    -- Native assemblies retain Roblox's normal sleep/contact behavior. This is
+    -- only a safety pass, with less Lua work on empty servers. It never anchors
+    -- a distant prop or changes who can move/shoot it.
+    elapsed+=dt
+    if elapsed<(if playerCount==0 then 1 else .1) then return end
+    elapsed=0;table.clear(lost)
     for _,entry in entries do
         local hull=entry.hull
         if not hull.Parent or entry.model.Parent~=folder then table.insert(lost,entry);continue end
@@ -187,13 +203,14 @@ RunService.Heartbeat:Connect(function(dt)
         local p=hull.Position
         if p.Y < -60 or math.abs(p.X)>310 or math.abs(p.Z)>310 then table.insert(lost,entry);continue end
         local velocity=hull.AssemblyLinearVelocity
-        local horizontal=Vector3.new(velocity.X,0,velocity.Z)
-        if horizontal.Magnitude>Config.Physics.MaxSpeed or velocity.Y>8 then
-            if horizontal.Magnitude>Config.Physics.MaxSpeed then horizontal=horizontal.Unit*Config.Physics.MaxSpeed end
-            hull.AssemblyLinearVelocity=horizontal+Vector3.new(0,math.min(velocity.Y,8),0)
+        local horizontalSquared=velocity.X*velocity.X+velocity.Z*velocity.Z
+        if horizontalSquared>maxSpeedSquared or velocity.Y>8 then
+            local scale=if horizontalSquared>maxSpeedSquared then Config.Physics.MaxSpeed/math.sqrt(horizontalSquared) else 1
+            hull.AssemblyLinearVelocity=Vector3.new(velocity.X*scale,math.min(velocity.Y,8),velocity.Z*scale)
         end
         local spin=hull.AssemblyAngularVelocity
-        if spin.Magnitude>Config.Physics.MaxSpin then hull.AssemblyAngularVelocity=spin.Unit*Config.Physics.MaxSpin end
+        local spinSquared=spin.X*spin.X+spin.Y*spin.Y+spin.Z*spin.Z
+        if spinSquared>maxSpinSquared then hull.AssemblyAngularVelocity=spin*(Config.Physics.MaxSpin/math.sqrt(spinSquared)) end
     end
     for _,entry in lost do resetEntry(entry) end
     if #lost>0 then publishStatus() end
