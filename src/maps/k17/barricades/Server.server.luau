@@ -11,7 +11,8 @@ local Physics=require(shared:WaitForChild("Physics"))
 local Placement=require(shared:WaitForChild("Placement"))
 local folder=workspace:WaitForChild("ZO_Barricades")
 local internal=SS:WaitForChild("ZO_Gameplay")
-type Entry={model: Model,hull: BasePart,kind: any,health: number,template: Model}
+type Entry={model: Model,hull: BasePart,kind: any,health: number,template: Model,
+    brake: LinearVelocity,supportParams: RaycastParams,probeFrame: CFrame?,probed: boolean}
 local entries: {[Model]: Entry}={}
 local attacks: {[Player]: number}={}
 local templates: {[string]: Model}={}
@@ -62,6 +63,26 @@ end
 local function role(player: Player): string?
     return player.Team and player.Team.Name
 end
+local function resistance(hull: BasePart,model: Model,kind: any): (LinearVelocity,RaycastParams)
+    -- A finite horizontal brake separates walking contact from a validated shot.
+    -- It never anchors a live prop, drives it toward a position, or holds it up.
+    local attachment=Instance.new("Attachment")
+    attachment.Name="ZO_ResistanceAttachment";attachment.Parent=hull
+    local brake=Instance.new("LinearVelocity")
+    brake.Name="ZO_BodyResistance";brake.Attachment0=attachment
+    brake.RelativeTo=Enum.ActuatorRelativeTo.World
+    brake.VelocityConstraintMode=Enum.VelocityConstraintMode.Plane
+    brake.PrimaryTangentAxis=Vector3.new(1,0,0);brake.SecondaryTangentAxis=Vector3.new(0,0,1)
+    brake.PlaneVelocity=Vector2.zero
+    brake.ForceLimitsEnabled=true;brake.ForceLimitMode=Enum.ForceLimitMode.PerAxis
+    local force=kind.Mass*Config.Physics.BodyResistance
+    brake.MaxPlanarAxesForce=Vector2.new(force,force)
+    brake.Enabled=false;brake.Parent=hull
+    local params=RaycastParams.new()
+    params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={model}
+    params.RespectCanCollide=true
+    return brake,params
+end
 local function activate(model: Model,kind: any,template: Model): Entry
     local hull=model:FindFirstChild("Hull") :: BasePart
     model.PrimaryPart=hull;model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
@@ -76,11 +97,13 @@ local function activate(model: Model,kind: any,template: Model): Entry
             part.Anchored=false
         end
     end
+    local brake,supportParams=resistance(hull,model,kind)
     hull.Anchored=false
     local canOwn,reason=hull:CanSetNetworkOwnership()
     assert(canOwn,"Cannot set server ownership: "..tostring(reason))
     hull:SetNetworkOwner(nil)
-    local entry={model=model,hull=hull,kind=kind,health=kind.Health,template=template}
+    local entry={model=model,hull=hull,kind=kind,health=kind.Health,template=template,
+        brake=brake,supportParams=supportParams,probeFrame=nil,probed=false}
     entries[model]=entry
     return entry
 end
@@ -123,6 +146,7 @@ damage.OnInvoke=function(player: Player,part: BasePart): number?
     push(entry,entry.hull.Position-head.Position,Config.Physics.MeleeImpulse)
     entry.health=math.max(0,entry.health-Config.MeleeDamage);entry.model:SetAttribute("ZO_Health",entry.health)
     if entry.health==0 then
+        entry.brake.Enabled=false
         entry.hull.AssemblyLinearVelocity=Vector3.zero;entry.hull.AssemblyAngularVelocity=Vector3.zero;entry.hull.Anchored=true
         for _,part in entry.model:GetDescendants() do
             if part:IsA("BasePart") then part.CanCollide=false;part.CanQuery=false;part.Transparency=1 end
@@ -190,9 +214,9 @@ local maxSpeedSquared=Config.Physics.MaxSpeed*Config.Physics.MaxSpeed
 local maxSpinSquared=Config.Physics.MaxSpin*Config.Physics.MaxSpin
 local lost: {Entry}={}
 RunService.Heartbeat:Connect(function(dt)
-    -- Native assemblies retain Roblox's normal sleep/contact behavior. This is
-    -- only a safety pass, with less Lua work on empty servers. It never anchors
-    -- a distant prop or changes who can move/shoot it.
+    -- Supported props resist body pressure in the solver, including between
+    -- these safety passes. Shots never disable that brake. Falling props remain
+    -- free vertically and regain ordinary horizontal physics without support.
     elapsed+=dt
     if elapsed<(if playerCount==0 then 1 else .1) then return end
     elapsed=0;table.clear(lost)
@@ -203,6 +227,16 @@ RunService.Heartbeat:Connect(function(dt)
         local p=hull.Position
         if p.Y < -60 or math.abs(p.X)>310 or math.abs(p.Z)>310 then table.insert(lost,entry);continue end
         local velocity=hull.AssemblyLinearVelocity
+        local cf=hull.CFrame
+        if not entry.probed or entry.probeFrame~=cf or velocity.X~=0 or velocity.Y~=0 or velocity.Z~=0 then
+            -- World-space lower extent also works after a cabinet tips over.
+            -- Excluding only this model lets another prop support a stack.
+            local size=hull.Size
+            local halfHeight=(math.abs(cf.RightVector.Y)*size.X+math.abs(cf.UpVector.Y)*size.Y+math.abs(cf.LookVector.Y)*size.Z)/2
+            local hit=workspace:Raycast(p,Vector3.new(0,-halfHeight-Config.Physics.SupportProbe,0),entry.supportParams)
+            entry.brake.Enabled=hit~=nil and hit.Normal.Y>.5
+            entry.probeFrame=cf;entry.probed=true
+        end
         local horizontalSquared=velocity.X*velocity.X+velocity.Z*velocity.Z
         if horizontalSquared>maxSpeedSquared or velocity.Y>8 then
             local scale=if horizontalSquared>maxSpeedSquared then Config.Physics.MaxSpeed/math.sqrt(horizontalSquared) else 1

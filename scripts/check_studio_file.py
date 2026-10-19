@@ -21,7 +21,8 @@ def release(binary):
     assert names.count('Hull')>=164,'The expanded barricade catalog is missing'
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
     assert len(names)==sum(count for _,count in classes.values()),'Incomplete native Name properties'
-    for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau'):
+    for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
+                 'src/maps/k17/barricades/Server.server.luau','src/maps/k17/barricades/Config.luau','src/maps/k17/barricades/Physics.luau'):
         assert sources.count((ROOT/path).read_text(encoding='utf-8'))==1,'Outdated/missing native source: '+path
     data=binary.read_bytes()
     return {'file':BINARY.name,'map':'ZO_K17Foundry','sha256':hashlib.sha256(data).hexdigest(),

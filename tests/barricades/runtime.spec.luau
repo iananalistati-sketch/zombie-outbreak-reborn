@@ -14,6 +14,9 @@ local vmt={__type="Vector3"}
 local vectorAllocations=0
 function Vector.new(x,y,z) vectorAllocations+=1;return setmetatable({X=x,Y=y,Z=z},vmt) end
 Vector.zero=Vector.new(0,0,0)
+Vector.xAxis=Vector.new(1,0,0);Vector.yAxis=Vector.new(0,1,0);Vector.zAxis=Vector.new(0,0,1)
+local Vector2={new=function(x,y) return {X=x,Y=y} end}
+Vector2.zero=Vector2.new(0,0)
 vmt.__add=function(a,b) return Vector.new(a.X+b.X,a.Y+b.Y,a.Z+b.Z) end
 vmt.__sub=function(a,b) return Vector.new(a.X-b.X,a.Y-b.Y,a.Z-b.Z) end
 vmt.__mul=function(a,b) return Vector.new(a.X*b,a.Y*b,a.Z*b) end
@@ -37,9 +40,16 @@ local function simulation(options)
     local function instance(class,name)
         local data={ClassName=class,Name=name or class,_attrs={},_children={},_signals={}}
         local value={_data=data}
-        setmetatable(value,{__index=function(_,key) return methods[key] or data[key] or data._children[key] end,
+        setmetatable(value,{__index=function(_,key)
+                if methods[key]~=nil then return methods[key] end
+                if data[key]~=nil then return data[key] end
+                return data._children[key]
+            end,
             __newindex=function(_,key,new)
                 if key=="Parent" then
+                    if class=="LinearVelocity" and new and new.Parent and new.Parent.Name==options.failResistanceName then
+                        error("injected LinearVelocity configuration failure")
+                    end
                     if data.Parent then data.Parent._children[data.Name]=nil end
                     data.Parent=new
                     if new then new._children[data.Name]=value end
@@ -69,6 +79,11 @@ local function simulation(options)
     local rs=instance("ReplicatedStorage","ReplicatedStorage")
     local ss=instance("ServerStorage","ServerStorage")
     local world=instance("Workspace","Workspace")
+    local raycasts={}
+    function world:Raycast(origin,direction,params)
+        table.insert(raycasts,{origin=origin,direction=direction,params=params})
+        return if options.raycast then options.raycast(origin,direction,params) else nil
+    end
     local folder=instance("Folder","ZO_Barricades");folder.Parent=world
     local internal=instance("Folder","ZO_Gameplay");internal.Parent=ss
     local damage=instance("BindableFunction","DamageBarricade");damage.Parent=internal
@@ -100,7 +115,8 @@ local function simulation(options)
         local hull=instance("Part","Hull");hull.Parent=model
         hull.Size=Vector.new(kind.Width,kind.Height,kind.Depth)
         hull.Position=Vector.new(prop.X,prop.Y+kind.Height/2,prop.Z)
-        hull.Anchored=true;hull.CanCollide=true;hull.AssemblyMass=kind.Mass
+        hull.CFrame={RightVector=Vector.xAxis,UpVector=Vector.yAxis,LookVector=Vector.new(0,0,-1)}
+        hull.Anchored=true;hull.CanCollide=true;hull.CanQuery=true;hull.AssemblyMass=kind.Mass
         hull.AssemblyLinearVelocity=Vector.zero;hull.AssemblyAngularVelocity=Vector.zero
         local skin=instance("Part","Skin");skin.Parent=model;skin.Anchored=true;skin.CanCollide=false
     end
@@ -114,8 +130,9 @@ local function simulation(options)
     end
     local heartbeat=signal()
     local services={Players=players,ReplicatedStorage=rs,ServerStorage=ss,RunService={Heartbeat=heartbeat,IsStudio=function() return true end}}
-    local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,Vector3=Vector,
-        Instance={new=function(class) return instance(class) end},Enum={ModelStreamingMode={Atomic="Atomic"},RaycastFilterType={Exclude="Exclude"}},
+    local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,Vector3=Vector,Vector2=Vector2,
+        Instance={new=function(class) return instance(class) end},Enum={ModelStreamingMode={Atomic="Atomic"},RaycastFilterType={Exclude="Exclude"},
+            ActuatorRelativeTo={World="World"},VelocityConstraintMode={Plane="Plane"},ForceLimitMode={PerAxis="PerAxis"}},
         PhysicalProperties={new=function(density,friction,elasticity,fw,ew) assert(density>=.01 and density<=100,"valid density");return {density,friction,elasticity,fw,ew} end},
         RaycastParams={new=function() return {} end},task={defer=function(fn) table.insert(deferred,fn) end},
         require=function(m) return assert(modules[m],m.Name) end,
@@ -128,7 +145,7 @@ local function simulation(options)
     check(ok,"real barricade controller must complete startup: "..tostring(message))
     local function flush() while #deferred>0 do table.remove(deferred,1)() end end
     return {rs=rs,folder=folder,internal=internal,warnings=warnings,heartbeat=heartbeat,options=options,flush=flush,
-        advance=function(seconds) now+=seconds end,world=world,
+        advance=function(seconds) now+=seconds end,world=world,raycasts=raycasts,
         remove=function(player)
             local index=table.find(list,player);if index then table.remove(list,index) end
             players.PlayerRemoving:Fire(player)
@@ -197,6 +214,87 @@ do
 end
 
 do
+    local options={supported=true,normalY=1}
+    local target,support
+    options.raycast=function(_,direction)
+        if math.abs(direction.X)>.001 then return {Instance=target.Hull,Normal=Vector.yAxis} end
+        return if options.supported then {Instance=support,Normal=Vector.new(0,options.normalY,0)} else nil
+    end
+    local s=simulation(options);target=s.folder:FindFirstChild(names[1]);support=s.folder:FindFirstChild(names[2]).Hull
+    local hull=target.Hull;local kind=Config.Kinds[Config.Props[names[1]].Kind]
+    local brake=hull:FindFirstChild("ZO_BodyResistance");local attachment=hull:FindFirstChild("ZO_ResistanceAttachment")
+    check(brake and brake:IsA("LinearVelocity") and attachment and attachment:IsA("Attachment"),"each hull owns the physical brake and its attachment")
+    check(brake.Attachment0==attachment and attachment.Parent==hull,"brake attachment belongs to the same assembly")
+    check(brake.RelativeTo=="World" and brake.VelocityConstraintMode=="Plane","resistance acts in a world plane")
+    check(brake.PrimaryTangentAxis.X==1 and brake.PrimaryTangentAxis.Y==0 and brake.PrimaryTangentAxis.Z==0
+        and brake.SecondaryTangentAxis.X==0 and brake.SecondaryTangentAxis.Y==0 and brake.SecondaryTangentAxis.Z==1,"brake plane uses X/Z and leaves the gravity axis free")
+    check(brake.PlaneVelocity.X==0 and brake.PlaneVelocity.Y==0,"brake targets rest without propulsion")
+    check(brake.ForceLimitsEnabled and brake.ForceLimitMode=="PerAxis","body resistance is finite instead of an infinite velocity lock")
+    check(brake.MaxPlanarAxesForce.X==kind.Mass*Config.Physics.BodyResistance
+        and brake.MaxPlanarAxesForce.Y==kind.Mass*Config.Physics.BodyResistance,"finite resistance scales with prop mass")
+    check(brake.Enabled==false,"new assembly waits for a support probe before braking")
+    local human=s.actor("Humans");s.heartbeat:Fire(.1)
+    check(brake.Enabled==true,"another prop can support a stack and enable resistance")
+    local foundProbe=false
+    for _,ray in s.raycasts do
+        if ray.params.FilterDescendantsInstances[1]==target then
+            foundProbe=true
+            check(#ray.params.FilterDescendantsInstances==1 and ray.params.FilterType=="Exclude" and ray.params.RespectCanCollide,"support query excludes only its own model and respects collisions")
+        end
+    end
+    check(foundProbe,"controller queried the target support")
+    check(s.internal.PushBarricade.OnInvoke(human,hull,Vector.xAxis),"rifle hit is accepted while the brake is active")
+    local rifleSpeed=hull.AssemblyLinearVelocity.X
+    check(rifleSpeed>0 and brake.Enabled,"validated shot moves the prop without opening a resistance-free window")
+    local zombie=s.actor("Zombies");s.rs:SetAttribute("ZO_RoundState","Active")
+    zombie.Character.Head.Position=hull.Position-Vector.new(2,0,0);hull.AssemblyLinearVelocity=Vector.zero
+    local health=s.internal.DamageBarricade.OnInvoke(zombie,hull)
+    check(health==kind.Health-Config.MeleeDamage and hull.AssemblyLinearVelocity.X>0
+        and hull.AssemblyLinearVelocity.X<rifleSpeed,"zombie melee damages the prop but has less displacement impulse than a rifle hit")
+    check(brake.Enabled,"zombie melee cannot disable body resistance")
+    options.supported=false;hull.AssemblyLinearVelocity=Vector.new(1,-9,2);s.heartbeat:Fire(.1)
+    check(not brake.Enabled and hull.AssemblyLinearVelocity.Y==-9,"unsupported falling prop loses only the planar brake and keeps downward velocity")
+    check(not hull.Anchored and hull.CanCollide and hull.CanQuery and hull.ServerOwned,"falling retains collision and server-owned physical motion")
+    options.supported=true;options.normalY=.4;s.heartbeat:Fire(.1)
+    check(not brake.Enabled,"near-vertical contact is not treated as supporting ground")
+    options.normalY=1;hull.AssemblyLinearVelocity=Vector.zero
+    hull.CFrame={RightVector=Vector.yAxis,UpVector=Vector.xAxis,LookVector=Vector.new(0,0,-1)}
+    local before=#s.raycasts;s.heartbeat:Fire(.1)
+    check(brake.Enabled,"rotation invalidates the cached support probe")
+    local rotatedProbe=false
+    for index=before+1,#s.raycasts do
+        local ray=s.raycasts[index]
+        if ray.params.FilterDescendantsInstances[1]==target then
+            rotatedProbe=true
+            check(math.abs(ray.direction.Y+(kind.Width/2+Config.Physics.SupportProbe))<.000001,"support length follows rotated hull height")
+        end
+    end
+    check(rotatedProbe,"rotated target receives a new support query")
+    while health>0 do
+        s.advance(Config.MeleeCooldown+.01)
+        health=s.internal.DamageBarricade.OnInvoke(zombie,hull)
+        check(type(health)=="number","supported prop remains damageable until destroyed")
+    end
+    check(not brake.Enabled and target:GetAttribute("ZO_Destroyed"),"destruction disables the supported brake")
+    s.rs:SetAttribute("ZO_RoundState","Preparation");s.flush()
+    local replacement=s.folder:FindFirstChild(names[1]);local constraints,attachments=0,0
+    for _,child in replacement.Hull:GetChildren() do
+        if child:IsA("LinearVelocity") then constraints+=1 end
+        if child:IsA("Attachment") then attachments+=1 end
+    end
+    check(replacement~=target and constraints==1 and attachments==1,"reset creates one clean brake without accumulating constraints")
+end
+
+do
+    local options={failResistanceName=names[1]}
+    local s=simulation(options)
+    check(not s.rs:GetAttribute("ZO_BarricadesReady") and s.rs:GetAttribute("ZO_BarricadesActive")==expected-1,"constraint API failure quarantines only the failing prop")
+    check(s.folder:FindFirstChild(names[1]).Hull.Anchored and #s.warnings==1,"constraint failure is anchored and logged")
+    options.failResistanceName=nil;s.rs:SetAttribute("ZO_RoundState","Active");s.rs:SetAttribute("ZO_RoundState","Preparation");s.flush()
+    check(s.rs:GetAttribute("ZO_BarricadesReady"),"preparation recovers a failed constraint from the original template")
+end
+
+do
     local catalog=table.clone(Config);catalog.Props={}
     local kinds={"Cabinet","Crate","Table"}
     for index=1,180 do
@@ -205,6 +303,8 @@ do
     local s=simulation({catalog=catalog})
     check(s.rs:GetAttribute("ZO_BarricadesReady") and s.rs:GetAttribute("ZO_BarricadesActive")==180,"180-prop catalogue initializes without fixed count assumptions")
     check(s.rs:GetAttribute("ZO_BarricadesMaintenanceHz")==1,"empty server uses one safety pass per second")
+    s.heartbeat:Fire(1)
+    check(#s.raycasts==180,"first stationary pass probes each of the 180 authored props")
     local allocations=vectorAllocations
     s.heartbeat:Fire(1)
     check(vectorAllocations==allocations,"stationary safety pass allocates no temporary vectors across 180 props")

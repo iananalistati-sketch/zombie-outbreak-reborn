@@ -23,6 +23,7 @@ refúgios com interiores detalhados.
 referências verificadas de infecção, knockback e diferenças do protótipo atual.
 
 **Atual: [34 refúgios detalhados e 164 objetos de barricada](docs/K17_DEFENSE_DENSITY.md).**
+Revisão de mecânica: [tiros, golpes e resistência ao empurrão corporal](docs/BARRICADE_GAMEPLAY.md).
 Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
 recarga temporizada e knockback configurável. A prévia de construção anterior
 está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
@@ -60,7 +61,8 @@ require(game.ServerStorage.ZO_Validation.RefugeAudit).visit(16)
 ```
 
 Troque `16` por `19`–`34` ou `40`–`49` para visitar as novas posições. Use **M** para localizar todos os refúgios. Empurre os objetos
-por contato ou tiros; **R** recarrega. Veja o [roteiro atual dos refúgios](docs/K17_DEFENSE_DENSITY.md).
+com tiros; o contato corporal encontra resistência e os golpes de zumbi desgastam
+os objetos. **R** recarrega. Veja o [roteiro de comparação das forças](docs/BARRICADE_GAMEPLAY.md).
 O [treino com alvos de combate](docs/CLASSIC_GAMEPLAY.md) também está disponível.
 
 O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
@@ -128,7 +130,7 @@ renderizados pelo Roblox Studio.
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 213 percursos com 37.291
 amostras de apoio/espaço livre, 17 testes de geometria, 160 asserções do combate/
-rodada, testes de execução dos controladores com APIs simuladas, 198 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
+rodada, 7.551 asserções do controlador de barricadas com APIs simuladas, 202 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
 no place. Os percursos também foram checados com os 164 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,

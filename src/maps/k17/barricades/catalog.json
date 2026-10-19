@@ -16,11 +16,13 @@
   "MeleeDamage": 45,
   "CarrySpeed": 10,
   "Physics": {
-    "BulletImpulse": 260,
-    "MeleeImpulse": 390,
-    "MaxSpeed": 12,
+    "BulletImpulse": 660,
+    "MeleeImpulse": 90,
+    "MaxSpeed": 18,
     "MaxSpin": 2.5,
-    "Friction": 0.65
+    "Friction": 0.3,
+    "BodyResistance": 120,
+    "SupportProbe": 0.45
   },
   "Kinds": {
     "Cabinet": {

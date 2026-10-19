@@ -47,7 +47,8 @@ Não existe zona invulnerável ou passagem exclusiva para humanos.
    selecionar cada refúgio e ver quantidade de entradas e objetos.
 4. Visite primeiro **21** (ambulatório), **33** (rádio), **42** (ônibus),
    **46** (subterrâneo) e **48** (sob escada), que mostram situações diferentes.
-5. Empurre caixas, mesas e armários até os acessos por contato ou tiros. **R**
+5. Empurre caixas, mesas e armários até os acessos com tiros. O contato corporal
+   encontra resistência na [revisão de mecânica](BARRICADE_GAMEPLAY.md). **R**
    recarrega. O mapa tático suspende os disparos locais enquanto estiver aberto.
 
 **M** também tem botão na tela para toque e atalho View no gamepad.
@@ -123,9 +124,9 @@ não o número de percursos que chegam ao mesmo vão.
   de ocultação/cobertura superior verificados contra a geometria real.
 - **17 testes Python**, com controles que precisam falhar ao bloquear entradas,
   retirar um piso, retirar o teto do ônibus ou retirar o anteparo sob escada.
-- Compilação Luau; 198 asserções de impulso, 85 de regras de barricada e 160 de
+- Compilação Luau; 202 asserções de impulso, 85 de regras de barricada e 160 de
   combate/rodada. Controladores reais executados com APIs simuladas: 24 asserções
-  de início de rodada e 4.895 de barricadas, incluindo cenários com 164 e 180 objetos.
+  de início de rodada e 7.551 de barricadas, incluindo cenários com 164 e 180 objetos.
 - Build Rojo XML e binário, integração das fontes ativas e inspeção do conteúdo
   nativo/checksum antes de atualizar o arquivo entregue.
 
