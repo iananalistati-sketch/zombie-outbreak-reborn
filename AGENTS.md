@@ -1,0 +1,34 @@
+# Diretrizes permanentes — Zombie Outbreak Reborn
+
+## Reutilização primeiro
+
+O usuário pediu repetidamente para reaproveitar sistemas e partes prontas de
+outros projetos. Essa é a abordagem padrão deste projeto, inclusive em sessões
+futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
+
+- Antes de substituir ou ampliar um sistema, procurar uma base existente que
+  resolva o problema. Priorizar componentes Roblox/Luau e exemplos oficiais.
+- Reutilizar o código existente de fato, com origem, revisão e licença
+  verificadas e atribuições preservadas. Só citar um projeto como inspiração
+  não é reutilização. Pequenos componentes também são bem-vindos quando úteis.
+- Preferir adaptar a integração ao componente pronto. Código próprio deve
+  preencher lacunas concretas, não reconstruir o componente escolhido.
+- Limitar a pesquisa a poucos candidatos relevantes. Evitar ciclos de buscas,
+  reescritas, documentação e testes que não produzam avanço para o jogador.
+- Escolher componentes pela utilidade para o jogo. Uma biblioteca de câmera
+  não equivale a um sistema completo de armas, animações e modelos.
+- Manter o modo Zombie Survival/Zombie Mod como referência funcional.
+  Não importar mapas de Counter-Strike sem autorização correspondente.
+- Trabalhar por entregas integradas e respeitar a prioridade atual do usuário;
+  não ampliar o escopo com novos sistemas por iniciativa própria.
+
+## Preservação e evidências
+
+- Fazer backup antes de alterar arquivos importantes. Preservar o histórico Git.
+- Não afirmar acesso ao Studio local sem uma conexão realmente verificada.
+- Compilação e testes com APIs simuladas não comprovam aparência, controles,
+  física ou multiplayer no Roblox Studio. Descrever o que foi executado.
+- Se um componente depender de assets, permissões ou importação local, confirmar
+  essa dependência antes de anunciar integração concluída.
+- Não introduzir código baixado na execução do jogo sem revisar suas fontes.
+  Guardar importações externas desativadas e separadas até a revisão.
