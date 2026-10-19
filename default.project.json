@@ -42,6 +42,12 @@
         "WeaponState": {
           "$path": "src/maps/k17/gameplay/WeaponState.luau"
         },
+        "LoadoutState": {
+          "$path": "src/maps/k17/gameplay/LoadoutState.luau"
+        },
+        "Containment": {
+          "$path": "src/maps/k17/gameplay/Containment.luau"
+        },
         "RoundRules": {
           "$path": "src/maps/k17/gameplay/RoundRules.luau"
         }
@@ -91,6 +97,9 @@
           },
           "TacticalMap": {
             "$path": "src/maps/k17/gameplay/TacticalMap.client.luau"
+          },
+          "Loadout": {
+            "$path": "src/maps/k17/gameplay/Loadout.client.luau"
           }
         },
         "K17_Barricades": {

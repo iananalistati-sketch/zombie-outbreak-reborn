@@ -126,7 +126,8 @@ não o número de percursos que chegam ao mesmo vão.
   retirar um piso, retirar o teto do ônibus ou retirar o anteparo sob escada.
 - Compilação Luau; 202 asserções de impulso, 85 de regras de barricada e 160 de
   combate/rodada. Controladores reais executados com APIs simuladas: 24 asserções
-  de início de rodada e 7.551 de barricadas, incluindo cenários com 164 e 180 objetos.
+  de início de rodada na etapa original; a [integração atual de combate](CLASSIC_COMBAT_PACK.md)
+  inclui 27 verificações de rodada e 7.554 de barricadas, com catálogos de 164 e 180 objetos.
 - Build Rojo XML e binário, integração das fontes ativas e inspeção do conteúdo
   nativo/checksum antes de atualizar o arquivo entregue.
 

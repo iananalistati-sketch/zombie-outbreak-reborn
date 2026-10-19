@@ -115,6 +115,7 @@ local function setRole(player: Player,team: Team,move: boolean?)
     updateCounts()
 end
 local function join(player: Player)
+    player:SetAttribute("ZO_SurvivedRound",0)
     setRole(player,lobby)
     local function characterAdded(char: Model)
         local root=char:WaitForChild("HumanoidRootPart",10)
@@ -180,6 +181,14 @@ local function countdown(value: string,seconds: number): boolean
     end
 end
 local function cleanup(winner: string)
+    -- Snapshot eligibility before Results/Lobby signals. Economy must not infer
+    -- survival from a delayed Team event after infection, death or round cleanup.
+    for player in participants do
+        if player.Parent==Players then
+            player:SetAttribute("ZO_SurvivedRound",if winner=="Humans" and player.Team==humans
+                and alive(player.Character) then roundId else 0)
+        end
+    end
     RS:SetAttribute("ZO_LastWinner",winner)
     setState("Results",Config.Results)
     for player in participants do if player.Parent==Players then setRole(player,lobby) end end
@@ -214,7 +223,9 @@ while true do
     local practice=workspace:FindFirstChild("ZO_PracticeTargets")
     if practice then practice:Destroy() end
     for _,player in Players:GetPlayers() do
-        if characterReady(player) then participants[player]=true;setRole(player,humans,true) end
+        if characterReady(player) then
+            participants[player]=true;player:SetAttribute("ZO_SurvivedRound",0);setRole(player,humans,true)
+        end
     end
     if not countdown("Preparation",Config.Preparation) then cleanup("Cancelled");continue end
     local eligible={}

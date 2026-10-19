@@ -122,12 +122,14 @@ local function push(entry: Entry,direction: Vector3,force: number)
 end
 -- Only Combat can invoke this, after consuming ammo and tracing the first hit.
 local bullet=internal:WaitForChild("PushBarricade") :: BindableFunction
-bullet.OnInvoke=function(player: Player,part: BasePart,direction: Vector3): boolean
+bullet.OnInvoke=function(player: Player,part: BasePart,direction: Vector3,weaponScale: number?): boolean
     local entry=entryFor(part)
     local _,head,hum=character(player)
     if not entry or not head or not Rules.canBuild(role(player),phase(),hum~=nil) then return false end
     if typeof(direction)~="Vector3" or not Rules.finite(direction.X) or not Rules.finite(direction.Y) or not Rules.finite(direction.Z) then return false end
-    push(entry,direction,Config.Physics.BulletImpulse)
+    local scale=if weaponScale==nil then 1 else weaponScale
+    if not Rules.finite(scale) or scale<=0 or scale>2 then return false end
+    push(entry,direction,Config.Physics.BulletImpulse*scale)
     return true
 end
 local damage=internal:WaitForChild("DamageBarricade") :: BindableFunction

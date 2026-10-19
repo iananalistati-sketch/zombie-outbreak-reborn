@@ -143,16 +143,20 @@ do
     check(s.infect.OnInvoke(zombie,human.Character),"real server infection accepts melee-authorized opponent")
     s.advance(totalBefore+2)
     check(s.rs:GetAttribute("ZO_LastWinner")=="Zombies" and s.rs:GetAttribute("ZO_RoundState")=="Results","last survivor infection ends round")
+    check(p1:GetAttribute("ZO_SurvivedRound")==0 and p2:GetAttribute("ZO_SurvivedRound")==0,"zombie victory cannot mark infected players for a human survival reward")
 end
 
 do
     local s=simulation({studio=false});local p1=s.add("A",true);s.add("B",true);launch(s);s.advance(totalBefore+1)
     local firstMother=if p1.Team.Name=="Zombies" then p1 else s.players:GetPlayers()[2]
+    local survivor=if firstMother==p1 then s.players:GetPlayers()[2] else p1
     s.advance(totalBefore+ROUND_CONFIG.Duration+.5)
     check(s.rs:GetAttribute("ZO_LastWinner")=="Humans","real active deadline awards survivors")
+    check(survivor:GetAttribute("ZO_SurvivedRound")==1 and firstMother:GetAttribute("ZO_SurvivedRound")==0,"round snapshots only the living human before moving survivors to Lobby")
     s.advance(totalBefore*2+ROUND_CONFIG.Duration+ROUND_CONFIG.Results+2)
     check(s.rs:GetAttribute("ZO_RoundState")=="Active" and s.rs:GetAttribute("ZO_RoundId")==2,"second round starts automatically on live-style server")
     check(firstMother.Team.Name=="Humans","mother selection avoids same player in next round when possible")
+    check(firstMother:GetAttribute("ZO_SurvivedRound")==0 and survivor:GetAttribute("ZO_SurvivedRound")==0,"next preparation clears every participant's old reward eligibility")
 end
 
 do

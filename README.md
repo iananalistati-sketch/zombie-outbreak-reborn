@@ -24,7 +24,9 @@ referências verificadas de infecção, knockback e diferenças do protótipo at
 
 **Atual: [34 refúgios detalhados e 164 objetos de barricada](docs/K17_DEFENSE_DENSITY.md).**
 Revisão de mecânica: [tiros, golpes e resistência ao empurrão corporal](docs/BARRICADE_GAMEPLAY.md).
-Infecção por golpe, primeiros infectados transformados no local, tiro contínuo,
+**[Pacote de combate](docs/CLASSIC_COMBAT_PACK.md): cinco armas, loja na tecla B,
+troca de equipamento, créditos, munição por arma e contenção do avanço por tiros.**
+Infecção por golpe, primeiros infectados transformados no local, armas automáticas e semiautomáticas,
 recarga temporizada e knockback configurável. A prévia de construção anterior
 está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
 
@@ -40,7 +42,8 @@ está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barri
    em **`ABRIR_K17.cmd`**, na raiz do repositório. Ele confere o SHA-256 da
    entrega e abre o caminho completo de `builds/ZombieOutbreakReborn_K17.rbxl`.
 4. Selecione `Workspace → ZO_K17Foundry` e pressione **F**.
-5. Use Play para explorar. Para iniciar as rodadas, teste com dois jogadores.
+5. Use Play para explorar; **M** abre o mapa, **B** o arsenal. Para iniciar as
+   rodadas, teste com dois jogadores; com três há dois humanos defendendo um zumbi.
 
 **“Recentes” reabre o place salvo anteriormente.** O Pull atualiza os arquivos
 do Git e não troca o mapa de um place já aberto. O mapa urbano de dois prédios
@@ -130,7 +133,9 @@ renderizados pelo Roblox Studio.
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 213 percursos com 37.291
 amostras de apoio/espaço livre, 17 testes de geometria, 160 asserções do combate/
-rodada, 7.551 asserções do controlador de barricadas com APIs simuladas, 202 da política de impulso e 85 das regras de barricadas preservadas. Verificação das fontes ativas
+rodada, 215 de inventário/economia e 96 de contenção. Os controladores reais
+passaram 100 verificações de combate, 27 de rodada e 7.554 de barricadas com APIs
+simuladas; há também 202 da política de impulso e 85 das regras preservadas. Verificação das fontes ativas
 no place. Os percursos também foram checados com os 164 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,

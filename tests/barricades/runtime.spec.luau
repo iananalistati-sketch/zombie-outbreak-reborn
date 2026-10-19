@@ -168,6 +168,12 @@ do
     local human=s.actor("Humans")
     check(s.internal.PushBarricade.OnInvoke(human,hull,Vector.new(1,0,0)),"server rifle callback pushes a valid prop")
     check(hull.AssemblyLinearVelocity.X>0 and hull.AssemblyLinearVelocity.X<=Config.Physics.MaxSpeed,"bounded physical impulse")
+    local fullShot=hull.AssemblyLinearVelocity.X
+    hull.AssemblyLinearVelocity=Vector.zero
+    check(s.internal.PushBarricade.OnInvoke(human,hull,Vector.new(1,0,0),.5),"weapon-specific prop scale is accepted on the private callback")
+    check(hull.AssemblyLinearVelocity.X>0 and hull.AssemblyLinearVelocity.X<fullShot,"partial pellet hit applies less prop impulse than a full rifle hit")
+    check(not s.internal.PushBarricade.OnInvoke(human,hull,Vector.new(1,0,0),0/0)
+        and not s.internal.PushBarricade.OnInvoke(human,hull,Vector.new(1,0,0),3),"invalid or excessive weapon scale cannot reach physics")
     check(not s.internal.PushBarricade.OnInvoke(human,hull,Vector.new(0/0,0,0)),"reject nonfinite shot direction")
     model:SetAttribute("ZO_Health",1)
     s.rs:SetAttribute("ZO_RoundState","Active");s.rs:SetAttribute("ZO_RoundState","Preparation");s.flush()

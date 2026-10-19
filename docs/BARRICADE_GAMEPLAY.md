@@ -1,5 +1,8 @@
 # Barricadas: montagem por tiros e resistência ao contato
 
+A integração atual adiciona multiplicadores de impulso por arma. Veja o
+[pacote de combate com cinco armas e loja](CLASSIC_COMBAT_PACK.md).
+
 ## Problema e comportamento pretendido
 
 O relato no Studio foi que um zumbi conseguia arrastar as barricadas mais

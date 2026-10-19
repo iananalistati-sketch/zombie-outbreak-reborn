@@ -525,6 +525,10 @@ local function setOpen(open: boolean)
         GuiService.SelectedObject = nil
     end
 end
+
+player:GetAttributeChangedSignal("ZO_ShopOpen"):Connect(function()
+    if player:GetAttribute("ZO_ShopOpen")==true then setOpen(false) end
+end)
 toggle.Activated:Connect(function() setOpen(true) end)
 close.Activated:Connect(function() setOpen(false) end)
 shade.Activated:Connect(function() setOpen(false) end)

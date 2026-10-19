@@ -18,7 +18,7 @@ function Audit.run()
     end
     record(RS:GetAttribute("ZO_GameplayRoundReady")==true,"round authority ready")
     record(RS:GetAttribute("ZO_GameplayCombatReady")==true,"combat authority ready")
-    for _,name in {"ZO_Melee","ZO_FireRifle","ZO_CombatFX"} do
+    for _,name in {"ZO_Melee","ZO_FireRifle","ZO_CombatFX","ZO_LoadoutAction"} do
         local remote=RS:FindFirstChild(name)
         record(remote~=nil and remote:IsA("RemoteEvent"),name)
     end
@@ -29,6 +29,21 @@ function Audit.run()
     end
     record(require(RS.Shared.RoundConfig).MotherZombieTeleport==false,"classic in-place first infection")
     record(require(RS.K17Barricades.Config).EnablePlacement==false,"placement preview disabled")
+    local arsenal=require(RS.K17Gameplay.Config)
+    local arsenalCount=0
+    for id,weapon in arsenal.Weapons do
+        arsenalCount+=1
+        record(weapon.Id==id and weapon.Magazine>0 and weapon.Reserve>0 and weapon.FireInterval>0
+            and weapon.ReloadSeconds>0 and weapon.Pellets>=1,id.." complete weapon configuration")
+    end
+    record(arsenalCount==5,"five configured firearms")
+    record(RS.K17Gameplay:FindFirstChild("LoadoutState")~=nil and RS.K17Gameplay:FindFirstChild("Containment")~=nil,"loadout and containment modules")
+    for _,player in Players:GetPlayers() do
+        local id=player:GetAttribute("ZO_WeaponId")
+        local credits=player:GetAttribute("ZO_Credits")
+        record(type(id)=="string" and arsenal.Weapons[id]~=nil,player.Name.." authoritative weapon")
+        record(type(credits)=="number" and credits>=0 and credits<=arsenal.Economy.MaxCredits,player.Name.." bounded credits")
+    end
     local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include
     params.FilterDescendantsInstances={workspace:WaitForChild("ZO_K17Foundry")}
     record(workspace:Raycast(Vector3.new(-228,5,123),Vector3.new(8,0,0),params)==nil,"stockroom doorway ray clear")
@@ -100,6 +115,6 @@ function Audit.practice(teamName: string?)
     if head and head:IsA("BasePart") and effects and effects:IsA("RemoteEvent") then
         effects:FireClient(player,"PracticeAim",head.Position,destination+Vector3.new(0,1.5,0))
     end
-    print("[GAMEPLAY PRACTICE] "..name.." — target ahead. Hold click to fire/attack; R reloads. Solo Studio only; round HUD stays Waiting. Repeat command to reset target.")
+    print("[GAMEPLAY PRACTICE] "..name.." — target ahead. B opens the armory; 1/2/Q changes slots; R reloads. Hold automatic weapons, click for pistol/shotgun. Solo Studio only. Repeat resets target and starter weapons, not credits.")
 end
 return Audit
