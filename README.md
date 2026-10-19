@@ -26,6 +26,9 @@ referências verificadas de infecção, knockback e diferenças do protótipo at
 Revisão de mecânica: [tiros, golpes e resistência ao empurrão corporal](docs/BARRICADE_GAMEPLAY.md).
 **[Pacote de combate](docs/CLASSIC_COMBAT_PACK.md): cinco armas, loja na tecla B,
 troca de equipamento, créditos, munição por arma e contenção do avanço por tiros.**
+**[AR reutilizada do Roblox Weapons Kit](docs/REUSED_WEAPON_KIT.md): a carabina
+inicial usa mesh, sons, flash, ferrolho e animações R15 do kit; as outras quatro
+armas mantêm os modelos provisórios.** O controlador de combate permanece o do K-17.
 Infecção por golpe, primeiros infectados transformados no local, armas automáticas e semiautomáticas,
 recarga temporizada e knockback configurável. A prévia de construção anterior
 está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
@@ -68,8 +71,10 @@ com tiros; o contato corporal encontra resistência e os golpes de zumbi desgast
 os objetos. **R** recarrega. Veja o [roteiro de comparação das forças](docs/BARRICADE_GAMEPLAY.md).
 O [treino com alvos de combate](docs/CLASSIC_GAMEPLAY.md) também está disponível.
 
-O arquivo já contém o mapa, os scripts e a iluminação. É um place binário nativo
-compactado; não exige GLB, Toolbox, upload de meshes ou Codex local.
+O arquivo já contém o mapa, os scripts, a iluminação e a AR extraída do kit.
+É um place binário nativo compactado; não exige importar GLB, Toolbox, fazer
+upload de meshes ou instalar Codex local. Os assets da AR ainda são carregados
+pelos serviços Roblox e dependem de disponibilidade e permissões.
 É uma compilação desta entrega: depois de editar os fontes, recompile ou sincronize.
 
 ## Onde estão os fontes
@@ -89,6 +94,8 @@ src/maps/k17/barricades/catalog.json catálogo-base de objetos e parâmetros fí
 src/maps/k17/barricades/           catálogo único, modelos e física dos objetos
 src/maps/k17/gameplay/             combate, infecção por golpe, rodada e HUD atuais
 src/maps/k17/gameplay/TacticalMap.client.luau mapa tático com filtros, aberto por M
+src/third_party/roblox-weapon-kit/   AR e apresentação extraídas, sem scripts externos
+third_party/roblox-weapon-kit/       kit original arquivado, origem e licenças
 src/server/                       bootstrap compartilhado e protótipos desativados
 src/client/                       cliente anterior e bootstrap compartilhado
 scripts/validate_k17.py            checagem de colisão e circulação
@@ -132,14 +139,16 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 213 percursos com 37.291
-amostras de apoio/espaço livre, 17 testes de geometria, 160 asserções do combate/
+amostras de apoio/espaço livre, 17 testes de geometria e quatro de identidade/
+licenças do kit, 160 asserções do combate/
 rodada, 215 de inventário/economia e 96 de contenção. Os controladores reais
 passaram 100 verificações de combate, 27 de rodada e 7.554 de barricadas com APIs
 simuladas; há também 202 da política de impulso e 85 das regras preservadas. Verificação das fontes ativas
 no place. Os percursos também foram checados com os 164 objetos presentes.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
-controles/colisões das barricadas, multiplayer e equilíbrio. Ainda não se afirma qualidade visual equivalente ao
+controles/colisões das barricadas, multiplayer, equilíbrio e renderização/
+permissões dos meshes, sons e animações da AR importada. Ainda não se afirma qualidade visual equivalente ao
 Counter-Strike ou desempenho aprovado.
 
 Durante Play, na Command Bar em contexto **Server**:

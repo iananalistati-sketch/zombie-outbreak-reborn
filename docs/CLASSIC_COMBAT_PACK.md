@@ -22,8 +22,9 @@ por golpe e vitória humana por sobreviver ao tempo.
 
 ## Arsenal com funções distintas
 
-Todos os modelos de primeira pessoa são construções procedurais originais e
-provisórias. Não são modelos, animações ou sons importados de Counter-Strike.
+A carabina inicial agora usa a [AR do Roblox Weapons Kit](REUSED_WEAPON_KIT.md),
+com mesh, sons, flash, ferrolho e animações R15. As outras quatro armas mantêm
+os modelos procedurais provisórios. Nenhum desses assets veio de Counter-Strike.
 
 | Arma | Papel | Carregador / reserva | Intervalo | Recarga | Dano base | Preço |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -124,10 +125,12 @@ O controlador de barricadas passou 7.554 verificações, com multiplicadores
 específicos de arma e cenários de 164 e 180 objetos. A política física passou
 202 verificações e as regras de barricada preservadas, 85.
 
-Também passaram os 17 testes Python de geometria, a compilação Luau, o build
+Na entrega original deste pacote também passaram os 17 testes Python de geometria, a compilação Luau, o build
 Rojo XML/binário e a identidade de 21 fontes ativas. O arquivo nativo contém
 7.700 instâncias, incluindo os módulos e a interface do novo arsenal. Esses
-números descrevem verificações de código e conteúdo, não partidas reais.
+números descrevem verificações daquela entrega, não partidas reais. A AR
+reutilizada foi adicionada posteriormente; sua origem, integração e roteiro
+de validação estão em [REUSED_WEAPON_KIT.md](REUSED_WEAPON_KIT.md).
 
 O backup antes da correção de barricadas está em
 `backup/before-barricade-resistance-6d13145`; antes do arsenal, em

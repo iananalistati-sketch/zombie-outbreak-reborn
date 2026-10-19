@@ -2,8 +2,10 @@
 
 A preferência do usuário está registrada em [AGENTS.md](../AGENTS.md) para os
 próximos trabalhos: reaproveitar componentes reais antes de desenvolver sistemas
-equivalentes. A última entrega de combate ainda é uma implementação própria;
-esta alteração não afirma que ela foi substituída por um kit externo.
+equivalentes. A carabina inicial agora usa a AR, sons, animações e trechos de
+apresentação do Roblox Weapons Kit; veja a [integração entregue](REUSED_WEAPON_KIT.md).
+Os controladores de combate permanecem próprios e as outras quatro armas ainda
+usam os modelos procedurais anteriores.
 
 ## Base concreta para armas
 
@@ -11,7 +13,7 @@ A documentação oficial da Roblox fornece o
 [Weapons Kit](https://create.roblox.com/docs/resources/weapons-kit), incluindo
 prefabs de pistola, escopeta, rifle automático e submetralhadora com um sistema
 de armas associado. A documentação descreve câmera sobre o ombro e projéteis;
-a compatibilidade com nossa primeira pessoa precisa ser examinada nos fontes.
+a integração atual adapta sua apresentação à primeira pessoa do K-17.
 
 Os IDs abaixo foram lidos na documentação oficial, não inferidos de modelos
 aleatórios da Toolbox:
@@ -27,15 +29,23 @@ O kit usa a [Roblox Limited Use License](https://create.roblox.com/docs/resource
 não MIT. A licença permite incorporar e modificar o material para aplicações
 na plataforma Roblox, com suas condições e atribuições.
 
-## Dependência que permanece bloqueada
+## Download direto e fonte alternativa obtida
 
 Nesta nuvem, os pedidos de download dos prefabs a
 `assetdelivery.roblox.com` retornaram `Tunnel connection failed: 403 Forbidden`.
-Os modelos, fontes internos, animações, sons e dependências desses prefabs
-**não foram obtidos nem testados aqui**. Não há integração de armas oficiais
-concluída, nem conexão desta nuvem com o Studio do usuário.
+Esse caminho direto permanece bloqueado. Entretanto, foi obtido pelo GitHub o
+[Roblox Weapon Kit Fix](https://github.com/JustAT0rtoise/Roblox-Weapon-Kit-Fix/tree/72229de581a9c38272b10e4353804c80ac0c6379),
+que contém um kit nativo completo com uma AR. O arquivo original e as fontes
+foram examinados; a AR e seus componentes de apresentação já estão no perfil
+ativo. Origem, hash e as duas licenças estão na
+[atribuição](../third_party/roblox-weapon-kit/ATTRIBUTION.md).
 
-Foi preparado o [importador para revisão](../tools/studio/ImportOfficialWeapons.luau).
+Não foram obtidos os outros três prefabs da tabela acima. A apresentação da AR
+ainda precisa de validação no Studio; não há conexão com o computador do usuário.
+
+O [importador para revisão](../tools/studio/ImportOfficialWeapons.luau) continua
+disponível para obter os demais prefabs pelo Studio; ele não é necessário para
+usar a AR já incluída nesta entrega.
 Ele precisa ser executado no Studio, em modo de edição, usando a conta local:
 
 1. Copie o arquivo inteiro para a Command Bar e execute fora de Play.

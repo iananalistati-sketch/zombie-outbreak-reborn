@@ -48,12 +48,18 @@
         "Containment": {
           "$path": "src/maps/k17/gameplay/Containment.luau"
         },
+        "ReusedRiflePresentation": {
+          "$path": "src/maps/k17/gameplay/ReusedRiflePresentation.luau"
+        },
         "RoundRules": {
           "$path": "src/maps/k17/gameplay/RoundRules.luau"
         }
       },
       "K17Refuges": {
         "$path": "src/maps/k17/Refuges.luau"
+      },
+      "ZO_ReusedWeaponKit": {
+        "$path": "src/third_party/roblox-weapon-kit/Presentation.rbxmx"
       }
     },
     "ServerScriptService": {
@@ -77,6 +83,9 @@
         },
         "Barricades": {
           "$path": "src/maps/k17/barricades/Server.server.luau"
+        },
+        "EquipmentVisuals": {
+          "$path": "src/maps/k17/gameplay/EquipmentVisuals.server.luau"
         }
       }
     },

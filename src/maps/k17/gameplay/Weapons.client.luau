@@ -1,5 +1,6 @@
 --!strict
--- Original procedural viewmodels; authoritative hits, inventory and ammunition live on the server.
+-- Default rifle uses the imported Roblox Weapons Kit AR; other weapons retain
+-- their existing viewmodels. Authoritative hits/inventory stay on our server.
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
@@ -7,11 +8,22 @@ local UIS=game:GetService("UserInputService")
 local CAS=game:GetService("ContextActionService")
 local GuiService=game:GetService("GuiService")
 local Debris=game:GetService("Debris")
+local ContentProvider=game:GetService("ContentProvider")
+local StarterGui=game:GetService("StarterGui")
 local player=Players.LocalPlayer
 local playerGui=player:WaitForChild("PlayerGui") :: PlayerGui
+-- The kit Tool is a replicated visual; slots 1/2/Q remain server-controlled.
+task.spawn(function()
+    for _=1,5 do
+        local ok=pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack,false) end)
+        if ok then return end
+        task.wait(.5)
+    end
+end)
 local shared=RS:WaitForChild("K17Gameplay")
 local Config=require(shared.Config)
 local Rules=require(shared.Rules)
+local ReusedRiflePresentation=require(shared:WaitForChild("ReusedRiflePresentation"))
 local rifle=RS:WaitForChild("ZO_FireRifle") :: RemoteEvent
 local melee=RS:WaitForChild("ZO_Melee") :: RemoteEvent
 local effects=RS:WaitForChild("ZO_CombatFX") :: RemoteEvent
@@ -42,6 +54,36 @@ local cross=label("Crosshair",UDim2.new(.5,-15,.5,-15),UDim2.fromOffset(30,30),2
 local status=label("Feedback",UDim2.new(.5,-250,1,-126),UDim2.fromOffset(500,36),14)
 status.TextWrapped=true
 local vm=Instance.new("Model");vm.Name="ZO_LocalWeapon";vm.Parent=workspace.CurrentCamera
+local reusedRifle: any=nil
+player:SetAttribute("ZO_ReusedWeaponAssetsStatus","Loading")
+task.spawn(function()
+    local kit=RS:WaitForChild("ZO_ReusedWeaponKit",15)
+    local template=kit and kit:FindFirstChild("AR")
+    if not template or not template:IsA("Tool") then
+        player:SetAttribute("ZO_ReusedWeaponAssetsStatus","Failed")
+        warn("[K17] Roblox Weapons Kit AR não está disponível no perfil atual.")
+        return
+    end
+    reusedRifle=ReusedRiflePresentation.new(template,vm)
+    if not reusedRifle then
+        player:SetAttribute("ZO_ReusedWeaponAssetsStatus","Failed")
+        warn("[K17] AR importado sem Handle, PrimaryPart ou HandleAttachment.")
+        return
+    end
+    local completed=false
+    task.delay(20,function()
+        if not completed then player:SetAttribute("ZO_ReusedWeaponAssetsStatus","Failed") end
+    end)
+    local failed=false
+    local ok,problem=pcall(function()
+        ContentProvider:PreloadAsync({template},function(_,fetchStatus)
+            if fetchStatus~=Enum.AssetFetchStatus.Success then failed=true end
+        end)
+    end)
+    completed=true
+    player:SetAttribute("ZO_ReusedWeaponAssetsStatus",if ok and not failed then "Ready" else "Failed")
+    if not ok or failed then warn("[K17] Assets do rifle indisponíveis neste cliente: "..tostring(problem or "falha de download/permissão")) end
+end)
 local parts: {{Object: Part,Offset: CFrame,Weapon: string,Flash: boolean}}={}
 local function part(name: string,size: Vector3,offset: CFrame,color: Color3,weapon: string,flash: boolean?)
     local obj=Instance.new("Part");obj.Name=weapon..name;obj.Size=size
@@ -57,12 +99,7 @@ local dark=Color3.fromRGB(24,29,29)
 local function gunPart(id: string,name: string,x: number,y: number,z: number,sx: number,sy: number,sz: number,color: Color3?)
     part(name,Vector3.new(sx,sy,sz),CFrame.new(x,y,z),color or steel,id)
 end
--- Distinct silhouettes rather than five recolours of one rifle. No imported weapon art.
-gunPart("Rifle","Receiver",.62,-.63,-1.85,.48,.42,1.85)
-gunPart("Rifle","Barrel",.62,-.5,-3.12,.12,.12,1.05,dark)
-gunPart("Rifle","Stock",.62,-.7,-.65,.36,.35,.72)
-gunPart("Rifle","Magazine",.62,-1.02,-1.8,.28,.7,.46,dark)
-gunPart("Rifle","Rail",.62,-.36,-1.85,.13,.13,1.1,dark)
+-- These four weapons have not yet been replaced with imported components.
 gunPart("SMG","Receiver",.58,-.65,-1.65,.4,.43,1.25)
 gunPart("SMG","Suppressor",.58,-.53,-2.65,.22,.22,.75,dark)
 gunPart("SMG","Grip",.58,-.99,-1.42,.26,.5,.3,dark)
@@ -84,6 +121,7 @@ gunPart("Pistol","Grip",.48,-.97,-1.13,.29,.55,.34,dark)
 gunPart("Pistol","FrontSight",.48,-.43,-1.85,.07,.09,.08,dark)
 local muzzleZ={Rifle=-3.69,SMG=-3.07,Shotgun=-3.96,LMG=-3.96,Pistol=-2.03}
 for _,id in Config.WeaponOrder do
+    if id=="Rifle" then continue end -- Its mesh, flash and grip come from the kit.
     local weapon=Config.Weapons[id]
     local x=if id=="Pistol" then .48 elseif id=="SMG" then .58 elseif id=="LMG" then .65 else .62
     part("MuzzleFlash",Vector3.new(.23,.23,.35),CFrame.new(x,-.51,muzzleZ[id]),Color3.fromRGB(255,209,111),id,true)
@@ -116,7 +154,10 @@ local function canMelee(): boolean
     local hum=humanoid()
     return Rules.canMelee(role(),phase(),hum~=nil and hum.Health>0)
 end
-local function stop() held=false;nextAction=0;recoil=0;flashUntil=0 end
+local function stop()
+    held=false;nextAction=0;recoil=0;flashUntil=0
+    if reusedRifle then reusedRifle:stop() end
+end
 local function action()
     local camera=workspace.CurrentCamera
     if not camera or UIS:GetFocusedTextBox() or menuOpen() or os.clock()<nextAction then return end
@@ -125,6 +166,7 @@ local function action()
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0) then
         nextAction=os.clock()+equipped.FireInterval+.005
         rifle:FireServer("Fire",camera.CFrame.LookVector)
+        if equipped.Id=="Rifle" and reusedRifle then reusedRifle:fire() end
         flashUntil=os.clock()+.045
         recoil=math.min(recoil+.08*equipped.Recoil,.32)
         camera.CFrame*=CFrame.Angles(math.rad(.3*equipped.Recoil),0,0)
@@ -198,11 +240,17 @@ melee.OnClientEvent:Connect(function(kind: string,value: any)
     else notice="" end
     noticeUntil=os.clock()+1
 end)
-effects.OnClientEvent:Connect(function(kind: string,origin: any,destination: any,_shooter: any,weaponId: any)
+effects.OnClientEvent:Connect(function(kind: string,origin: any,destination: any,shooter: any,weaponId: any)
     if kind=="PracticeAim" and RunService:IsStudio() and typeof(origin)=="Vector3" and typeof(destination)=="Vector3" then
         practiceOrigin=origin;practiceTarget=destination;practiceDeadline=os.clock()+3;return
     end
     if kind~="Shot" or typeof(origin)~="Vector3" or typeof(destination)~="Vector3" then return end
+    -- The local rifle predicts its presentation once; never double the server echo.
+    if weaponId=="Rifle" and shooter~=player.UserId and typeof(shooter)=="number" then
+        local other=Players:GetPlayerByUserId(shooter)
+        local tool=other and other.Character and other.Character:FindFirstChild("ZO_EquippedRifle")
+        if tool then ReusedRiflePresentation.playWorldShot(tool) end
+    end
     local distance=(destination-origin).Magnitude
     if distance<.1 then return end
     -- Query-free, short-lived trace; it never participates in hit detection.
@@ -244,6 +292,19 @@ RunService.RenderStepped:Connect(function(dt)
     local remaining=math.max(0,(player:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow())
     local equipping=workspace:GetServerTimeNow()<(player:GetAttribute("ZO_EquipReadyAt") or 0)
     local reloadPose=if reloading then CFrame.new(0,-.3,.2)*CFrame.Angles(-.4,0,-.2) elseif equipping then CFrame.new(0,-.24,.15) else CFrame.identity
+    if reusedRifle then
+        local rifleVisible=equipped.Id=="Rifle" and gun
+        reusedRifle:update(camera.CFrame,reloadPose*CFrame.new(0,0,recoil),rifleVisible)
+        reusedRifle:setReloading(rifleVisible and reloading,remaining)
+    end
+    -- The replicated character tool is for observers. Only this client's copy
+    -- is hidden in first person; other players retain their positional AR mesh.
+    local worldRifle=player.Character and player.Character:FindFirstChild("ZO_EquippedRifle")
+    if worldRifle then
+        for _,descendant in worldRifle:GetDescendants() do
+            if descendant:IsA("BasePart") then descendant.LocalTransparencyModifier=if firstPerson then 1 else 0 end
+        end
+    end
     local swing=math.max(0,(swingUntil-os.clock())/.24)
     for _,entry in parts do
         local obj=entry.Object
@@ -261,7 +322,9 @@ RunService.RenderStepped:Connect(function(dt)
     health.Text=("%s  %d"):format(if zombie then "ZUMBI" else "VIDA",math.ceil(if hum then hum.Health else 0))
     cross.Text=if os.clock()<hitUntil then "×" else "+"
     cross.TextColor3=if os.clock()<hitUntil and hitHead then Color3.fromRGB(255,109,91) elseif zombie then Color3.fromRGB(211,128,101) else Color3.fromRGB(230,222,192)
-    status.Text=if os.clock()<noticeUntil then notice elseif gun and clip==0 then "R: recarregar · 1 / 2: trocar arma"
+    status.Text=if os.clock()<noticeUntil then notice
+        elseif gun and equipped.Id=="Rifle" and player:GetAttribute("ZO_ReusedWeaponAssetsStatus")=="Failed" then "Rifle: falha ao carregar assets · veja o Output"
+        elseif gun and clip==0 then "R: recarregar · 1 / 2: trocar arma"
         elseif zombie then "Segure atacar para golpear e infectar" else ""
     status.Visible=active
     local triggerButton=CAS:GetButton("ZO_Trigger")

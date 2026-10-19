@@ -1,0 +1,10 @@
+{
+  "name": "Pinned upstream weapon kit audit",
+  "tree": {
+    "$className": "DataModel",
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "UpstreamKit": { "$path": "RobloxWeaponKitFix_v1.1.4.rbxm" }
+    }
+  }
+}

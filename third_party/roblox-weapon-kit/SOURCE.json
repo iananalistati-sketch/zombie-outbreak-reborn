@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/JustAT0rtoise/Roblox-Weapon-Kit-Fix",
+  "revision": "72229de581a9c38272b10e4353804c80ac0c6379",
+  "file": "RobloxWeaponKitFix_v1.1.4.rbxm",
+  "sha256": "ae17731762be2382e1257c488d91e616333991f9fc12eeecb54597bc0c72fb73",
+  "original_documentation": "https://create.roblox.com/docs/resources/weapons-kit",
+  "licenses": {
+    "original_kit": "Roblox Limited Use License",
+    "fork_changes": "MIT Copyright (c) 2025 JustATortoise"
+  },
+  "runtime_assets": "src/third_party/roblox-weapon-kit/Presentation.rbxmx",
+  "runtime_upstream_scripts": false
+}

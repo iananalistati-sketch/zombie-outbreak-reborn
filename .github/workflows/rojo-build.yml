@@ -51,6 +51,8 @@ jobs:
           rojo --version
       - name: Build game
         run: |
+          rojo build third_party/roblox-weapon-kit/upstream.project.json --output /tmp/upstream-weapons.rbxlx
+          python scripts/extract_reused_weapon_kit.py /tmp/upstream-weapons.rbxlx --check
           rojo build default.project.json --output /tmp/k17.rbxlx
           rojo build default.project.json --output /tmp/ZombieOutbreakReborn_K17.rbxl
           python scripts/check_studio_file.py --binary /tmp/ZombieOutbreakReborn_K17.rbxl --manifest /tmp/K17.release.json --write
