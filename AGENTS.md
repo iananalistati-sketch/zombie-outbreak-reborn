@@ -32,3 +32,15 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
   essa dependência antes de anunciar integração concluída.
 - Não introduzir código baixado na execução do jogo sem revisar suas fontes.
   Guardar importações externas desativadas e separadas até a revisão.
+
+## Ordem de desenvolvimento e aceitação
+
+- Pedido de 28/10/2026: auditar e estabilizar primeiro o ciclo completo de Zombie
+  Survival; depois aprimorar mapa, armas/sons/interface e, então, Zombie Escape.
+  Os dois modos fazem parte do projeto, mas Escape ainda não está implementado.
+- Preservar sistemas que passam nas verificações; corrigir falhas reproduzidas
+  antes de considerar substituições. Não executar todas as fases simultaneamente.
+- Validação visual e multiplayer no motor Roblox permanece pendente até execução
+  real. Testes com APIs simuladas e arquivos compilados não satisfazem essa etapa.
+- Os drivers em `tests/studio` pertencem somente ao place de validação separado.
+  Nunca incluir automação, posições fixas ou rodadas curtas no perfil jogável.

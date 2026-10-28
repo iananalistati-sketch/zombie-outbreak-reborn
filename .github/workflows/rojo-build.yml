@@ -38,6 +38,7 @@ jobs:
           /tmp/luau_release/luau tests/gameplay/containment.spec.luau
           python scripts/test_round_controller.py --luau /tmp/luau_release/luau
           python scripts/test_combat_controller.py --luau /tmp/luau_release/luau
+          python scripts/test_survival_cycle.py --luau /tmp/luau_release/luau
           python scripts/test_loadout_client.py --luau /tmp/luau_release/luau
           python tests/barricades/run_runtime.py --luau /tmp/luau_release/luau
       - name: Install Rojo 7.7.1
@@ -56,10 +57,13 @@ jobs:
           rojo build default.project.json --output /tmp/k17.rbxlx
           rojo build default.project.json --output /tmp/ZombieOutbreakReborn_K17.rbxl
           python scripts/check_studio_file.py --binary /tmp/ZombieOutbreakReborn_K17.rbxl --manifest /tmp/K17.release.json --write
+          python scripts/build_studio_survival_test.py --output /tmp/ZombieOutbreakReborn_SurvivalTest.rbxl
+          python scripts/build_studio_survival_test.py --output /tmp/survival-test.rbxlx
       - name: Validate generated map
         run: |
           python scripts/validate_k17.py --quiet --place /tmp/k17.rbxlx --binary /tmp/ZombieOutbreakReborn_K17.rbxl
           python scripts/validate_gameplay.py --place /tmp/k17.rbxlx
+          python scripts/validate_gameplay.py --place /tmp/survival-test.rbxlx --studio-test
       - name: Upload playable Studio place
         uses: actions/upload-artifact@v4
         with:
@@ -67,3 +71,4 @@ jobs:
           path: |
             /tmp/ZombieOutbreakReborn_K17.rbxl
             /tmp/K17.release.json
+            /tmp/ZombieOutbreakReborn_SurvivalTest.rbxl

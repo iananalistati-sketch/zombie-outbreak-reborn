@@ -28,6 +28,7 @@ local nextMelee: {[Player]: number}={}
 local nextFire: {[Player]: number}={}
 local rewardedSurvival: {[Player]: number}={}
 local deathConnections: {[Player]: RBXScriptConnection}={}
+local removingCharacters: {[Player]: Model}={}
 local suppressed: {[Model]: any}={}
 local rng=Random.new()
 
@@ -38,7 +39,8 @@ local function character(player: Player): (Model?,BasePart?,Humanoid?)
     local char=player.Character
     local head=char and char:FindFirstChild("Head")
     local hum=char and char:FindFirstChildOfClass("Humanoid")
-    if not char or not head or not head:IsA("BasePart") or not hum or hum.Health<=0 then return nil,nil,nil end
+    if not char or removingCharacters[player]==char or not char:IsDescendantOf(workspace)
+        or not head or not head:IsA("BasePart") or not hum or hum.Health<=0 then return nil,nil,nil end
     return char,head,hum
 end
 local function practice(): boolean
@@ -57,6 +59,16 @@ local function targetRole(model: Model): string?
     if player then return role(player) end
     local folder=workspace:FindFirstChild("ZO_PracticeTargets")
     if practice() and folder and model:IsDescendantOf(folder) then return model:GetAttribute("ZO_PracticeRole") end
+    return nil
+end
+local function targetModel(part: Instance): Model?
+    -- Accessories and imported rigs may contain nested Models. Resolve the
+    -- actual participant/practice character instead of stopping at decoration.
+    local ancestor: Instance?=part.Parent
+    while ancestor and ancestor~=workspace do
+        if ancestor:IsA("Model") and targetRole(ancestor)~=nil then return ancestor end
+        ancestor=ancestor.Parent
+    end
     return nil
 end
 local function sync(player: Player)
@@ -122,11 +134,14 @@ local function resetWeapons(player: Player)
     loadout:resetWeapons();nextFire[player]=nil;nextMelee[player]=nil;sync(player)
 end
 local function bindCharacter(player: Player,char: Model)
+    if player.Character~=char or not loadouts[player] then return end
+    removingCharacters[player]=nil
     if deathConnections[player] then deathConnections[player]:Disconnect();deathConnections[player]=nil end
     if role(player)=="Humans" then resetWeapons(player) end
     task.spawn(function()
         local hum=char:WaitForChild("Humanoid",10)
-        if not hum or not hum:IsA("Humanoid") or player.Character~=char or not loadouts[player] then return end
+        if not hum or not hum:IsA("Humanoid") or player.Character~=char or removingCharacters[player]==char
+            or not loadouts[player] then return end
         deathConnections[player]=hum.Died:Connect(function()
             if player.Character~=char then return end
             local loadout=loadouts[player]
@@ -139,6 +154,16 @@ local function join(player: Player)
     loadouts[player]=LoadoutState.new(Config)
     sync(player)
     player.CharacterAdded:Connect(function(char: Model) bindCharacter(player,char) end)
+    player.CharacterRemoving:Connect(function(char: Model)
+        -- CharacterRemoving can run before Parent/Character is cleared. Deny
+        -- that transition window without affecting a newer character.
+        clearSuppression(char,false)
+        if player.Character~=char then return end
+        removingCharacters[player]=char
+        if deathConnections[player] then deathConnections[player]:Disconnect();deathConnections[player]=nil end
+        local loadout=loadouts[player]
+        if loadout then loadout:cancelReloads();sync(player) end
+    end)
     player:GetPropertyChangedSignal("Team"):Connect(function()
         local current=role(player)
         -- Results is published before survivors move into Lobby. Both hooks
@@ -161,6 +186,7 @@ Players.PlayerRemoving:Connect(function(player: Player)
     if deathConnections[player] then deathConnections[player]:Disconnect();deathConnections[player]=nil end
     loadouts[player]=nil;lastRequest[player]=nil;nextMelee[player]=nil;nextFire[player]=nil
     rewardedSurvival[player]=nil
+    removingCharacters[player]=nil
 end)
 workspace:GetAttributeChangedSignal("ZO_PracticeRevision"):Connect(function()
     if practice() then
@@ -289,7 +315,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
             end
             continue
         end
-        local model=hit.Instance:FindFirstAncestorOfClass("Model")
+        local model=targetModel(hit.Instance)
         if not model or targetRole(model)~="Zombies" then continue end
         local victim=model:FindFirstChildOfClass("Humanoid")
         if not victim or victim.Health<=0 then continue end
@@ -342,7 +368,7 @@ melee.OnServerEvent:Connect(function(player: Player,direction: any)
     nextMelee[player]=now+Config.Melee.Cooldown
     local hit=trace(char,head,direction,Config.Melee.Range)
     if not hit then melee:FireClient(player,"Miss");return end
-    local model=hit.Instance:FindFirstAncestorOfClass("Model")
+    local model=targetModel(hit.Instance)
     if model and targetRole(model)=="Humans" then
         local realVictim=Players:GetPlayerFromCharacter(model)
         local infected=infection:Invoke(player,model)

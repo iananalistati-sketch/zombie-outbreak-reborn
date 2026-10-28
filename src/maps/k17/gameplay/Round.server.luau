@@ -50,6 +50,7 @@ local state="Waiting"
 local roundId=0
 local participants: {[Player]: boolean}={}
 local previousMothers: {[Player]: boolean}={}
+local characterCleanups: {[Player]: () -> ()}={}
 
 local function alive(model: Model?): boolean
     local hum=model and model:FindFirstChildOfClass("Humanoid")
@@ -58,7 +59,8 @@ end
 local function characterReady(player: Player): boolean
     local char=player.Character
     local root=char and char:FindFirstChild("HumanoidRootPart")
-    return player.Parent==Players and alive(char) and root~=nil and root:IsA("BasePart")
+    return player.Parent==Players and char~=nil and char:IsDescendantOf(workspace)
+        and alive(char) and root~=nil and root:IsA("BasePart")
 end
 local function readyCount(): number
     local ready=0
@@ -117,26 +119,66 @@ end
 local function join(player: Player)
     player:SetAttribute("ZO_SurvivedRound",0)
     setRole(player,lobby)
+    local currentCharacter: Model?=nil
+    local boundHumanoid: Humanoid?=nil
+    local diedConnection: RBXScriptConnection?=nil
+    local characterConnections: {RBXScriptConnection}={}
+    local placed=false
+    local function clearCharacter()
+        for _,connection in characterConnections do connection:Disconnect() end
+        table.clear(characterConnections)
+        if diedConnection then diedConnection:Disconnect();diedConnection=nil end
+        boundHumanoid=nil;currentCharacter=nil;placed=false
+    end
+    characterCleanups[player]=clearCharacter
     local function characterAdded(char: Model)
-        local root=char:WaitForChild("HumanoidRootPart",10)
-        local hum=char:WaitForChild("Humanoid",10)
-        if not root or not hum or not hum:IsA("Humanoid") or player.Character~=char or player.Parent~=Players then return end
-        hum.Died:Connect(function()
-            if player.Character~=char or state~="Active" or not participants[player] then return end
-            if player.Team==humans then setRole(player,zombies) end
-            -- Zombies retain their role while waiting for Roblox character respawn.
-        end)
-        style(player)
-        if participants[player] and (state=="Preparation" or state=="Active") then
-            teleport(player,if player.Team==zombies then zombieSpawn else humanSpawn)
-        else teleport(player,lobbySpawn) end
+        if player.Character~=char or player.Parent~=Players then return end
+        clearCharacter();currentCharacter=char
+        local function refreshCharacter()
+            if currentCharacter~=char or player.Character~=char or player.Parent~=Players
+                or not char:IsDescendantOf(workspace) then return end
+            local hum=char:FindFirstChildOfClass("Humanoid")
+            if hum~=boundHumanoid then
+                if diedConnection then diedConnection:Disconnect();diedConnection=nil end
+                boundHumanoid=hum;placed=false
+                if hum then
+                    -- Bind death independently of the root arriving. A character
+                    -- loading longer than 10s must not enter rounds without this.
+                    diedConnection=hum.Died:Connect(function()
+                        if currentCharacter~=char or player.Character~=char or boundHumanoid~=hum
+                            or state~="Active" or not participants[player] then return end
+                        if player.Team==humans then setRole(player,zombies) end
+                        -- Zombies retain their role until Roblox respawns them.
+                    end)
+                end
+            end
+            local root=char:FindFirstChild("HumanoidRootPart")
+            if placed or not hum or hum.Health<=0 or not root or not root:IsA("BasePart") then return end
+            placed=true;style(player)
+            if participants[player] and (state=="Preparation" or state=="Active") then
+                teleport(player,if player.Team==zombies then zombieSpawn else humanSpawn)
+            else teleport(player,lobbySpawn) end
+        end
+        table.insert(characterConnections,char.ChildAdded:Connect(function(child)
+            if child:IsA("Humanoid") or child.Name=="HumanoidRootPart" then refreshCharacter() end
+        end))
+        table.insert(characterConnections,char.ChildRemoved:Connect(function(child)
+            if child==boundHumanoid or child.Name=="HumanoidRootPart" then placed=false;refreshCharacter() end
+        end))
+        table.insert(characterConnections,char.AncestryChanged:Connect(refreshCharacter))
+        refreshCharacter()
     end
     player.CharacterAdded:Connect(characterAdded)
+    player.CharacterRemoving:Connect(function(char)
+        if currentCharacter==char then clearCharacter() end
+    end)
     if player.Character then task.spawn(characterAdded,player.Character) end
 end
 Players.PlayerAdded:Connect(join)
 for _,player in Players:GetPlayers() do join(player) end
 Players.PlayerRemoving:Connect(function(player)
+    local cleanupCharacter=characterCleanups[player]
+    if cleanupCharacter then cleanupCharacter();characterCleanups[player]=nil end
     participants[player]=nil;previousMothers[player]=nil;updateCounts()
 end)
 Players.RespawnTime=Config.RespawnSeconds

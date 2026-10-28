@@ -21,6 +21,7 @@ def release(binary):
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
     assert names.count('Hull')>=164,'The expanded barricade catalog is missing'
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
+    assert not {'ZO_StudioSurvivalScenario','ZO_StudioSurvivalDriver'}&set(names),'Automated Studio drivers in playable release'
     assert len(names)==sum(count for _,count in classes.values()),'Incomplete native Name properties'
     for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
                  'src/maps/k17/barricades/Server.server.luau','src/maps/k17/barricades/Config.luau','src/maps/k17/barricades/Physics.luau',

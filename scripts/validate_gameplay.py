@@ -22,7 +22,7 @@ def at(root,path):
     return root
 
 
-def validate(path):
+def validate(path,studio_test=False):
     root=ET.parse(path).getroot()
     bindings={
         'ServerScriptService/ZO_Server/ZombieRound':'src/maps/k17/gameplay/Round.server.luau',
@@ -48,6 +48,20 @@ def validate(path):
         assert item.attrib['class']==expected,(instance_path,item.attrib['class'],expected)
         source=item.findtext('./Properties/*[@name="Source"]')
         assert source is not None and source.replace('\r\n','\n')==(ROOT/source_path).read_text(),instance_path
+    driver_paths={
+        'ServerScriptService/ZO_StudioSurvivalScenario':'tests/studio/SurvivalScenario.server.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_StudioSurvivalDriver':'tests/studio/SurvivalDriver.client.luau',
+    }
+    if studio_test:
+        for instance_path,source_path in {**driver_paths,
+            'ReplicatedStorage/Shared/RoundConfig':'tests/studio/RoundConfig.luau',
+            'ReplicatedStorage/Shared/ProductionRoundConfig':'src/maps/k17/RoundConfig.luau',
+        }.items():
+            assert at(root,instance_path).findtext('./Properties/*[@name="Source"]')==(ROOT/source_path).read_text(),instance_path
+    else:
+        names={item.findtext('./Properties/string[@name="Name"]') for item in root.iter('Item')}
+        assert not {path.rsplit('/',1)[-1] for path in driver_paths}&names,'Test drivers in production profile'
+        assert at(root,'ReplicatedStorage/Shared/RoundConfig').findtext('./Properties/*[@name="Source"]')==(ROOT/'src/maps/k17/RoundConfig.luau').read_text(),'Short test rounds in production profile'
     for name in ('Infect','DamageBarricade','PushBarricade'):
         assert at(root,'ServerStorage/ZO_Gameplay/'+name).attrib['class']=='BindableFunction'
     legacy={(ROOT/p).read_text() for p in ('src/server/ZombieRound.server.luau','src/server/Combat.server.luau','src/client/Rifle.client.luau')}
@@ -56,8 +70,10 @@ def validate(path):
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Combat.server.luau').read_text() for s in sources)==1
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Round.server.luau').read_text() for s in sources)==1
     print(f'PASS classic profile: {len(bindings)} exact source bindings, three private server functions, one round/combat controller, no legacy proximity/rifle controllers')
+    print('PASS isolated Studio validation drivers and test config' if studio_test else 'PASS production round config; no automated test drivers')
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--place',required=True,type=Path)
-    validate(parser.parse_args().place)
+    parser.add_argument('--studio-test',action='store_true',help='Verify the isolated Studio validation profile')
+    args=parser.parse_args();validate(args.place,args.studio_test)

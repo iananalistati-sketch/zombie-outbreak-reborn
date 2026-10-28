@@ -31,6 +31,8 @@ local function simulation(options)
     local instance
     instance=function(class,name,parent)
         local raw={ClassName=class,Name=name or class,Parent=parent,_children={},_attrs={},_attrSignals={},_propSignals={}}
+        raw.ChildAdded=signal();raw.ChildRemoved=signal();raw.AncestryChanged=signal()
+        if class=="Humanoid" then raw.Health=100;raw.Died=signal() end
         if parent then parent._children[raw.Name]=raw end
         local methods={}
         function methods:IsA(kind) return class==kind or kind=="Instance" or (class=="Part" and kind=="BasePart") end
@@ -50,14 +52,19 @@ local function simulation(options)
         end
         function methods:GetAttributeChangedSignal(name) raw._attrSignals[name]=raw._attrSignals[name] or signal();return raw._attrSignals[name] end
         function methods:GetPropertyChangedSignal(name) raw._propSignals[name]=raw._propSignals[name] or signal();return raw._propSignals[name] end
-        function methods:Destroy() if raw.Parent then raw.Parent._children[raw.Name]=nil end;raw.Parent=nil end
+        function methods:Destroy()
+            if raw.Parent then raw.Parent._children[raw.Name]=nil;raw.Parent.ChildRemoved:Fire(raw) end
+            raw.Parent=nil
+        end
         function methods:PivotTo(value) raw.Pivot=value;raw.PivotCount=(raw.PivotCount or 0)+1 end
         function methods:IsDescendantOf(ancestor) local node=raw.Parent;while node do if node==ancestor then return true end;node=node.Parent end;return false end
-        return setmetatable(raw,{__index=function(_,key) return methods[key] or raw._children[key] end,__newindex=function(_,key,value)
+        local result=setmetatable(raw,{__index=function(_,key) return methods[key] or raw._children[key] end,__newindex=function(_,key,value)
             rawset(raw,key,value)
             if key=="Parent" and value then value._children[raw.Name]=raw end
             if raw._propSignals[key] then raw._propSignals[key]:Fire() end
         end})
+        if parent then parent.ChildAdded:Fire(result) end
+        return result
     end
     local players=instance("Players","Players");players.PlayerAdded=signal();players.PlayerRemoving=signal()
     local list={}
@@ -86,6 +93,7 @@ local function simulation(options)
     local run={IsStudio=function() return options.studio~=false end}
     local services={Players=players,ReplicatedStorage=rs,ServerStorage=ss,Teams=teams,RunService=run,Workspace=world,ScriptContext=scriptContext}
     local function character(player)
+        if player.Character then player.CharacterRemoving:Fire(player.Character) end
         local char=instance("Model",player.Name.."Character",world)
         local root=instance("Part","HumanoidRootPart",char);root.Color={}
         local head=instance("Part","Head",char);head.Color={}
@@ -93,7 +101,7 @@ local function simulation(options)
         player.Character=char;player.CharacterAdded:Fire(char);return char
     end
     local function addPlayer(name,loaded)
-        local p=instance("Player",name,players);p.CharacterAdded=signal();p.UserId=#list+1
+        local p=instance("Player",name,players);p.CharacterAdded=signal();p.CharacterRemoving=signal();p.UserId=#list+1
         table.insert(list,p)
         if loaded then character(p) end
         players.PlayerAdded:Fire(p);return p
@@ -124,6 +132,13 @@ local function simulation(options)
     if options.dependencies~=false then rs:SetAttribute("ZO_GameplayCombatReady",true);rs:SetAttribute("ZO_BarricadesReady",true) end
     return {rs=rs,players=players,teams=teams,world=world,spawns=spawns,internal=internal,infect=infect,history=history,
         errors=errors,advance=advance,add=addPlayer,character=character,execute=execute,scriptContext=scriptContext,serverScript=serverScript,
+        create=instance,
+        reparent=function(value,parent)
+            if value.Parent then value.Parent._children[value.Name]=nil end
+            value.Parent=parent
+            if parent then parent._children[value.Name]=value end
+            value.AncestryChanged:Fire(value,parent)
+        end,
         remove=function(p) local i=table.find(list,p);if i then table.remove(list,i) end;p.Parent=nil;players.PlayerRemoving:Fire(p) end}
 end
 
@@ -170,6 +185,46 @@ do
     check(not stateSeen(s,"Preparation"),"two connected players with one unloaded character stay in explicit loading state")
     s.character(late);s.advance(totalBefore*2+5)
     check(stateSeen(s,"Active")~=nil and #s.errors==0,"late character loading resumes round without manual restart")
+end
+
+do
+    local s=simulation();s.add("A",true);local late=s.add("LateWorkspace",true)
+    s.reparent(late.Character,nil)
+    launch(s);s.advance(totalBefore+2)
+    check(not stateSeen(s,"Preparation"),"character outside Workspace cannot start a round")
+    check(late.Character.PivotCount==nil,"character outside Workspace is not teleported early")
+    s.reparent(late.Character,s.world);s.advance(totalBefore*2+5)
+    check(s.rs:GetAttribute("ZO_RoundState")=="Active" and #s.errors==0,"entering Workspace completes setup and starts the round")
+    check(late.Character.PivotCount==2,"late Workspace character receives lobby and round placement")
+end
+
+-- The old ten-second WaitForChild path abandoned character setup permanently.
+-- These players must still get the death-to-infection hook after loading late.
+for _,missing in {"HumanoidRootPart","Humanoid"} do
+    local s=simulation();local p1=s.add("LateA",true);local p2=s.add("LateB",true)
+    for _,p in {p1,p2} do p.Character:FindFirstChild(missing):Destroy() end
+    launch(s);s.advance(11)
+    check(not stateSeen(s,"Preparation"),"missing "..missing.." blocks readiness before loading")
+    for _,p in {p1,p2} do s.create(if missing=="Humanoid" then "Humanoid" else "Part",missing,p.Character) end
+    s.advance(11+totalBefore+2)
+    check(s.rs:GetAttribute("ZO_RoundState")=="Active" and #s.errors==0,"late "..missing.." resumes the real round")
+    local human=if p1.Team.Name=="Humans" then p1 else p2
+    human.Character.Humanoid.Health=0;human.Character.Humanoid.Died:Fire()
+    s.advance(11+totalBefore+2.01)
+    check(human.Team.Name=="Zombies","late "..missing.." still binds death-to-infection")
+    s.advance(11+totalBefore+3)
+    check(s.rs:GetAttribute("ZO_LastWinner")=="Zombies","last human dying after late "..missing.." ends round")
+end
+
+do
+    local s=simulation();local p1=s.add("A",true);local p2=s.add("B",true);launch(s);s.advance(totalBefore+1)
+    local human=if p1.Team.Name=="Humans" then p1 else p2
+    local old=human.Character
+    local replacement=s.character(human);s.advance(totalBefore+1.1)
+    old.Humanoid.Health=0;old.Humanoid.Died:Fire();s.advance(totalBefore+1.2)
+    check(human.Team.Name=="Humans" and human.Character==replacement,"stale character death cannot infect its replacement")
+    replacement.Humanoid.Health=0;replacement.Humanoid.Died:Fire();s.advance(totalBefore+2)
+    check(s.rs:GetAttribute("ZO_LastWinner")=="Zombies","replacement character death keeps the round lifecycle intact")
 end
 
 do

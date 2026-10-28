@@ -2,6 +2,16 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
+**Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
+Carregamento tardio de personagens, remoção durante combate e acertos em modelos
+aninhados foram corrigidos. Os controladores de rodada e combate agora possuem
+um teste integrado. A aprovação multiplayer no motor continua pendente.
+
+Para executar o cenário automático com dois clientes, abra
+`builds/ZombieOutbreakReborn_SurvivalTest.rbxl` e siga o
+[roteiro do Studio](tests/studio/README.md). Esse arquivo é exclusivo de validação;
+o jogo normal continua em `builds/ZombieOutbreakReborn_K17.rbxl`.
+
 ## K-17 — Complexo de Contenção
 
 Mapa novo, independente de Santa Aurora e Harbor, com aproximadamente **600 × 600

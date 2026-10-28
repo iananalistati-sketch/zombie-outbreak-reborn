@@ -34,6 +34,7 @@ def run(luau):
         "local " + name + "=" + long_string((folder / source).read_text())
         for name, source in sources.items()
     ]
+    lines.append("local SIMULATION_SOURCE=" + long_string((ROOT / "tests/gameplay/support/CombatSimulation.luau").read_text()))
     lines.append((ROOT / "tests/gameplay/combat_runtime.spec.luau").read_text())
     with tempfile.TemporaryDirectory(prefix="zo-combat-controller-") as temporary:
         harness = Path(temporary) / "combat_runtime.spec.luau"
