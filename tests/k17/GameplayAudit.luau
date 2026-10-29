@@ -36,7 +36,13 @@ function Audit.run()
         record(weapon.Id==id and weapon.Magazine>0 and weapon.Reserve>0 and weapon.FireInterval>0
             and weapon.ReloadSeconds>0 and weapon.Pellets>=1,id.." complete weapon configuration")
     end
-    record(arsenalCount==5,"five configured firearms")
+    record(arsenalCount==4,"four configured firearms")
+    local kit=RS:FindFirstChild("ZO_WeaponAssets")
+    local templates=kit and kit:FindFirstChild("Weapons")
+    for _,id in arsenal.WeaponOrder do
+        local template=templates and templates:FindFirstChild(id)
+        record(template~=nil and template:IsA("Tool"),id.." real presentation template available")
+    end
     record(RS.K17Gameplay:FindFirstChild("LoadoutState")~=nil and RS.K17Gameplay:FindFirstChild("Containment")~=nil,"loadout and containment modules")
     for _,player in Players:GetPlayers() do
         local id=player:GetAttribute("ZO_WeaponId")

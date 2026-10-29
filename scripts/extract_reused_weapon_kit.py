@@ -10,7 +10,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
-TARGET=ROOT/'src/third_party/roblox-weapon-kit/Presentation.rbxmx'
+TARGET=ROOT/'src/third_party/roblox-weapon-kit/Arsenal.rbxmx'
 
 
 def name(item):
@@ -36,14 +36,17 @@ def extract(source):
     tool=copy.deepcopy(child(child(upstream,'_example_weapon'),'AR'))
     assert not any(i.get('class') in ('Script','LocalScript','ModuleScript') for i in tool.iter('Item'))
     tool.find('./Properties/bool[@name="CanBeDropped"]').text='false'
+    tool.find('./Properties/string[@name="Name"]').text='Rifle'
+    weapon_type=tool.find('Item[@class="StringValue"]')
+    if weapon_type is not None and name(weapon_type)=='WeaponType':tool.remove(weapon_type)
     root=ET.Element('roblox',{'version':'4'})
-    package=folder('ZO_ReusedWeaponKit','ZO_ReusedWeaponKit');root.append(package)
-    package.append(tool)
+    package=folder('ZO_WeaponAssets','ZO_WeaponAssets');root.append(package)
+    weapons=folder('Weapons','ZO_WeaponAssets_Weapons');package.append(weapons)
+    weapons.append(tool)
     package.append(copy.deepcopy(child(assets,'Animations')))
-    effects=folder('Effects','ZO_ReusedWeaponKit_Effects');package.append(effects)
+    effects=folder('Effects','ZO_WeaponAssets_Effects');package.append(effects)
     shots=child(child(assets,'Effects'),'Shots')
-    effects.append(copy.deepcopy(child(shots,'Bullet')))
-    effects.append(copy.deepcopy(child(child(child(assets,'Effects'),'Casings'),'RifleCasing')))
+    effects.append(copy.deepcopy(child(child(shots,'Bullet'),'HitEffect')))
     strings=source.find('SharedStrings')
     if strings is not None:root.append(copy.deepcopy(strings))
     assert not any(i.get('class') in ('Script','LocalScript','ModuleScript') for i in root.iter('Item'))
@@ -61,4 +64,4 @@ if __name__=='__main__':
     else:
         TARGET.parent.mkdir(parents=True,exist_ok=True)
         TARGET.write_text(data,encoding='utf-8')
-    print('PASS reused kit extraction: original AR, animations, bullet effects and casing; no executable scripts')
+    print('PASS bundled arsenal: original Rifle meshes, animations and used impact effect; no scripts or unused bullet/casing templates')

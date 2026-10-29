@@ -1,11 +1,16 @@
 # Reutilizar sistemas existentes
 
+Estado atual: [pacote FPS e dependências dos modelos oficiais](FPS_COMBAT_PACKAGE.md).
+Os blocos de armas anteriores e o importador de mera revisão foram substituídos.
+Os demais prefabs oficiais ainda não foram baixados na nuvem.
+
 A preferência do usuário está registrada em [AGENTS.md](../AGENTS.md) para os
 próximos trabalhos: reaproveitar componentes reais antes de desenvolver sistemas
 equivalentes. A carabina inicial agora usa a AR, sons, animações e trechos de
 apresentação do Roblox Weapons Kit; veja a [integração entregue](REUSED_WEAPON_KIT.md).
-Os controladores de combate permanecem próprios e as outras quatro armas ainda
-usam os modelos procedurais anteriores.
+Os controladores de combate permanecem próprios. O pacote FPS remove os modelos
+procedurais anteriores e prepara três outros prefabs oficiais; esses arquivos
+ainda não foram obtidos e não são anunciados como modelos embutidos.
 
 ## Base concreta para armas
 
@@ -43,18 +48,17 @@ ativo. Origem, hash e as duas licenças estão na
 Não foram obtidos os outros três prefabs da tabela acima. A apresentação da AR
 ainda precisa de validação no Studio; não há conexão com o computador do usuário.
 
-O [importador para revisão](../tools/studio/ImportOfficialWeapons.luau) continua
-disponível para obter os demais prefabs pelo Studio; ele não é necessário para
-usar a AR já incluída nesta entrega.
+O [importador de prefabs](../tools/studio/ImportOfficialWeapons.luau) usa o novo
+`WeaponAssetImport`, após abrir o arquivo da branch FPS. A AR embutida continua
+independente dessa operação.
 Ele precisa ser executado no Studio, em modo de edição, usando a conta local:
 
 1. Copie o arquivo inteiro para a Command Bar e execute fora de Play.
-2. O importador tenta carregar os quatro prefabs, desativa seus scripts antes
-   de colocá-los em `ServerStorage` e seleciona a pasta de revisão. Ele não
-   substitui arquivos nem conecta o material à partida.
-3. Salve a pasta selecionada como `.rbxmx` por **Save to File** no repositório
-   e sincronize pelo GitHub Desktop. Os fontes reais poderão então ser
-   examinados e adaptados, com atribuições e dependências preservadas.
+2. O importador faz backup em `ServerStorage`, tenta os quatro prefabs e remove
+   seus scripts/remotes antes de publicar os templates em `ZO_WeaponAssets`.
+   Confira o Output: a operação e suas permissões ainda não foram executadas aqui.
+3. Salve/exporte a pasta selecionada como `.rbxmx` e sincronize pelo GitHub Desktop
+   para que os modelos realmente obtidos possam ser incorporados ao repositório.
 
 O importador foi compilado em Luau; sua execução e a autorização para carregar
 os assets ainda dependem do Studio. Uma falha individual é informada no Output.

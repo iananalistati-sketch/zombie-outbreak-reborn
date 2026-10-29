@@ -1,5 +1,8 @@
 # Pacote de combate clássico — K-17
 
+> Registro da entrega anterior. O pacote FPS substitui a apresentação e reduz o
+> catálogo para quatro armas; veja [estado atual e modelos pendentes](FPS_COMBAT_PACKAGE.md).
+
 Esta entrega conecta arsenal, compras, inventário, munição, contenção por tiros e
 barricadas ao ciclo existente de Zombie Survival. O mapa original K-17 mantém os
 34 refúgios, quatro dutos e 164 objetos móveis. A partida continua com todos

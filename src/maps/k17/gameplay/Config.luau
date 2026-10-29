@@ -6,7 +6,7 @@ local Weapons = table.freeze({
         Id="Rifle", Label="Carabina", Slot="Primary", Price=1500,
         Magazine=30, Reserve=120, FireInterval=.105, ReloadSeconds=2.4,
         Range=280, Damage=22, Knockback=1, PropScale=1,
-        Spread=.5, MoveSpread=1.3, Recoil=1, Automatic=true, Pellets=1,
+        Spread=.5, MoveSpread=1.3, AimSpread=.22, AimMoveSpread=.9, Recoil=1, Automatic=true, Pellets=1,
         Color=table.freeze({79,158,204}),
         Description="Precisão e cadência equilibradas para segurar corredores.",
     }),
@@ -14,7 +14,7 @@ local Weapons = table.freeze({
         Id="SMG", Label="Submetralhadora", Slot="Primary", Price=1000,
         Magazine=32, Reserve=160, FireInterval=.075, ReloadSeconds=2,
         Range=200, Damage=14, Knockback=.75, PropScale=.7,
-        Spread=.9, MoveSpread=1.6, Recoil=.65, Automatic=true, Pellets=1,
+        Spread=.9, MoveSpread=1.6, AimSpread=.5, AimMoveSpread=1.2, Recoil=.65, Automatic=true, Pellets=1,
         Color=table.freeze({102,195,151}),
         Description="Rajadas rápidas e recarga curta; melhor a curta distância.",
     }),
@@ -22,23 +22,15 @@ local Weapons = table.freeze({
         Id="Shotgun", Label="Escopeta", Slot="Primary", Price=2200,
         Magazine=8, Reserve=48, FireInterval=.85, ReloadSeconds=2.9,
         Range=140, Damage=10, Knockback=1.25, PropScale=1.6,
-        Spread=4, MoveSpread=5, Recoil=2, Automatic=false, Pellets=7,
+        Spread=4, MoveSpread=5, AimSpread=3, AimMoveSpread=4, Recoil=2, Automatic=false, Pellets=7,
         Color=table.freeze({221,158,78}),
         Description="Sete projéteis por disparo para conter entradas próximas.",
-    }),
-    LMG = table.freeze({
-        Id="LMG", Label="Metralhadora", Slot="Primary", Price=3200,
-        Magazine=80, Reserve=240, FireInterval=.11, ReloadSeconds=4.8,
-        Range=260, Damage=20, Knockback=.9, PropScale=.9,
-        Spread=1.2, MoveSpread=2, Recoil=1.2, Automatic=true, Pellets=1,
-        Color=table.freeze({193,108,96}),
-        Description="Muito fôlego de defesa; exige cobertura na recarga longa.",
     }),
     Pistol = table.freeze({
         Id="Pistol", Label="Pistola", Slot="Secondary", Price=0,
         Magazine=12, Reserve=72, FireInterval=.23, ReloadSeconds=1.6,
         Range=180, Damage=18, Knockback=.75, PropScale=.6,
-        Spread=.5, MoveSpread=1.2, Recoil=.8, Automatic=false, Pellets=1,
+        Spread=.5, MoveSpread=1.2, AimSpread=.25, AimMoveSpread=.9, Recoil=.8, Automatic=false, Pellets=1,
         Color=table.freeze({169,180,197}),
         Description="Arma secundária para emergências durante a recarga.",
     }),
@@ -46,7 +38,7 @@ local Weapons = table.freeze({
 
 return table.freeze({
     Weapons=Weapons,
-    WeaponOrder=table.freeze({"Rifle", "SMG", "Shotgun", "LMG", "Pistol"}),
+    WeaponOrder=table.freeze({"Rifle", "SMG", "Shotgun", "Pistol"}),
     Rifle=Weapons.Rifle, -- Compatibility for the original rifle state/controller.
     EquipSeconds=.25,
     Economy=table.freeze({

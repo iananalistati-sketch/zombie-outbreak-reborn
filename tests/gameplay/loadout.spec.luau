@@ -10,7 +10,7 @@ local function reject(expected,call,label)
 end
 
 check(Config.Rifle==Config.Weapons.Rifle,"legacy rifle alias retains the live tuning")
-check(#Config.WeaponOrder==5,"five selectable weapons")
+check(#Config.WeaponOrder==4,"four selectable weapons; unmodeled LMG removed")
 local ids={}
 for _,id in Config.WeaponOrder do
     local weapon=Config.Weapons[id]
@@ -54,7 +54,9 @@ local _,smg=l:current()
 check(smg:fire(2.5) and smg.ammo==31,"new primary uses its own state")
 reject("AlreadyOwned",function() return l:buy("SMG","Humans","Preparation",true,3) end,"repeated SMG purchase rejected")
 check(smg.ammo==31 and l.credits==2500,"repeat buy cannot refill or charge")
-reject("InsufficientCredits",function() return l:buy("LMG","Humans","Preparation",true,3) end,"unaffordable weapon rejected without a partial transaction")
+l.credits=2000
+reject("InsufficientCredits",function() return l:buy("Shotgun","Humans","Preparation",true,3) end,"unaffordable weapon rejected without a partial transaction")
+l.credits=2500
 check(l.primary=="SMG" and l.states.SMG==smg and l.credits==2500,"failed purchase retains original inventory")
 check(l:buy("Shotgun","Humans","Preparation",true,3.1),"another paid primary may replace SMG")
 check(l.credits==300 and not l.states.SMG and l.states.Pistol==pistol,"replacement gives no resale refund")
@@ -108,19 +110,19 @@ check(l:award(350)==350 and l.credits==1470,"kill reward applied once per caller
 check(l:award(999999)==10530 and l.credits==12000,"rewards clamp at maximum balance")
 check(l:award(800)==0 and l.credits==12000,"capped credit balance cannot overflow")
 check(l:beginRound(3) and l.credits==12000,"round stipend also observes the economy cap")
-check(l:buy("LMG","Humans","Preparation",true,200),"earned credits purchase expensive primary")
-local _,lmg=l:current()
-for i=0,79 do check(lmg:fire(201+i*.12),"LMG full magazine burst") end
-check(lmg.ammo==0 and not lmg:fire(220),"LMG obeys magazine limit")
+check(l:buy("SMG","Humans","Preparation",true,200),"earned credits purchase a primary")
+local _,burst=l:current()
+for i=0,Config.Weapons.SMG.Magazine-1 do check(burst:fire(201+i*.12),"SMG full magazine burst") end
+check(burst.ammo==0 and not burst:fire(220),"SMG obeys magazine limit")
 check(l:equip("Pistol",220),"secondary remains available when primary is empty")
-check(l.states.LMG==lmg and lmg.ammo==0,"backup switch cannot refill empty primary")
+check(l.states.SMG==burst and burst.ammo==0,"backup switch cannot refill empty primary")
 
 for _,badTime in {0/0,math.huge,-math.huge,"1",{},true} do
     local budget=l.credits
     reject("InvalidTime",function() return l:equip("Primary",badTime) end,"invalid draw time rejected")
     reject("InvalidTime",function() return l:buy("SMG","Humans","Preparation",true,badTime) end,"invalid purchase time rejected")
-    check(not lmg:reload(badTime) and not lmg:advance(badTime) and not lmg:fire(badTime),"invalid clock cannot bypass weapon state")
-    check(l.credits==budget and l.primary=="LMG","invalid-time request leaves economy untouched")
+    check(not burst:reload(badTime) and not burst:advance(badTime) and not burst:fire(badTime),"invalid clock cannot bypass weapon state")
+    check(l.credits==budget and l.primary=="SMG","invalid-time request leaves economy untouched")
 end
 check(not l:beginRound(nil) and not l:beginRound(0/0),"invalid round identity cannot grant income")
 print(("PASS arsenal loadout: %d assertions against actual inventory, economy, reload and weapon-state modules"):format(passed))

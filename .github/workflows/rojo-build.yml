@@ -40,6 +40,8 @@ jobs:
           python scripts/test_combat_controller.py --luau /tmp/luau_release/luau
           python scripts/test_survival_cycle.py --luau /tmp/luau_release/luau
           python scripts/test_loadout_client.py --luau /tmp/luau_release/luau
+          python scripts/test_weapons_client.py --luau /tmp/luau_release/luau
+          python scripts/test_weapon_import.py --luau /tmp/luau_release/luau
           python tests/barricades/run_runtime.py --luau /tmp/luau_release/luau
       - name: Install Rojo 7.7.1
         run: |

@@ -2,6 +2,11 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
+**Pacote FPS em desenvolvimento:** [implementação e pendência dos modelos oficiais](docs/FPS_COMBAT_PACKAGE.md).
+O pacote usa quatro armas configuradas, mira, braços R15 e prévia 3D. Somente a
+carabina está embutida; os outros prefabs dependem de importação Roblox ainda não
+executada. A branch `feat/fps-combat-package` permite revisar esse trabalho.
+
 **Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
 Carregamento tardio de personagens, remoção durante combate e acertos em modelos
 aninhados foram corrigidos. Os controladores de rodada e combate agora possuem
@@ -39,11 +44,11 @@ referências verificadas de infecção, knockback e diferenças do protótipo at
 
 **Atual: [34 refúgios detalhados e 164 objetos de barricada](docs/K17_DEFENSE_DENSITY.md).**
 Revisão de mecânica: [tiros, golpes e resistência ao empurrão corporal](docs/BARRICADE_GAMEPLAY.md).
-**[Pacote de combate](docs/CLASSIC_COMBAT_PACK.md): cinco armas, loja na tecla B,
+**[Pacote de combate anterior](docs/CLASSIC_COMBAT_PACK.md): inventário, loja na tecla B,
 troca de equipamento, créditos, munição por arma e contenção do avanço por tiros.**
 **[AR reutilizada do Roblox Weapons Kit](docs/REUSED_WEAPON_KIT.md): a carabina
-inicial usa mesh, sons, flash, ferrolho e animações R15 do kit; as outras quatro
-armas mantêm os modelos provisórios.** O controlador de combate permanece o do K-17.
+inicial usa mesh, sons, flash, ferrolho e animações R15 do kit.** Os modelos de
+blocos anteriores foram removidos no pacote FPS; os prefabs restantes estão pendentes.
 Infecção por golpe, primeiros infectados transformados no local, armas automáticas e semiautomáticas,
 recarga temporizada e knockback configurável. A prévia de construção anterior
 está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
@@ -157,7 +162,7 @@ renderizados pelo Roblox Studio.
 amostras de apoio/espaço livre, 19 testes de geometria e quatro de identidade/
 licenças do kit, 160 asserções do combate/
 rodada, 215 de inventário/economia e 96 de contenção. Os controladores reais
-passaram 110 verificações de combate, 41 de rodada, 39 do ciclo integrado e 7.554 de barricadas com APIs
+passaram 119 verificações de combate, 41 de rodada, 39 do ciclo integrado e 7.554 de barricadas com APIs
 simuladas; há também 202 da política de impulso e 85 das regras preservadas. Verificação das fontes ativas
 no place. Os percursos também foram checados com os 164 objetos presentes.
 

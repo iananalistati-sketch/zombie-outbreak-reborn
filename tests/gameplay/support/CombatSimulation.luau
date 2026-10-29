@@ -118,6 +118,9 @@ local function simulation(options)
     local push=instance("BindableFunction","PushBarricade",internal);push.OnInvoke=function() return true end
     local props=instance("Folder","ZO_Barricades",world)
     local shared=instance("Folder","K17Gameplay",rs)
+    local weaponAssets=instance("Folder","ZO_WeaponAssets",rs)
+    local templates=instance("Folder","Weapons",weaponAssets)
+    for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local modules={}
     for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment} do
         local module=instance("ModuleScript",name,shared);modules[module]=result

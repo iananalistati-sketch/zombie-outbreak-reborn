@@ -24,6 +24,11 @@ end
 function Rules.canMelee(role: string?,state: string?,alive: boolean): boolean
     return alive and role=="Zombies" and state=="Active"
 end
+function Rules.shotSpread(weapon,moving: boolean,aiming: boolean): number
+    local base=if moving then weapon.MoveSpread else weapon.Spread
+    local aimed=if moving then weapon.AimMoveSpread else weapon.AimSpread
+    return if aiming and Rules.finite(aimed) then math.clamp(aimed,0,base) else base
+end
 function Rules.hitgroup(partName: string): string
     if partName=="Head" then return "Head" end
     local name=string.lower(partName)

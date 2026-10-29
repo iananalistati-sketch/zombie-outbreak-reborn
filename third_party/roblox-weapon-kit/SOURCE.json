@@ -8,6 +8,16 @@
     "original_kit": "Roblox Limited Use License",
     "fork_changes": "MIT Copyright (c) 2025 JustATortoise"
   },
-  "runtime_assets": "src/third_party/roblox-weapon-kit/Presentation.rbxmx",
-  "runtime_upstream_scripts": false
+  "runtime_assets": "src/third_party/roblox-weapon-kit/Arsenal.rbxmx",
+  "runtime_upstream_scripts": false,
+  "bundled_weapons": [
+    "Rifle"
+  ],
+  "official_runtime_prefabs": {
+    "Rifle": 96131146947811,
+    "SMG": 119916677125479,
+    "Shotgun": 104068096273092,
+    "Pistol": 118912302094201
+  },
+  "runtime_prefab_status": "Requires Roblox InsertService and asset permission; not downloaded in cloud"
 }

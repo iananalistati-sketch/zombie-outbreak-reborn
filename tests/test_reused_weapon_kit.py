@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class ReusedWeaponKit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tree=ET.parse(ROOT/'src/third_party/roblox-weapon-kit/Presentation.rbxmx')
+        cls.tree=ET.parse(ROOT/'src/third_party/roblox-weapon-kit/Arsenal.rbxmx')
         cls.items=cls.tree.findall('.//Item')
         cls.named={i.findtext('./Properties/string[@name="Name"]'):i for i in cls.items}
 
@@ -28,6 +28,9 @@ class ReusedWeaponKit(unittest.TestCase):
         # There is also a nested AR Model; find the actual Tool explicitly.
         tool=next(i for i in self.items if i.get('class')=='Tool')
         self.assertEqual(tool.findtext('./Properties/bool[@name="CanBeDropped"]'),'false')
+        self.assertEqual(tool.findtext('./Properties/string[@name="Name"]'),'Rifle')
+        self.assertNotIn('RifleCasing',self.named)
+        self.assertNotIn('Bullet',self.named)
 
     def test_rifle_is_a_real_mesh_with_its_original_sounds_and_joints(self):
         expected={'Rifle':'2492890820','Magazine':'2492891824','Bolt':'2492892116'}

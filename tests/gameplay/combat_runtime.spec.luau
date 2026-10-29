@@ -376,4 +376,43 @@ do
     check(#s.infect._calls==1 and s.infect._calls[1][2]==human.Character,"melee hitting nested human mesh delegates infection of the actual character")
 end
 
+do
+    local s,p=twoHumans();ready(s,p)
+    local before=attr(p,"Ammo")
+    s.request("ZO_FireRifle",p,"Fire",-Vector.zAxis,"true")
+    check(attr(p,"Ammo")==before and #s.raycasts==0,"non-boolean ADS flag cannot spend ammo or bypass shot validation")
+    s.request("ZO_FireRifle",p,"Fire",-Vector.zAxis,false)
+    local hip=s.raycasts[#s.raycasts].direction
+    s.advance(Config.Weapons.Rifle.FireInterval+.01)
+    s.request("ZO_FireRifle",p,"Fire",-Vector.zAxis,true)
+    local aimed=s.raycasts[#s.raycasts].direction
+    check(math.abs(aimed.X)/aimed.Magnitude<math.abs(hip.X)/hip.Magnitude,"ADS uses server catalogue spread instead of a client supplied accuracy value")
+    check(attr(p,"Ammo")==before-2,"ADS still spends one server-owned round per accepted shot")
+    p.Character.HumanoidRootPart.AssemblyLinearVelocity=Vector.new(8,0,0)
+    s.advance(Config.Weapons.Rifle.FireInterval+.01)
+    s.request("ZO_FireRifle",p,"Fire",-Vector.zAxis,true)
+    local moving=s.raycasts[#s.raycasts].direction
+    check(math.abs(moving.X)/moving.Magnitude>math.abs(aimed.X)/aimed.Magnitude,"movement penalty uses observed assembly velocity even when MoveDirection is zero")
+    local effects=s.rs.ZO_CombatFX._calls
+    check(effects[#effects][7]==nil,"miss never publishes an impact normal")
+end
+
+do
+    local s,p=twoHumans();ready(s,p)
+    local templates=s.rs.ZO_WeaponAssets.Weapons
+    templates.SMG:Destroy()
+    local credits=attr(p,"Credits")
+    s.loadout(p,"Buy","SMG")
+    check(attr(p,"Credits")==credits and attr(p,"PrimaryWeapon")=="Rifle","missing model cannot charge a purchase or replace a usable weapon")
+    s.loadout(p,"Equip","Pistol");ready(s,p)
+    templates.Pistol:Destroy()
+    local ammo=attr(p,"Ammo");local rays=#s.raycasts
+    s.fire(p)
+    check(attr(p,"Ammo")==ammo and #s.raycasts==rays,"missing equipped template cannot fire invisibly")
+    s.loadout(p,"Equip","Rifle")
+    check(attr(p,"WeaponId")=="Rifle","a player can switch away from a missing template to an available weapon")
+    s.instance("Tool","SMG",templates);s.advance(.05);s.loadout(p,"Buy","SMG")
+    check(attr(p,"WeaponId")=="SMG" and attr(p,"Credits")==credits-Config.Weapons.SMG.Price,"late real template availability re-enables the server purchase")
+end
+
 print(("PASS actual Combat controller: %d assertions; inventory, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

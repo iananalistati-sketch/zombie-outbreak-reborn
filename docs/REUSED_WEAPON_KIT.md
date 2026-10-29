@@ -1,5 +1,9 @@
 # Rifle do Roblox Weapons Kit no K-17
 
+> Registro da integração inicial da AR. O helper e o pacote de apresentação
+> exclusivos foram substituídos pelo [pacote FPS genérico](FPS_COMBAT_PACKAGE.md).
+> As instruções e atributos antigos abaixo descrevem aquela versão.
+
 A carabina inicial (`Rifle`) agora usa a **AR real do Roblox Weapons Kit**:
 meshes de rifle, carregador e ferrolho, sons de disparo/recarga, muzzle flash e
 animações R15. A submetralhadora, escopeta, metralhadora e pistola continuam com

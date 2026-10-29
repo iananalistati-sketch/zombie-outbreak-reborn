@@ -54,6 +54,12 @@ end
 check(Rules.phase("Waiting",true,true,1)=="Active","solo Studio opt-in")
 check(Rules.phase("Waiting",false,true,1)=="Waiting","practice impossible on live server")
 check(Rules.phase("Waiting",true,true,2)=="Waiting","practice impossible with two players")
+for _,id in Config.WeaponOrder do
+    local gun=Config.Weapons[id]
+    check(Rules.shotSpread(gun,false,false)==gun.Spread,"hip spread is server configured")
+    check(Rules.shotSpread(gun,false,true)==gun.AimSpread,"stationary aim uses configured precision")
+    check(Rules.shotSpread(gun,true,true)==gun.AimMoveSpread,"moving aim retains configured movement penalty")
+end
 check(Rules.hitgroup("Head")=="Head" and Rules.hitgroup("RightUpperArm")=="Arm" and Rules.hitgroup("Left Foot")=="Leg" and Rules.hitgroup("Torso")=="Body","R6/R15 hitgroup mapping")
 local body=Rules.knockback(Config,22,1,1,1,false)
 check(near(body,27.5),"damage scaled body knockback")

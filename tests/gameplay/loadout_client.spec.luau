@@ -67,6 +67,9 @@ local function simulation()
         ZO_Credits=Config.Economy.StartingCredits,ZO_Ammo=Config.Weapons.Rifle.Magazine,ZO_Reserve=Config.Weapons.Rifle.Reserve} do player:SetAttribute(name,value) end
     rs:SetAttribute("ZO_RoundState","Preparation")
     local shared=instance("Folder","K17Gameplay",rs)
+    local kit=instance("Folder","ZO_WeaponAssets",rs)
+    local templates=instance("Folder","Weapons",kit)
+    for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local modules={}
     for name,value in {Config=Config,Rules=Rules} do local module=instance("ModuleScript",name,shared);modules[module]=value end
     local remote=instance("RemoteEvent","ZO_LoadoutAction",rs);remote.OnClientEvent=signal()
@@ -91,6 +94,7 @@ local function simulation()
     }
     local services={Players=players,ReplicatedStorage=rs,UserInputService=uis,ContextActionService=cas,GuiService=guiService,RunService=runService}
     local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
+        script={Destroying=signal()},
         Instance={new=function(class) return instance(class) end},Enum=enum,task=tasks,os={clock=function() return now end},
         require=function(module) return assert(modules[module],"Unexpected require") end,
         Color3={fromRGB=function(r,g,b) return {R=r,G=g,B=b} end,new=function(r,g,b) return {R=r*255,G=g*255,B=b*255} end},
@@ -249,6 +253,13 @@ do
     check(not opened(s),"window focus loss closes shop")
     open(s);s.guiService.MenuOpened:Fire();s.advance(0)
     check(not opened(s),"Roblox menu opening closes shop")
+end
+
+do
+    local s=simulation();s.rs.ZO_WeaponAssets.Weapons.SMG:Destroy();open(s);choose(s,"SMG")
+    check(not s.buy.Active,"shop disables purchase until the actual weapon template is present")
+    s.click(s.buy,true)
+    check(#s.requests==0,"queued purchase callback cannot request an unavailable template")
 end
 
 print(("PASS actual Loadout client: %d assertions; UI bindings, Result protocol, pending timers and server-owned attributes (Roblox API doubles)"):format(checks))

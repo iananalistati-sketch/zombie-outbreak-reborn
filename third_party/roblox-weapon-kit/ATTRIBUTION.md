@@ -21,9 +21,9 @@ As alterações desse autor usam a [licença MIT preservada](MIT-FIX-LICENSE.txt
 
 O arquivo original contém o kit completo e suas fontes; ele é material de
 revisão fora do perfil ativo. O runtime recebe somente a extração
-`src/third_party/roblox-weapon-kit/Presentation.rbxmx`, sem scripts ou remotes.
+`src/third_party/roblox-weapon-kit/Arsenal.rbxmx`, sem scripts ou remotes.
 
-No K-17, `ReusedRiflePresentation.luau` adapta trechos de `BaseWeapon` e
+No K-17, `WeaponPresentation.luau` adapta trechos de `BaseWeapon` e
 `BulletWeapon` para weld, reprodução de áudio, tween do ferrolho e muzzle flash.
 `EquipmentVisuals.server.luau` adapta o weld e o cache de animações. Os comentários
 de atribuição permanecem nesses arquivos. Posicionamento em primeira pessoa,
@@ -32,3 +32,10 @@ cancelamento e ligação aos estados do K-17 são adaptações locais.
 Não são ativados o controlador de dano, a rede de acertos ou a câmera do kit
 completo. A AR usa os assets originais de mesh, textura, áudio e animação; a
 disponibilidade e as permissões desses assets devem ser verificadas no Studio.
+
+O catálogo atual contém Rifle, SMG, Shotgun e Pistol. **Somente Rifle está
+empacotada neste arquivo.** `WeaponAssetImport` declara os quatro IDs oficiais
+documentados e tenta carregar as versões oficiais por InsertService no Roblox,
+removendo todos os scripts antes de publicar os templates. Os outros prefabs não
+foram baixados nesta nuvem; disponibilidade, hierarquia e permissões permanecem
+pendentes. Não se afirma que quatro modelos estão embutidos ou testados.

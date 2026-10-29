@@ -50,9 +50,18 @@ end
 local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
 end
+local function assetAvailable(id: string): boolean
+    local kit=RS:FindFirstChild("ZO_WeaponAssets")
+    local templates=kit and kit:FindFirstChild("Weapons")
+    local template=templates and templates:FindFirstChild(id)
+    return template~=nil and template:IsA("Tool")
+end
 local function allowed(player: Player): boolean
     local _,_,hum=character(player)
-    return Rules.canFire(role(player),phase(),hum~=nil,player:GetAttribute("ZO_BarricadeSelection")~=nil)
+    local loadout=loadouts[player]
+    local config=loadout and loadout:current()
+    return config~=nil and assetAvailable(config.Id)
+        and Rules.canFire(role(player),phase(),hum~=nil,player:GetAttribute("ZO_BarricadeSelection")~=nil)
 end
 local function targetRole(model: Model): string?
     local player=Players:GetPlayerFromCharacter(model)
@@ -219,6 +228,7 @@ local messages={
     InvalidTime="Ação inválida.",HumansOnly="Somente humanos usam armas.",PreparationOnly="Compre durante a preparação.",
     NotAlive="Aguarde um personagem vivo.",AlreadyOwned="Você já possui essa arma.",InsufficientCredits="Créditos insuficientes.",
     AmmoFull="Sua reserva já está completa.",InvalidWeapon="Essa arma não está disponível na loja.",
+    AssetUnavailable="Modelo da arma indisponível. Aguarde o carregamento dos assets.",
 }
 loadoutAction.OnServerEvent:Connect(function(player: Player,action: any,id: any)
     if action~="Buy" and action~="Ammo" and action~="Equip" then return end
@@ -231,11 +241,15 @@ loadoutAction.OnServerEvent:Connect(function(player: Player,action: any,id: any)
     local currentRole=role(player)
     local ok,reason=false,"HumansOnly"
     if action=="Equip" then
-        if currentRole=="Humans" and allowed(player) then ok,reason=loadout:equip(id,os.clock())
+        local requested=if id=="Primary" then loadout.primary elseif id=="Secondary" then loadout.secondary else id
+        if currentRole=="Humans" and Config.Weapons[requested] and not assetAvailable(requested) then reason="AssetUnavailable"
+        elseif Rules.canFire(currentRole,phase(),hum~=nil,player:GetAttribute("ZO_BarricadeSelection")~=nil) then
+            ok,reason=loadout:equip(id,os.clock())
         elseif not hum then reason="NotAlive"
         elseif currentRole=="Humans" then reason="PreparationOnly" end
     elseif action=="Buy" then
-        ok,reason=loadout:buy(id,currentRole,if practice() then "Preparation" else phase(),hum~=nil,os.clock())
+        if Config.Weapons[id] and not assetAvailable(id) then reason="AssetUnavailable"
+        else ok,reason=loadout:buy(id,currentRole,if practice() then "Preparation" else phase(),hum~=nil,os.clock()) end
     else ok,reason=loadout:buyAmmo(currentRole,if practice() then "Preparation" else phase(),hum~=nil) end
     sync(player)
     local message=if not ok then messages[reason] or "Não foi possível concluir a ação."
@@ -276,8 +290,9 @@ local function propRoot(part: Instance,folder: Instance): Instance
     while root.Parent and root.Parent~=folder do root=root.Parent end
     return root
 end
-rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
+rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,aiming: any)
     if action~="Reload" and action~="Fire" then return end
+    if aiming~=nil and typeof(aiming)~="boolean" then return end
     if not admit(player,action) or not allowed(player) then return end
     local loadout=loadouts[player]
     local char,head,hum=character(player)
@@ -292,7 +307,12 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
     nextFire[player]=now+config.FireInterval
     sync(player)
     local pellets=math.clamp(math.floor(config.Pellets),1,12)
-    local spread=if hum.MoveDirection.Magnitude>.1 then config.MoveSpread else config.Spread
+    -- Player MoveDirection is not replicated. Use observed assembly movement
+    -- so a client cannot select the stationary spread merely by omitting input.
+    local motionRoot=char:FindFirstChild("HumanoidRootPart")
+    local velocity=if motionRoot and motionRoot:IsA("BasePart") then motionRoot.AssemblyLinearVelocity else Vector3.zero
+    local moving=Rules.finite(velocity.X) and Rules.finite(velocity.Z) and velocity.X^2+velocity.Z^2>4
+    local spread=Rules.shotSpread(config,moving,aiming==true)
     local props=workspace:FindFirstChild("ZO_Barricades")
     local propHits: {[Instance]: any}={}
     local zombieHits: {[Model]: any}={}
@@ -303,7 +323,9 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any)
         -- Limit each volley to four visual rays while still resolving every hit.
         if i<=3 or i==pellets then
             local destination=if hit then hit.Position else head.Position+shot*config.Range
-            for _,observer in nearby do effects:FireClient(observer,"Shot",head.Position,destination,player.UserId,config.Id) end
+            for _,observer in nearby do
+                effects:FireClient(observer,"Shot",head.Position,destination,player.UserId,config.Id,if hit then hit.Normal else nil,i==1)
+            end
         end
         if not hit then continue end
         if props and hit.Instance:IsDescendantOf(props) then

@@ -1,0 +1,127 @@
+--!strict
+-- Official Roblox Weapons Kit prefabs, documented in the preserved attribution.
+-- Imported containers stay outside the DataModel. Only a sanitized Tool and
+-- Animation instances are copied; upstream combat/network scripts never run.
+local InsertService=game:GetService("InsertService")
+local RS=game:GetService("ReplicatedStorage")
+local Import={}
+local sources={
+    Rifle=96131146947811,
+    Pistol=118912302094201,
+    Shotgun=104068096273092,
+    SMG=119916677125479,
+}
+local sourceURL="https://create.roblox.com/docs/resources/weapons-kit"
+local running=false
+
+local function folder(parent: Instance,name: string): Folder
+    local existing=parent:FindFirstChild(name)
+    if existing then assert(existing:IsA("Folder"),name.." must be a Folder");return existing end
+    local result=Instance.new("Folder");result.Name=name;result.Parent=parent;return result
+end
+local function sound(tool: Tool,names: {string}): Sound?
+    for _,name in names do
+        local item=tool:FindFirstChild(name,true)
+        if item and item:IsA("Sound") then return item end
+    end
+    return nil
+end
+
+function Import.ensure(): (Folder,Folder,Folder)
+    local kit=folder(RS,"ZO_WeaponAssets")
+    return kit,folder(kit,"Weapons"),folder(kit,"Animations")
+end
+
+function Import.install(container: Model,id: string,assetId: number): Tool
+    assert(sources[id]==assetId,"Unknown weapon source")
+    assert(container.Parent==nil,"Inspect imported containers before parenting")
+    -- No entry script or client/server remote can survive into the live tree.
+    for _,item in container:GetDescendants() do
+        if item:IsA("LuaSourceContainer") or item:IsA("RemoteEvent") or item:IsA("UnreliableRemoteEvent") or item:IsA("RemoteFunction")
+            or item:IsA("BindableEvent") or item:IsA("BindableFunction") or item:IsA("PackageLink") then item:Destroy() end
+    end
+    local candidates={}
+    for _,item in container:GetDescendants() do
+        if item:IsA("Tool") and item:FindFirstChild("Handle") then table.insert(candidates,item) end
+    end
+    assert(#candidates==1,"Prefab must contain exactly one complete weapon Tool")
+    local tool=candidates[1] :: Tool
+    local handle=tool:FindFirstChild("Handle")
+    local model=tool:FindFirstChildOfClass("Model")
+    local grip=model and model:FindFirstChild("HandleAttachment",true)
+    local fired=sound(tool,{"Fired","FiredSound","FireSound"})
+    local reload=sound(tool,{"Reload","ReloadSound"})
+    assert(handle and handle:IsA("BasePart") and model and model.PrimaryPart
+        and grip and grip:IsA("Attachment"),"Unsupported prefab grip hierarchy")
+    assert(tool:FindFirstChildWhichIsA("MeshPart",true),"Prefab lacks imported mesh geometry")
+    assert(fired and fired:IsA("Sound") and fired.SoundId~=""
+        and reload and reload:IsA("Sound") and reload.SoundId~="","Prefab lacks original firing/reload audio")
+    local kit,weapons,animations=Import.ensure()
+    -- Collect the original rig animations without cloning their containing code.
+    for _,item in container:GetDescendants() do
+        if item:IsA("Animation") then
+            local old=animations:FindFirstChild(item.Name)
+            if old and old:IsA("Animation") and old.AnimationId~=item.AnimationId then old:Destroy();old=nil end
+            if not old then item:Clone().Parent=animations end
+        end
+    end
+    local copy=tool:Clone()
+    copy.Name=id;copy.CanBeDropped=false;copy.Enabled=false;copy.ManualActivationOnly=true
+    copy:SetAttribute("ZO_WeaponId",id);copy:SetAttribute("ZO_SourceAssetId",assetId)
+    copy:SetAttribute("ZO_SourceDocumentation",sourceURL)
+    for _,item in copy:GetDescendants() do
+        if item:IsA("BasePart") then
+            item.Anchored=false;item.CanCollide=false;item.CanQuery=false;item.CanTouch=false;item.Massless=true
+        elseif item:IsA("Sound") then item.Playing=false end
+    end
+    local previous=weapons:FindFirstChild(id)
+    if previous then previous:Destroy() end
+    copy.Parent=weapons -- The first time a sanitized weapon enters the DataModel.
+    kit:SetAttribute("Status_"..id,"Ready")
+    kit:SetAttribute("Error_"..id,nil)
+    return copy
+end
+
+function Import.loadAll()
+    if running then return end
+    running=true
+    local kit,weapons=Import.ensure()
+    local jobs={}
+    for id,assetId in sources do
+        local existing=weapons:FindFirstChild(id)
+        if existing and existing:GetAttribute("ZO_SourceAssetId")==assetId then
+            kit:SetAttribute("Status_"..id,"Ready")
+        else table.insert(jobs,{id=id,assetId=assetId}) end
+    end
+    local pending=#jobs
+    local failures=0
+    kit:SetAttribute("Status","Loading")
+    local function complete()
+        if pending>0 then return end
+        running=false
+        kit:SetAttribute("Status",if failures==0 then "Ready" else "Partial")
+        kit:SetAttribute("FailedCount",failures)
+    end
+    for _,job in jobs do
+        local id,assetId=job.id,job.assetId
+        kit:SetAttribute("Status_"..id,"Loading");kit:SetAttribute("Error_"..id,nil)
+        task.spawn(function()
+            local container: Model?=nil
+            local ok,problem=pcall(function()
+                container=InsertService:LoadAsset(assetId)
+                assert(container,"Empty official prefab")
+                Import.install(container :: Model,id,assetId)
+            end)
+            if container then container:Destroy() end
+            if not ok then
+                failures+=1;kit:SetAttribute("Status_"..id,"Failed")
+                kit:SetAttribute("Error_"..id,tostring(problem):sub(1,600))
+                warn(("[K17 ASSETS] %s (%d): %s"):format(id,assetId,tostring(problem)))
+            end
+            pending-=1;complete()
+        end)
+    end
+    complete()
+end
+
+return Import

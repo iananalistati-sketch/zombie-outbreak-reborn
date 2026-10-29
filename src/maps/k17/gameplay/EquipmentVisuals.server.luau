@@ -1,5 +1,5 @@
 --!strict
--- Presentation adapter for Roblox's reusable Weapons Kit AR and animations.
+-- Presentation adapter for reviewed Roblox Weapons Kit Tools and animations.
 -- The HandleWeld setup and named animation-track cache below are adapted from
 -- Weapons Kit / Libraries / BaseWeapon, Roblox Corporation, Limited Use License.
 -- Community fixes: Copyright (c) 2025 JustATortoise, MIT license.
@@ -11,22 +11,30 @@ local RunService=game:GetService("RunService")
 
 script:SetAttribute("ZO_EquipmentVisualsReady",false)
 
+local shared=RS:WaitForChild("K17Gameplay")
+local Config=require(shared:WaitForChild("Config"))
+local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
+
 type Session={
     player: Player,
     character: Model?,
     humanoid: Humanoid?,
     tool: Tool?,
+    template: Tool?,
     tracks: {[string]: AnimationTrack},
+    animationSources: {[string]: Animation},
     connections: {RBXScriptConnection},
     characterConnections: {RBXScriptConnection},
+    toolConnections: {RBXScriptConnection},
     died: RBXScriptConnection?,
     queued: boolean,
     removed: boolean,
 }
 
 local sessions: {[Player]: Session}={}
-local template: Tool
-local animations: Instance
+local assetRoot: Instance?=nil
+local assetConnections: {RBXScriptConnection}={}
+local missingAnimations: {[string]: boolean}={}
 
 local function disconnect(connections: {RBXScriptConnection})
     for _,connection in connections do connection:Disconnect() end
@@ -34,40 +42,68 @@ local function disconnect(connections: {RBXScriptConnection})
 end
 
 local function clearVisual(session: Session)
+    disconnect(session.toolConnections)
     -- Match BaseWeapon:stopAnimations: release tracks on every unequip/respawn.
     for _,track in session.tracks do
         pcall(function() track:Stop(.12);track:Destroy() end)
     end
     table.clear(session.tracks)
+    table.clear(session.animationSources)
     local tool=session.tool
     session.tool=nil
+    session.template=nil
     if tool then tool:Destroy() end
 end
 
-local function eligible(session: Session): boolean
+local function setStatus(session: Session,status: string)
+    session.player:SetAttribute("ZO_WeaponVisualStatus",status)
+end
+
+local function eligible(session: Session): string?
     local player=session.player
     local humanoid=session.humanoid
+    local id=player:GetAttribute("ZO_WeaponId")
     if session.removed or player.Parent~=Players or player.Character~=session.character
         or not humanoid or humanoid.Health<=0 or not session.character
         or not session.character:IsDescendantOf(workspace)
         or not player.Team or player.Team.Name~="Humans"
-        or player:GetAttribute("ZO_WeaponId")~="Rifle" then return false end
+        or typeof(id)~="string" or not Config.Weapons[id] then return nil end
     local phase=RS:GetAttribute("ZO_RoundState")
-    if phase=="Preparation" or phase=="Active" then return true end
-    return phase=="Waiting" and RunService:IsStudio()
-        and workspace:GetAttribute("ZO_BarricadePractice")==true and #Players:GetPlayers()==1
+    if phase=="Preparation" or phase=="Active" then return id end
+    if phase=="Waiting" and RunService:IsStudio()
+        and workspace:GetAttribute("ZO_BarricadePractice")==true and #Players:GetPlayers()==1 then return id end
+    return nil
 end
 
-local function animationTrack(session: Session,key: string): AnimationTrack?
-    local cached=session.tracks[key]
-    if cached then return cached end
+local function animationPrefix(tool: Tool,id: string): string
+    local prefix=tool:GetAttribute("ZO_AnimationPrefix")
+    if typeof(prefix)=="string" and prefix~="" then return prefix end
+    return PresentationConfig.get(id).AnimationPrefix
+end
+
+local function animationTrack(session: Session,kind: string): AnimationTrack?
     local humanoid=session.humanoid
-    if not humanoid or humanoid.RigType~=Enum.HumanoidRigType.R15 then return nil end
-    local animation=animations:FindFirstChild(key)
+    local tool=session.tool
+    if not humanoid or not tool or humanoid.RigType~=Enum.HumanoidRigType.R15 then return nil end
+    local id=tool:GetAttribute("ZO_WeaponId") :: string
+    local key=animationPrefix(tool,id)..kind
+    local animations=assetRoot and assetRoot:FindFirstChild("Animations")
+    local animation=animations and animations:FindFirstChild(key)
+    local cached=session.tracks[kind]
+    if cached and session.animationSources[kind]==animation then return cached end
+    if cached then
+        pcall(function() cached:Stop(.12);cached:Destroy() end)
+        session.tracks[kind]=nil
+        session.animationSources[kind]=nil
+    end
     if not animation or not animation:IsA("Animation") then
-        warn("[K17] Borrowed Weapons Kit animation missing: "..key)
+        if not missingAnimations[key] then
+            missingAnimations[key]=true
+            warn("[K17] Borrowed Weapons Kit animation missing (combat continues): "..key)
+        end
         return nil
     end
+    missingAnimations[key]=nil
     local animator=humanoid:FindFirstChildOfClass("Animator")
     if not animator then animator=Instance.new("Animator");animator.Parent=humanoid end
     -- BaseWeapon:getAnimTrack reused with the supported Animator loading API.
@@ -77,90 +113,129 @@ local function animationTrack(session: Session,key: string): AnimationTrack?
         return nil
     end
     local track=result :: AnimationTrack
-    track.Looped=key=="RifleAim"
-    track.Priority=if key=="RifleReload" then Enum.AnimationPriority.Action2 else Enum.AnimationPriority.Action
-    session.tracks[key]=track
+    track.Looped=kind~="Reload"
+    track.Priority=if kind=="Reload" then Enum.AnimationPriority.Action2 else Enum.AnimationPriority.Action
+    session.tracks[kind]=track
+    session.animationSources[kind]=animation
     return track
 end
 
-local function buildVisual(): Tool
-    local tool=template:Clone()
-    tool.Name="ZO_EquippedRifle"
-    tool.CanBeDropped=false
-    tool.RequiresHandle=true
-    tool.ManualActivationOnly=true
-    tool.Enabled=false -- K-17's existing server combat remains the sole authority.
-    tool:SetAttribute("ZO_EquipmentVisual",true)
-    for _,descendant in tool:GetDescendants() do
-        -- Defense in depth: upstream executable scripts are never activated.
-        if descendant:IsA("LuaSourceContainer") then descendant:Destroy()
-        elseif descendant:IsA("BasePart") then
-            descendant.Anchored=false
-            descendant.Massless=true
-            descendant.CanCollide=false
-            descendant.CanQuery=false
-            descendant.CanTouch=false
-        end
-    end
-    local handle=tool:FindFirstChild("Handle")
-    local model=tool:FindFirstChildOfClass("Model")
-    assert(handle and handle:IsA("BasePart"),"Weapons Kit AR lacks Handle")
-    assert(model and model.PrimaryPart,"Weapons Kit AR lacks PrimaryPart")
-    local attachment=model:FindFirstChild("HandleAttachment",true)
-    assert(attachment and attachment:IsA("Attachment"),"Weapons Kit AR lacks HandleAttachment")
+local function mirrorReload(session: Session,tool: Tool)
+    local endsAt=session.player:GetAttribute("ZO_ReloadEndsAt")
+    -- Publish the deadline first: client reload audio reads it on the flag edge.
+    tool:SetAttribute("ZO_ReloadEndsAt",if typeof(endsAt)=="number" then endsAt else 0)
+    tool:SetAttribute("ZO_Reloading",session.player:GetAttribute("ZO_Reloading")==true)
+end
 
-    -- Reused from official BaseWeapon's server-side handle attachment setup.
-    local handleOffset=model.PrimaryPart.CFrame:ToObjectSpace(attachment.WorldCFrame)
-    local existing=handle:FindFirstChild("HandleWeld")
-    if existing then existing:Destroy() end
-    local weld=Instance.new("Weld")
-    weld.Name="HandleWeld"
-    weld.Part0=handle
-    weld.Part1=model.PrimaryPart
-    weld.C0=CFrame.new()
-    weld.C1=handleOffset
-    weld.Parent=handle
+local function buildVisual(template: Tool,id: string): Tool
+    -- Validate the source before cloning an incomplete late import.
+    local sourceHandle=template:FindFirstChild("Handle")
+    local sourceModel=template:FindFirstChildOfClass("Model")
+    local sourceAttachment=sourceModel and sourceModel:FindFirstChild("HandleAttachment",true)
+    assert(sourceHandle and sourceHandle:IsA("BasePart"),id.." lacks Handle")
+    assert(sourceModel and sourceModel.PrimaryPart,id.." lacks PrimaryPart")
+    assert(sourceAttachment and sourceAttachment:IsA("Attachment"),id.." lacks HandleAttachment")
+    assert(template.Archivable,id.." is not Archivable")
+    local tool=template:Clone()
+    local ok,problem=pcall(function()
+        tool.Name="ZO_EquippedWeapon"
+        tool.CanBeDropped=false
+        tool.RequiresHandle=true
+        tool.ManualActivationOnly=true
+        tool.Enabled=false -- K-17's existing server combat remains the sole authority.
+        tool:SetAttribute("ZO_EquipmentVisual",true)
+        tool:SetAttribute("ZO_WeaponId",id)
+        tool:SetAttribute("ZO_AnimationPrefix",animationPrefix(template,id))
+        for _,descendant in tool:GetDescendants() do
+            -- Defense in depth: upstream executable scripts are never activated.
+            if descendant:IsA("LuaSourceContainer") then descendant:Destroy()
+            elseif descendant:IsA("BasePart") then
+                descendant.Anchored=false
+                descendant.Massless=true
+                descendant.CanCollide=false
+                descendant.CanQuery=false
+                descendant.CanTouch=false
+            end
+        end
+        local handle=tool:FindFirstChild("Handle")
+        local model=tool:FindFirstChildOfClass("Model")
+        assert(handle and handle:IsA("BasePart"),id.." lacks Handle")
+        assert(model and model.PrimaryPart,id.." lacks PrimaryPart")
+        local attachment=model:FindFirstChild("HandleAttachment",true)
+        assert(attachment and attachment:IsA("Attachment"),id.." lacks HandleAttachment")
+
+        -- Reused from official BaseWeapon's server-side handle attachment setup.
+        local handleOffset=model.PrimaryPart.CFrame:ToObjectSpace(attachment.WorldCFrame)
+        local existing=handle:FindFirstChild("HandleWeld")
+        if existing then existing:Destroy() end
+        local weld=Instance.new("Weld")
+        weld.Name="HandleWeld"
+        weld.Part0=handle
+        weld.Part1=model.PrimaryPart
+        weld.C0=CFrame.new()
+        weld.C1=handleOffset
+        weld.Parent=handle
+    end)
+    if not ok then
+        tool:Destroy()
+        error(tostring(problem),0)
+    end
     return tool
 end
 
+local queueRefresh: (Session) -> ()
+
 local function refresh(session: Session)
     if session.removed then return end
-    if not eligible(session) then
+    local id=eligible(session)
+    if not id then
         clearVisual(session)
-        session.player:SetAttribute("ZO_RifleVisualStatus","Idle")
+        setStatus(session,"Idle")
         return
     end
-    if not session.tool or session.tool.Parent~=session.character then
+    local weapons=assetRoot and assetRoot:FindFirstChild("Weapons")
+    local template=weapons and weapons:FindFirstChild(id)
+    if not template or not template:IsA("Tool") then
         clearVisual(session)
-        local ok,result=pcall(buildVisual)
+        setStatus(session,"AssetMissing")
+        return
+    end
+    if not session.tool or session.tool.Parent~=session.character or session.template~=template
+        or session.tool:GetAttribute("ZO_WeaponId")~=id then
+        clearVisual(session)
+        local ok,result=pcall(buildVisual,template,id)
         if not ok then
-            session.player:SetAttribute("ZO_RifleVisualStatus","Error")
+            setStatus(session,"Error")
             warn("[K17] Weapons Kit visual unavailable (combat continues): "..tostring(result))
             return
         end
         session.tool=result :: Tool
+        session.template=template
+        mirrorReload(session,session.tool)
         -- A scriptless Tool inside Character uses Roblox's native RightGrip.
         -- Never call EquipTool: that would alter the independent K-17 loadout.
         session.tool.Parent=session.character
-        local humanoid=session.humanoid :: Humanoid
-        if humanoid.RigType==Enum.HumanoidRigType.R15 then
-            local aim=animationTrack(session,"RifleAim")
-            animationTrack(session,"RifleReload")
-            if aim then aim:Play(.15) end
-            session.player:SetAttribute("ZO_RifleVisualStatus",
-                if aim and session.tracks.RifleReload then "Ready" else "AnimationUnavailable")
-        else
-            -- The mesh still works with native R6 grip. These animations are R15.
-            session.player:SetAttribute("ZO_RifleVisualStatus","NoR15Animation")
-        end
+        table.insert(session.toolConnections,session.tool.AncestryChanged:Connect(function() queueRefresh(session) end))
     end
+    local tool=session.tool :: Tool
+    mirrorReload(session,tool)
+    local humanoid=session.humanoid :: Humanoid
+    if humanoid.RigType~=Enum.HumanoidRigType.R15 then
+        -- The meshes still work with native R6 grip. Kit animations are R15.
+        setStatus(session,"NoR15Animation")
+        return
+    end
+    -- Retry missing animations after late imports; keep valid Animator tracks.
+    local aim=animationTrack(session,"Aim")
+    local reload=animationTrack(session,"Reload")
+    if aim and not aim.IsPlaying then aim:Play(.15) end
+    setStatus(session,if aim and reload then "Ready" else "AnimationUnavailable")
     -- Reuse BaseWeapon's named reload track; the authoritative reload duration
     -- and cancel signal are the existing combat controller's replicated attrs.
-    local reload=session.tracks.RifleReload
     if reload then
         if session.player:GetAttribute("ZO_Reloading")==true then
             if not reload.IsPlaying then
-                local remaining=(session.player:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow()
+                local remaining=(tool:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow()
                 local speed=if reload.Length>0 and remaining>.1 then reload.Length/remaining else 1
                 reload:Play(.08,1,math.clamp(speed,.2,5))
             end
@@ -168,7 +243,7 @@ local function refresh(session: Session)
     end
 end
 
-local function queueRefresh(session: Session)
+queueRefresh=function(session: Session)
     if session.queued or session.removed then return end
     session.queued=true
     task.defer(function()
@@ -181,6 +256,7 @@ local function bindHumanoid(session: Session)
     local humanoid=session.character and session.character:FindFirstChildOfClass("Humanoid")
     if humanoid==session.humanoid then return end
     if session.died then session.died:Disconnect();session.died=nil end
+    clearVisual(session)
     session.humanoid=humanoid
     if humanoid then session.died=humanoid.Died:Connect(function() queueRefresh(session) end) end
 end
@@ -208,9 +284,11 @@ end
 
 local function joined(player: Player)
     if sessions[player] then return end
-    local session: Session={player=player,character=nil,humanoid=nil,tool=nil,tracks={},
-        connections={},characterConnections={},died=nil,queued=false,removed=false}
+    player:SetAttribute("ZO_RifleVisualStatus",nil)
+    local session: Session={player=player,character=nil,humanoid=nil,tool=nil,template=nil,tracks={},animationSources={},
+        connections={},characterConnections={},toolConnections={},died=nil,queued=false,removed=false}
     sessions[player]=session
+    setStatus(session,"Idle")
     for _,attribute in {"ZO_WeaponId","ZO_Reloading","ZO_ReloadEndsAt"} do
         table.insert(session.connections,player:GetAttributeChangedSignal(attribute):Connect(function() queueRefresh(session) end))
     end
@@ -222,6 +300,7 @@ local function joined(player: Player)
         if session.died then session.died:Disconnect();session.died=nil end
         session.character=nil;session.humanoid=nil
         clearVisual(session)
+        setStatus(session,"Idle")
     end))
     if player.Character then characterAdded(session,player.Character) end
 end
@@ -230,15 +309,48 @@ local function refreshAll()
     for _,session in sessions do queueRefresh(session) end
 end
 
+local function bindAssets()
+    disconnect(assetConnections)
+    assetRoot=RS:FindFirstChild("ZO_WeaponAssets")
+    if assetRoot then
+        -- A provider may publish the folder before individual reviewed Tools.
+        -- Descendants also cover an Animations/Weapons folder added afterward.
+        table.insert(assetConnections,assetRoot.DescendantAdded:Connect(refreshAll))
+        table.insert(assetConnections,assetRoot.DescendantRemoving:Connect(refreshAll))
+        table.insert(assetConnections,assetRoot.AncestryChanged:Connect(function()
+            if assetRoot and assetRoot.Parent~=RS then
+                disconnect(assetConnections)
+                assetRoot=nil
+                refreshAll()
+            end
+        end))
+    end
+    refreshAll()
+end
+
+local function removeLegacyVisuals(player: Player)
+    -- One-time migration only; never remove another system's ordinary Tools.
+    local containers: {Instance}={}
+    if player.Character then table.insert(containers,player.Character) end
+    local backpack=player:FindFirstChildOfClass("Backpack")
+    if backpack then table.insert(containers,backpack) end
+    for _,container in containers do
+        for _,child in container:GetChildren() do
+            if child:IsA("Tool") and child.Name=="ZO_EquippedRifle"
+                and child:GetAttribute("ZO_EquipmentVisual")==true then child:Destroy() end
+        end
+    end
+end
+
 local ok,problem=xpcall(function()
-    local kit=RS:WaitForChild("ZO_ReusedWeaponKit",12)
-    assert(kit,"ZO_ReusedWeaponKit missing: import the reviewed Roblox Weapons Kit")
-    local ar=kit:FindFirstChild("AR")
-    assert(ar and ar:IsA("Tool"),"Reused Weapons Kit AR Tool missing")
-    template=ar
-    animations=kit:FindFirstChild("Animations") :: Instance
-    assert(animations and animations:FindFirstChild("RifleAim") and animations:FindFirstChild("RifleReload"),
-        "Reused Weapons Kit Animations missing")
+    -- Register the lifecycle even if every presentation asset is absent.
+    bindAssets()
+    RS.ChildAdded:Connect(function(child)
+        if child.Name=="ZO_WeaponAssets" then bindAssets() end
+    end)
+    RS.ChildRemoved:Connect(function(child)
+        if child==assetRoot or child.Name=="ZO_WeaponAssets" then bindAssets() end
+    end)
     Players.PlayerAdded:Connect(function(player) joined(player);refreshAll() end)
     Players.PlayerRemoving:Connect(function(player)
         local session=sessions[player]
@@ -252,7 +364,7 @@ local ok,problem=xpcall(function()
     end)
     RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(refreshAll)
     workspace:GetAttributeChangedSignal("ZO_BarricadePractice"):Connect(refreshAll)
-    for _,player in Players:GetPlayers() do joined(player) end
+    for _,player in Players:GetPlayers() do removeLegacyVisuals(player);joined(player) end
     script:SetAttribute("ZO_EquipmentVisualsReady",true)
 end,debug.traceback)
 if not ok then warn("[K17] Equipment visuals disabled (combat continues): "..tostring(problem)) end

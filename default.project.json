@@ -48,18 +48,24 @@
         "Containment": {
           "$path": "src/maps/k17/gameplay/Containment.luau"
         },
-        "ReusedRiflePresentation": {
-          "$path": "src/maps/k17/gameplay/ReusedRiflePresentation.luau"
-        },
         "RoundRules": {
           "$path": "src/maps/k17/gameplay/RoundRules.luau"
+        },
+        "WeaponPresentation": {
+          "$path": "src/maps/k17/gameplay/WeaponPresentation.luau"
+        },
+        "PresentationConfig": {
+          "$path": "src/maps/k17/gameplay/PresentationConfig.luau"
+        },
+        "WeaponPreview": {
+          "$path": "src/maps/k17/gameplay/WeaponPreview.luau"
         }
       },
       "K17Refuges": {
         "$path": "src/maps/k17/Refuges.luau"
       },
-      "ZO_ReusedWeaponKit": {
-        "$path": "src/third_party/roblox-weapon-kit/Presentation.rbxmx"
+      "ZO_WeaponAssets": {
+        "$path": "src/third_party/roblox-weapon-kit/Arsenal.rbxmx"
       }
     },
     "ServerScriptService": {
@@ -86,6 +92,12 @@
         },
         "EquipmentVisuals": {
           "$path": "src/maps/k17/gameplay/EquipmentVisuals.server.luau"
+        },
+        "WeaponAssets": {
+          "$path": "src/maps/k17/gameplay/WeaponAssets.server.luau"
+        },
+        "WeaponAssetImport": {
+          "$path": "src/maps/k17/gameplay/WeaponAssetImport.luau"
         }
       }
     },

@@ -4,6 +4,7 @@
 This checks build integration/source identity; it does not execute Roblox APIs.
 """
 import argparse
+import hashlib
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -29,6 +30,8 @@ def validate(path,studio_test=False):
         'ServerScriptService/ZO_Server/Startup':'src/maps/k17/gameplay/Startup.server.luau',
         'ServerScriptService/ZO_Server/Combat':'src/maps/k17/gameplay/Combat.server.luau',
         'ServerScriptService/ZO_Server/EquipmentVisuals':'src/maps/k17/gameplay/EquipmentVisuals.server.luau',
+        'ServerScriptService/ZO_Server/WeaponAssets':'src/maps/k17/gameplay/WeaponAssets.server.luau',
+        'ServerScriptService/ZO_Server/WeaponAssetImport':'src/maps/k17/gameplay/WeaponAssetImport.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Weapons':'src/maps/k17/gameplay/Weapons.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/RoundHUD':'src/maps/k17/gameplay/HUD.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/TacticalMap':'src/maps/k17/gameplay/TacticalMap.client.luau',
@@ -40,7 +43,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','ReusedRiflePresentation')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','WeaponPresentation','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)
@@ -64,9 +67,15 @@ def validate(path,studio_test=False):
         assert at(root,'ReplicatedStorage/Shared/RoundConfig').findtext('./Properties/*[@name="Source"]')==(ROOT/'src/maps/k17/RoundConfig.luau').read_text(),'Short test rounds in production profile'
     for name in ('Infect','DamageBarricade','PushBarricade'):
         assert at(root,'ServerStorage/ZO_Gameplay/'+name).attrib['class']=='BindableFunction'
-    legacy={(ROOT/p).read_text() for p in ('src/server/ZombieRound.server.luau','src/server/Combat.server.luau','src/client/Rifle.client.luau')}
+    # Legacy files were removed after backup; keep rejecting their exact sources
+    # if an old controller is accidentally imported into a generated place.
+    legacy={
+        'bd184a96e6d3ee24719e571927c301159b4943334e5eb8c424dbb1f6e00a44ab',
+        '06e753907bf0a81a1732417890c16651b8365ca7d1bfbe26c912c50e72b59dfa',
+        'eb7bc279b165d9a4c6a702914d74c6059322e426bd7aa3a1d28e686b292538bb',
+    }
     sources=[p.text or '' for p in root.findall('.//Properties/*[@name="Source"]')]
-    assert not any(s in legacy for s in sources),'A legacy controller is still loaded in K-17'
+    assert not any(hashlib.sha256(s.encode()).hexdigest() in legacy for s in sources),'A legacy controller is still loaded in K-17'
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Combat.server.luau').read_text() for s in sources)==1
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Round.server.luau').read_text() for s in sources)==1
     print(f'PASS classic profile: {len(bindings)} exact source bindings, three private server functions, one round/combat controller, no legacy proximity/rifle controllers')

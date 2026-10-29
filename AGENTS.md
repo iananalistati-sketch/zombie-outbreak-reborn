@@ -44,3 +44,16 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
   real. Testes com APIs simuladas e arquivos compilados não satisfazem essa etapa.
 - Os drivers em `tests/studio` pertencem somente ao place de validação separado.
   Nunca incluir automação, posições fixas ou rodadas curtas no perfil jogável.
+
+## Pacote FPS e limpeza
+
+- O usuário autorizou remover armas e objetos anteriores que perderem seu uso.
+  Preservar backup e conferir dependências antes de excluir; não manter dois
+  controladores ou dois catálogos visuais ativos.
+- O pacote FPS na branch `feat/fps-combat-package` tem dependências de prefabs
+  oficiais ainda não baixadas. Somente a carabina está embutida. Não anunciar
+  quatro modelos prontos nem misturar esse pacote incompleto à main estável antes
+  de resolver os assets ou receber autorização explícita para essa limitação.
+- `WeaponAssetImport` só aceita IDs oficiais fixos e remove código externo antes
+  de publicar templates. Compra/equipamento de modelos ausentes fica bloqueada.
+  Scripts legados removidos permanecem recuperáveis pelo backup Git.
