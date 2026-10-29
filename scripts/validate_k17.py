@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
 CELL=16
+MAP_PART_CLASSES={'Part','WedgePart'}
 
 
 def props(item):return {p.attrib['name']:p for p in item.find('Properties')}
@@ -23,7 +24,7 @@ def geometry(tree):
     boxes=[];all_parts=[]
     def visit(item,path):
         p=props(item);path=path+'/'+p.get('Name',ET.Element('Name')).text
-        if item.attrib['class']=='Part':
+        if item.attrib['class'] in MAP_PART_CLASSES:
             all_parts.append(p)
             if p['CanCollide'].text=='true':
                 cf=p['CFrame'];v=p['size']
@@ -63,6 +64,25 @@ class CollisionIndex:
         return None,samples
 
 
+def roof_aperture_errors(boxes,architecture):
+    """Reject re-capping a skylight at the original roof slab elevation.
+
+    This verifies geometry below the monitor, not illumination in the engine.
+    Wedge colliders use conservative AABBs; avatar routes avoid their slopes.
+    """
+    errors=[]
+    for feature in architecture:
+        if 'apertures' not in feature:continue
+        y=feature['aperture_floor']-.2
+        for number,(x0,x1,z0,z1) in enumerate(feature['apertures'],1):
+            for x in (x0+1,(x0+x1)/2,x1-1):
+                for z in (z0+1,(z0+z1)/2,z1-1):
+                    blocker=next((name for name,lo,hi in boxes
+                                  if lo[0]<x<hi[0] and lo[1]<y<hi[1] and lo[2]<z<hi[2]),None)
+                    if blocker:errors.append(f'{feature["id"]} aperture {number}: capped by {blocker}')
+    return errors
+
+
 def validate(path,manifest,quiet=False):
     tree=ET.parse(path);boxes,parts=geometry(tree)
     assert len(parts)==manifest['parts'],(len(parts),manifest['parts'])
@@ -87,7 +107,9 @@ def validate(path,manifest,quiet=False):
         elif aperture['kind']=='alcoveDoor':
             assert aperture['end']-aperture['start']>=6,aperture
             assert aperture['top']-aperture['bottom']>=7.19,aperture
-    index=CollisionIndex(boxes);errors=[];total=0
+    architecture=manifest.get('architecture',[])
+    assert {'foundry_roof_monitors','power_exhaust_plant','tower_control_cabin'}<={f['id'] for f in architecture}
+    index=CollisionIndex(boxes);errors=roof_aperture_errors(boxes,architecture);total=0
     for route in manifest['routes']:
         error,n=index.sweep(route,manifest['avatar']);total+=n
         if error:errors.append(route['name']+': '+error)
@@ -120,7 +142,7 @@ def main():
         assert {props(i)['Name'].text for i in props_model.findall('Item[@class="Model"]')}==set(manifest['barricades'])
         assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&names
         model=next(i for i in tree.findall('.//Item[@class="Model"]') if props(i)['Name'].text=='ZO_K17Foundry')
-        assert len(model.findall('.//Item[@class="Part"]'))==manifest['parts']
+        assert sum(item.attrib['class'] in MAP_PART_CLASSES for item in model.iter('Item'))==manifest['parts']
         source=ROOT/'src/maps/k17/Config.luau'
         assert 'ZO_K17Foundry' in source.read_text()
         print('PASS compiled place: K-17, authored spawns, audit, lighting; no previous scene')

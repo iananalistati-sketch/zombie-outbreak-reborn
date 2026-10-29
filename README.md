@@ -12,6 +12,11 @@ Para executar o cenário automático com dois clientes, abra
 [roteiro do Studio](tests/studio/README.md). Esse arquivo é exclusivo de validação;
 o jogo normal continua em `builds/ZombieOutbreakReborn_K17.rbxl`.
 
+**Mapa: [revisão da arquitetura industrial](docs/K17_INDUSTRIAL_ARCHITECTURE.md).**
+Fundição com quatro monitores inclinados e claraboias abertas, marquise de carga,
+exaustão da estação de energia e cabine panorâmica da torre com passarela externa.
+[Prévia geométrica atualizada](docs/K17_OVERVIEW.png); a aparência no Studio continua pendente.
+
 ## K-17 — Complexo de Contenção
 
 Mapa novo, independente de Santa Aurora e Harbor, com aproximadamente **600 × 600
@@ -148,11 +153,11 @@ renderizados pelo Roblox Studio.
 
 ## Estado de validação
 
-**Executado na nuvem:** geração, compilação Luau/Rojo, 213 percursos com 37.291
-amostras de apoio/espaço livre, 17 testes de geometria e quatro de identidade/
+**Executado na nuvem:** geração, compilação Luau/Rojo, 215 percursos com 38.374
+amostras de apoio/espaço livre, 19 testes de geometria e quatro de identidade/
 licenças do kit, 160 asserções do combate/
 rodada, 215 de inventário/economia e 96 de contenção. Os controladores reais
-passaram 100 verificações de combate, 27 de rodada e 7.554 de barricadas com APIs
+passaram 110 verificações de combate, 41 de rodada, 39 do ciclo integrado e 7.554 de barricadas com APIs
 simuladas; há também 202 da política de impulso e 85 das regras preservadas. Verificação das fontes ativas
 no place. Os percursos também foram checados com os 164 objetos presentes.
 

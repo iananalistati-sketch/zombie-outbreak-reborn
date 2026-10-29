@@ -11,12 +11,14 @@ root=ET.parse(src)
 parts=[]
 def walk(item,path=''):
  p={v.attrib['name']:v for v in item.find('Properties')};name=p['Name'].text;path+='/'+name
- if item.attrib['class']=='Part':
+ if item.attrib['class'] in ('Part','WedgePart'):
   cf=p['CFrame'];center=np.array([float(cf.find(k).text) for k in 'XYZ']);size=np.array([float(p['size'].find(k).text) for k in 'XYZ'])
   matrix=np.array([[float(cf.find(f'R{i}{j}').text) for j in range(3)] for i in range(3)])
   color=np.array([float(p['Color'].find(k).text) for k in 'RGB'])*255
   alpha=float(p['Transparency'].text)
-  if alpha<.9:parts.append((path,name,center,size,matrix,color,alpha))
+  shape=p.get('shape')
+  geometry='wedge' if item.attrib['class']=='WedgePart' else 'cylinder' if shape is not None and shape.text=='2' else 'box'
+  if alpha<.9:parts.append((path,name,center,size,matrix,color,alpha,geometry))
  for child in item.findall('Item'):walk(child,path)
 for i in root.getroot().findall('Item'):walk(i)
 for i in ET.parse(ROOT/"src/maps/k17/barricades/Stockroom.rbxmx").getroot().findall("Item"):walk(i)
@@ -26,19 +28,31 @@ right=np.cross(forward,[0,1,0]);right/=np.linalg.norm(right);up=np.cross(right,f
 light=np.array([-.4,1,.4]);light/=np.linalg.norm(light)
 verts=np.array([[x,y,z] for x in (-.5,.5) for y in (-.5,.5) for z in (-.5,.5)])
 faces=[[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]]
+def mesh(kind):
+ if kind=='wedge':
+  # Roblox WedgePart: full bottom, high edge along local +Z.
+  return np.array([[-.5,-.5,-.5],[-.5,-.5,.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,.5,.5],[.5,.5,.5]]),[[0,2,3,1],[1,3,5,4],[0,1,4],[2,5,3],[0,4,5,2]]
+ if kind=='cylinder':
+  n=20
+  vertices=np.array([[x,.5*np.cos(i*2*np.pi/n),.5*np.sin(i*2*np.pi/n)] for x in (-.5,.5) for i in range(n)])
+  polygons=[list(range(n-1,-1,-1)),list(range(n,2*n))]
+  polygons.extend([[i,(i+1)%n,(i+1)%n+n,i+n] for i in range(n)])
+  return vertices,polygons
+ return verts,faces
 font_path=next((str(p) for p in (Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'),Path('C:/Windows/Fonts/arial.ttf')) if p.exists()),'DejaVuSans.ttf')
 for mode in ('overview','ground','underground'):
  colorbuf=np.zeros((H,W,3),np.uint8);colorbuf[:]=[23,36,36];depthbuf=np.full((H,W),np.inf)
  scale=1.8 if mode!='underground' else 2.05
- for path,name,c,size,rgbmat,color,alpha in parts:
+ for path,name,c,size,rgbmat,color,alpha,kind in parts:
   if mode=='underground' and (('U1_MaintenanceNetwork' not in path and 'R15_PumpBay' not in path and not any(n in path for n in ('PumpCrate','PumpBayCrate'))) or name=='TunnelCeiling'):continue
   if mode!='underground' and ('U1_MaintenanceNetwork' in path or 'R15_PumpBay' in path or any(n in path for n in ('PumpCrate','PumpBayCrate'))):continue
   if mode=='ground' and (c[1]-size[1]/2>8 or name in ('GuardRail','RailPost')):continue
   if mode=='ground' and alpha>.4:continue
-  pts=(verts*size)@rgbmat.T+c
+  vertices,polygons=mesh(kind)
+  pts=(vertices*size)@rgbmat.T+c
   if mode=='ground':pts[:,1]=np.minimum(pts[:,1],8)
   if mode=='underground':pts[:,1]=np.minimum(pts[:,1],-19)
-  for ids in faces:
+  for ids in polygons:
    face=pts[ids];normal=np.cross(face[1]-face[0],face[2]-face[0]);norm=np.linalg.norm(normal)
    if norm<1e-6:continue
    normal/=norm
@@ -46,7 +60,7 @@ for mode in ('overview','ground','underground'):
    shade=.52+.48*max(0,np.dot(normal,light));fc=np.clip(color*shade,0,255)
    # Transparent glazing gets a reduced-opacity geometric representation.
    proj=np.column_stack(((face-target)@right*scale+W/2,H*.53-(face-target)@up*scale,(face-camera)@forward))
-   for indices in ((0,1,2),(0,2,3)):
+   for indices in ((0,i,i+1) for i in range(1,len(proj)-1)):
     tri=proj[list(indices)];xmin=max(0,int(np.floor(tri[:,0].min())));xmax=min(W-1,int(np.ceil(tri[:,0].max())))
     ymin=max(100,int(np.floor(tri[:,1].min())));ymax=min(H-70,int(np.ceil(tri[:,1].max())))
     if xmin>xmax or ymin>ymax:continue

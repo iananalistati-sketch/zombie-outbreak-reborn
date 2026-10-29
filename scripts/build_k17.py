@@ -17,6 +17,9 @@ from k17_extra_refuges import build_extra_refuges, overrides_room
 from k17_catalog import load_catalog
 from k17_covered_routes import build_covered_routes
 from k17_stair_niches import build_stair_niches
+from k17_foundry_architecture import build_foundry_architecture
+from k17_power_architecture import build_power_architecture
+from k17_tower_architecture import build_tower_architecture
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = {
@@ -83,6 +86,7 @@ class Map:
         self.root=self.item(self.xml,'Model','ZO_K17Foundry')
         self.models={}; self.parts=0; self.lights=0; self.shadow_lights=0
         self.routes=[]; self.defenses=[]; self.buildings=[]; self.openings=[]; self.refuges=[]; self.ducts=[]
+        self.architecture=[];self.rail_posts=set()
 
     @staticmethod
     def prop(p,kind,name,value):
@@ -134,8 +138,8 @@ class Map:
             cf.find(key).text=str(round(value,6))
         return item
 
-    def pipe(self,g,a,b,diameter=.75):
-        item=self.line(g,'SteamDistribution',a,b,diameter,'rust')
+    def pipe(self,g,a,b,diameter=.75,color='rust'):
+        item=self.line(g,'SteamDistribution',a,b,diameter,color)
         p=item.find('Properties');cf=p.find('CoordinateFrame')
         r=[[float(cf.find(f'R{i}{j}').text) for j in range(3)] for i in range(3)]
         for i in range(3):
@@ -143,6 +147,7 @@ class Map:
         size=p.find('Vector3[@name="size"]')
         for key,value in zip('XYZ',(math.dist(a,b),diameter,diameter)):size.find(key).text=str(value)
         self.prop(p,'token','shape',2)
+        return item
 
     def wall(self,g,name,axis,fixed,a,b,low,high,holes=(),color='aged',material='Concrete',thick=1):
         # hole=(start,end,sill,head,kind); windows get real framed glazing.
@@ -155,10 +160,20 @@ class Map:
             if kind=='window':
                 rect=(u0,u1,fixed-.08,fixed+.08) if axis=='X' else (fixed-.08,fixed+.08,u0,u1)
                 self.box(g,name+'_Glass',rect,v0,v1,'glass','Glass',alpha=.5,shadow=False)
-                # One outer frame and one mullion; limited repetition per bay.
-                for aa,bb,cc,dd in [(u0,u1,v1-.2,v1),((u0+u1)/2-.1,(u0+u1)/2+.1,v0,v1)]:
-                    r=(aa,bb,fixed-.2,fixed+.2) if axis=='X' else (fixed-.2,fixed+.2,aa,bb)
-                    self.box(g,name+'_Frame',r,cc,dd,'steel','Metal',physical=False)
+                aa,bb=(u0+u1)/2-.1,(u0+u1)/2+.1
+                r=(aa,bb,fixed-.2,fixed+.2) if axis=='X' else (fixed-.2,fixed+.2,aa,bb)
+                self.box(g,name+'_Frame',r,v0,v1,'steel','Metal',physical=False)
+        # Continuous window headers replace separate strips over every pane.
+        # Door apertures interrupt the header so it never crosses a taller door.
+        heights=defaultdict(list)
+        for u0,u1,v0,v1,kind in holes:
+            if kind=='window':heights[v1].append((u0,u1))
+        for height,spans in heights.items():
+            strips=[(min(a for a,b in spans),max(b for a,b in spans),height-.2,height)]
+            cuts=[(u0,u1,v0,v1) for u0,u1,v0,v1,kind in holes if kind!='window']
+            for aa,bb,cc,dd in union_cells(strips,cuts):
+                r=(aa,bb,fixed-.2,fixed+.2) if axis=='X' else (fixed-.2,fixed+.2,aa,bb)
+                self.box(g,name+'_WindowHeader',r,cc,dd,'steel','Metal',physical=False)
 
     def rail(self,g,a,b,foot):
         # Actual bars stop bodies; gaps between bars remain visible and shootable.
@@ -166,6 +181,9 @@ class Map:
         count=max(1,math.ceil(math.dist(a,b)/12))
         for i in range(count+1):
             x,z=[a[j]+(b[j]-a[j])*i/count for j in range(2)]
+            key=(g,round(x,5),round(z,5),round(foot,5))
+            if key in self.rail_posts:continue
+            self.rail_posts.add(key)
             self.box(g,'RailPost',(x-.1,x+.1,z-.1,z+.1),foot,foot+3.5,'steel','Metal',physical=False)
 
     def stair(self,g,name,x,z,axis,direction,width,run,rise,base,steps=None):
@@ -629,12 +647,15 @@ def build():
     office_block(m,'D_Warehouse',(-264,-170,-68,148),2,'brick',[('east',1,140)])
     office_block(m,'T_ControlTower',(172,248,-36,76),4,'aged')
     foundry(m)
+    build_foundry_architecture(m)
     gantries(m)
     underground(m)
     build_refuges(m,boundary)
     m.refuges.extend(build_extra_refuges(m))
     m.refuges.extend(build_covered_routes(m))
     m.refuges.extend(build_stair_niches(m))
+    build_power_architecture(m)
+    build_tower_architecture(m)
     defenses(m)
     for name,point in [('HumanSpawn',(-68,1,-136)),('ZombieSpawn',(-217,1,136)),('LobbySpawn',(-30,.1,36))]:
         x,y,z=point;m.box('Spawns',name,(x-1,x+1,z-1,z+1),y,y+.1,physical=False,alpha=1)
@@ -671,7 +692,7 @@ def output_files():
     manifest={'map':'ZO_K17Foundry','bounds':[-300,300,-300,300],'avatar':{'radius':1.5,'height':5.5,'step':1},
               'parts':m.parts,'lights':m.lights,'shadow_lights':m.shadow_lights,'buildings':m.buildings,
               'routes':m.routes,'defenses':m.defenses,'openings':m.openings,'underground':TUNNELS,'refuges':m.refuges,'ducts':m.ducts,
-              'barricades':catalog['Props']}
+              'barricades':catalog['Props'],'architecture':m.architecture}
     refuge_luau='--!strict\n-- Generated by scripts/build_k17.py; edit the authored refuge data.\nreturn {\n'
     for r in m.refuges:
         vec=lambda p:'{'+','.join(str(v) for v in p)+'}'
@@ -692,8 +713,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--check',action='store_true');args=p.parse_args()
     for path,text in output_files().items():
         if args.check:
-            if not path.exists() or path.read_text()!=text:raise SystemExit(f'Stale generated file: {path.relative_to(ROOT)}')
-        else:path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
+            if not path.exists() or path.read_text(encoding='utf-8')!=text:raise SystemExit(f'Stale generated file: {path.relative_to(ROOT)}')
+        else:path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text,encoding='utf-8')
     m=build();print(f'K-17: {m.parts} anchored parts, {m.lights} lights ({m.shadow_lights} shadowed), {len(m.routes)} authored routes, {len(m.defenses)} defenses')
 
 

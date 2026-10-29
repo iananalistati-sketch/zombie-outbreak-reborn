@@ -44,6 +44,8 @@ return function()
         {name="foundry east roof", origin=Vector3.new(160,3,128), target=Vector3.new(116,31,205)},
         {name="tower to fourth floor", origin=Vector3.new(188,31,-7), target=Vector3.new(230,45,58)},
         {name="tower east stair to roof", origin=Vector3.new(232,45,-7), target=Vector3.new(232,59,33)},
+        {name="tower west control balcony", origin=Vector3.new(188,45,33), target=Vector3.new(169,45,-39)},
+        {name="tower east control balcony", origin=Vector3.new(232,45,33), target=Vector3.new(251,45,-39)},
         {name="gantry west", origin=Vector3.new(-80,3,0), target=Vector3.new(48,17,0)},
         {name="gantry east", origin=Vector3.new(168,3,8), target=Vector3.new(48,17,0)},
         {name="upper container", origin=Vector3.new(-140,3,-82), target=Vector3.new(-80,15,-82)},
@@ -67,6 +69,13 @@ return function()
     } do
         local hit = Workspace:Raycast(test.origin, test.target-test.origin, params)
         record((hit == nil) == test.clear, test.name)
+    end
+    -- The monitor glass is above this segment. An opaque slab under it must fail.
+    for _,x in {-80,20} do
+        for _,z in {112,214} do
+            local hit=Workspace:Raycast(Vector3.new(x,28.2,z),Vector3.new(0,2,0),params)
+            record(hit==nil,("foundry roof aperture %.0f/%.0f"):format(x,z))
+        end
     end
     print(("[K17 AUDIT] COMPLETE: %d passed, %d failed. Walk every stair; inspect both invasion routes and multiplayer separately."):format(passed,failed))
     return {passed=passed, failed=failed}
