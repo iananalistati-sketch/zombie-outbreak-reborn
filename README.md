@@ -57,7 +57,9 @@ está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barri
 
 ## Abrir no Windows
 
-1. No GitHub Desktop, selecione **main**, faça **Fetch origin → Pull origin**.
+1. No GitHub Desktop, selecione **main** para a versão estável ou
+   **`feat/fps-combat-package`** para testar o pacote FPS e as correções de
+   lentidão/postura. Faça **Fetch origin → Pull origin** na branch escolhida.
    Preserve eventuais alterações locais antes de atualizar.
 2. Salve uma cópia do seu place atual como backup. Desconecte o plugin Rojo se
    estiver ligado ao projeto anterior.

@@ -235,16 +235,51 @@ do
 end
 
 do
+    local s,first,second=twoHumans();local zombie=s.add("BurstMovement","Zombies");s.phase("Active");ready(s,first)
+    local hum=zombie.Character.Humanoid;hum.Health=10000;hum.WalkSpeed=19
+    local baseline=hum.WalkSpeed
+    s.ray(function() return hit(zombie.Character.UpperTorso) end)
+    -- Two shooters and two separate bursts must share one stable baseline. The
+    -- float32 WalkSpeed double distinguishes the real bug from exact Lua tables.
+    for burst=1,2 do
+        local firstAmmo,secondAmmo=attr(first,"Ammo"),attr(second,"Ammo")
+        for shot=1,12 do
+            s.fire(if shot%2==1 then first else second)
+            check(near(hum.WalkSpeed,baseline*Config.Containment.TagWalkScale),
+                "sustained hits keep one slowdown rather than multiplying movement loss")
+            s.advance(Config.Weapons.Rifle.FireInterval+.01)
+        end
+        check(attr(first,"Ammo")==firstAmmo-6 and attr(second,"Ammo")==secondAmmo-6,
+            "both shooters delivered all confirmed burst shots")
+        s.advance(Config.Containment.TagSeconds+.1)
+        check(hum.WalkSpeed==baseline,"each completed burst restores the original full zombie speed")
+    end
+end
+
+do
+    local s,p=twoHumans();local zombie=s.add("RoundEndMovement","Zombies");s.phase("Active");ready(s,p)
+    local hum=zombie.Character.Humanoid;hum.Health=1000;hum.WalkSpeed=19
+    s.ray(function() return hit(zombie.Character.UpperTorso) end);s.fire(p)
+    check(near(hum.WalkSpeed,19*Config.Containment.TagWalkScale),"round-end scenario begins with a real float-stored tag")
+    s.phase("Results")
+    check(hum.WalkSpeed==19,"leaving Active immediately removes the owned slowdown")
+    hum.WalkSpeed=16;s.advance(Config.Containment.TagSeconds+.1)
+    check(hum.WalkSpeed==16,"cancelled tag cannot overwrite later lobby movement")
+end
+
+do
     local s,p=twoHumans();local zombie=s.add("OtherMovementEffect","Zombies");s.phase("Active");ready(s,p)
     local hum=zombie.Character.Humanoid;hum.Health=1000
     s.ray(function() return hit(zombie.Character.UpperTorso) end);s.fire(p)
-    hum.WalkSpeed=23
+    hum.WalkSpeed=23.7
+    local changedBaseline=hum.WalkSpeed
+    check(changedBaseline~=23.7,"movement double rounds property writes rather than preserving Luau doubles")
     s.advance(Config.Containment.TagSeconds+.1)
-    check(hum.WalkSpeed==23,"tag expiry never overwrites another system's newer movement speed")
+    check(hum.WalkSpeed==changedBaseline,"tag expiry never overwrites another system's newer movement speed")
     s.advance(Config.Weapons.Rifle.FireInterval+.01);s.fire(p)
-    check(near(hum.WalkSpeed,23*Config.Containment.TagWalkScale),"new confirmed hit tags the changed baseline instead of restoring stale speed")
+    check(near(hum.WalkSpeed,changedBaseline*Config.Containment.TagWalkScale),"new confirmed hit tags the changed baseline instead of restoring stale speed")
     s.advance(Config.Containment.TagSeconds+.1)
-    check(hum.WalkSpeed==23,"new speed baseline survives the next tag expiry")
+    check(hum.WalkSpeed==changedBaseline,"new speed baseline survives the next tag expiry")
 end
 
 do

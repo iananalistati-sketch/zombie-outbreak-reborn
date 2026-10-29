@@ -4,6 +4,13 @@ return function(deps)
 local Config,Rules,WeaponState=deps.Config,deps.Rules,deps.WeaponState
 local LoadoutState,Containment=deps.LoadoutState,deps.Containment
 local COMBAT_SOURCE=deps.CombatSource
+-- Engine float properties do not preserve every Luau double. Model that storage
+-- boundary so equality-based effect ownership cannot pass on table precision.
+local floatStorage=buffer.create(4)
+local function propertyFloat(value)
+    buffer.writef32(floatStorage,0,value)
+    return buffer.readf32(floatStorage,0)
+end
 local Vector={}
 local vmt={}
 function Vector.new(x,y,z) return setmetatable({X=x,Y=y,Z=z},vmt) end
@@ -57,6 +64,7 @@ local function simulation(options)
         local value={_data=data}
         setmetatable(value,{__index=function(_,key) return methods[key] or data[key] or data._children[key] end,
             __newindex=function(_,key,new)
+                if class=="Humanoid" and key=="WalkSpeed" then new=propertyFloat(new) end
                 local previous=data[key]
                 if key=="Parent" then
                     if previous then previous._children[data.Name]=nil;previous.ChildRemoved:Fire(value) end

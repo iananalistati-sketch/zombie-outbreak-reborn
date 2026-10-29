@@ -14,6 +14,7 @@ script:SetAttribute("ZO_EquipmentVisualsReady",false)
 local shared=RS:WaitForChild("K17Gameplay")
 local Config=require(shared:WaitForChild("Config"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
+local WeaponAimPose=require(shared:WaitForChild("WeaponAimPose"))
 
 type Session={
     player: Player,
@@ -113,8 +114,11 @@ local function animationTrack(session: Session,kind: string): AnimationTrack?
         return nil
     end
     local track=result :: AnimationTrack
-    track.Looped=kind~="Reload"
+    -- Kit Aim is a pitch-pose bank, not a breathing/idle loop. Sampling its
+    -- neutral frame prevents observers seeing an endless down/up aim sweep.
+    track.Looped=false
     track.Priority=if kind=="Reload" then Enum.AnimationPriority.Action2 else Enum.AnimationPriority.Action
+    if kind~="Reload" then table.insert(session.toolConnections,WeaponAimPose.bind(track)) end
     session.tracks[kind]=track
     session.animationSources[kind]=animation
     return track
@@ -228,7 +232,7 @@ local function refresh(session: Session)
     -- Retry missing animations after late imports; keep valid Animator tracks.
     local aim=animationTrack(session,"Aim")
     local reload=animationTrack(session,"Reload")
-    if aim and not aim.IsPlaying then aim:Play(.15) end
+    if aim then WeaponAimPose.hold(aim,.15) end
     setStatus(session,if aim and reload then "Ready" else "AnimationUnavailable")
     -- Reuse BaseWeapon's named reload track; the authoritative reload duration
     -- and cancel signal are the existing combat controller's replicated attrs.

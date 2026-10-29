@@ -16,7 +16,7 @@ def release(binary):
     required={'ZO_K17Foundry','R16_FilterRoom','R17_YardWorkshop','R18_CoolantRoom',
               'V_StockroomVent','V_FilterVent','V_YardVent','V_CoolantVent','Startup','RefugeAudit','TacticalMap','K17Refuges',
               'R48_UnderStair','R49_UnderStair','Loadout','LoadoutState','Containment','ZO_WeaponAssets',
-              'EquipmentVisuals','WeaponPresentation','PresentationConfig','WeaponPreview','WeaponAssets','WeaponAssetImport',
+              'EquipmentVisuals','WeaponPresentation','WeaponAimPose','PresentationConfig','WeaponPreview','WeaponAssets','WeaponAssetImport',
               'RifleAim','RifleReload','RifleAimDownSights','MuzzleFlash'}
     required|={'MonitorClerestoryGlass','MonitorEndCheek','ReceivingCanopyRoof','ExhaustFlue','AirBalanceHeader',
                'ControlCabinFacade','ControlInspectionWalkway'}
@@ -30,7 +30,7 @@ def release(binary):
     for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
                  'src/maps/k17/barricades/Server.server.luau','src/maps/k17/barricades/Config.luau','src/maps/k17/barricades/Physics.luau',
                  'src/maps/k17/gameplay/Combat.server.luau','src/maps/k17/gameplay/Config.luau','src/maps/k17/gameplay/LoadoutState.luau',
-                 'src/maps/k17/gameplay/Containment.luau','src/maps/k17/gameplay/Loadout.client.luau','src/maps/k17/gameplay/Weapons.client.luau',
+                 'src/maps/k17/gameplay/Containment.luau','src/maps/k17/gameplay/WeaponAimPose.luau','src/maps/k17/gameplay/Loadout.client.luau','src/maps/k17/gameplay/Weapons.client.luau',
                  'src/maps/k17/gameplay/EquipmentVisuals.server.luau','src/maps/k17/gameplay/WeaponPresentation.luau',
                  'src/maps/k17/gameplay/PresentationConfig.luau','src/maps/k17/gameplay/WeaponPreview.luau',
                  'src/maps/k17/gameplay/WeaponAssets.server.luau','src/maps/k17/gameplay/WeaponAssetImport.luau',

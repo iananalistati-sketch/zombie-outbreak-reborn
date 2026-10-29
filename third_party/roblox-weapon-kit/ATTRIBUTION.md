@@ -29,6 +29,12 @@ No K-17, `WeaponPresentation.luau` adapta trechos de `BaseWeapon` e
 de atribuição permanecem nesses arquivos. Posicionamento em primeira pessoa,
 cancelamento e ligação aos estados do K-17 são adaptações locais.
 
+`WeaponAimPose.luau` adapta de `BulletWeapon:onRenderStepped` a seleção da pose
+na sequência de mira entre -80 e 80 graus. Aim/ADS são bancos de poses, não loops
+de idle. A integração mantém a pose neutra em primeira e terceira pessoa; a
+recarga continua avançando normalmente. A inclinação da câmera não é replicada
+por esse adaptador. O conteúdo permanece sob as licenças acima.
+
 Não são ativados o controlador de dano, a rede de acertos ou a câmera do kit
 completo. A AR usa os assets originais de mesh, textura, áudio e animação; a
 disponibilidade e as permissões desses assets devem ser verificadas no Studio.

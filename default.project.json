@@ -48,6 +48,9 @@
         "Containment": {
           "$path": "src/maps/k17/gameplay/Containment.luau"
         },
+        "WeaponAimPose": {
+          "$path": "src/maps/k17/gameplay/WeaponAimPose.luau"
+        },
         "RoundRules": {
           "$path": "src/maps/k17/gameplay/RoundRules.luau"
         },

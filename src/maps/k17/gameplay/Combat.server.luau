@@ -116,6 +116,10 @@ local function suppress(model: Model,hum: Humanoid,now: number)
     entry.untilTime=Containment.tagUntil(entry.untilTime,now,Config.Containment.TagSeconds)
     entry.applied=Containment.walkSpeed(entry.base,now,entry.untilTime,Config.Containment.TagWalkScale)
     hum.WalkSpeed=entry.applied
+    -- Humanoid stores WalkSpeed at engine precision, not Luau double precision.
+    -- Own the value actually read back: otherwise our own rounded tag looks
+    -- like another system's new baseline, compounds each hit and fails restore.
+    entry.applied=hum.WalkSpeed
 end
 local function beginRound(player: Player)
     local loadout=loadouts[player]

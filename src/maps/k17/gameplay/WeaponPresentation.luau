@@ -9,6 +9,7 @@ local TweenService=game:GetService("TweenService")
 local Debris=game:GetService("Debris")
 local RS=game:GetService("ReplicatedStorage")
 local PresentationConfig=require(script.Parent.PresentationConfig)
+local WeaponAimPose=require(script.Parent.WeaponAimPose)
 local localRandom=Random.new()
 local Presentation={}
 Presentation.__index=Presentation
@@ -286,7 +287,7 @@ function Presentation:getTrack(kind)
         warn("[K17] First-person animation unavailable: "..self.id.."/"..kind)
         return nil
     end
-    track.Looped=kind~="Reload"
+    track.Looped=false -- Aim/ADS are held pitch poses; Reload plays once.
     track.Priority=if kind=="Reload" then Enum.AnimationPriority.Action2 else Enum.AnimationPriority.Action
     self.tracks[kind]=track
     if kind=="Reload" then
@@ -296,6 +297,8 @@ function Presentation:getTrack(kind)
                 track:AdjustSpeed(math.clamp(track.Length/remaining,.2,5))
             end
         end))
+    else
+        table.insert(self.connections,WeaponAimPose.bind(track))
     end
     return track
 end
@@ -410,8 +413,8 @@ function Presentation:update(cameraCFrame,pose,visible,aimAlpha)
             self.aimAnimation=aim;self.idleStarted=true
             self.nextAnimationRetry=os.clock()+.5
             local hip,ads=self:getTrack("Aim"),self:getTrack("AimDownSights")
-            if hip then if aim and ads then hip:Stop(.12) elseif not hip.IsPlaying then hip:Play(.12) end end
-            if ads then if aim then ads:Play(.12) else ads:Stop(.12) end end
+            if hip then if aim and ads then hip:Stop(.12) elseif not hip.IsPlaying then WeaponAimPose.hold(hip,.12) end end
+            if ads then if aim then WeaponAimPose.hold(ads,.12) else ads:Stop(.12) end end
         end
     end
 end

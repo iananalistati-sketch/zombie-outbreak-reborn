@@ -43,7 +43,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','WeaponPresentation','PresentationConfig','WeaponPreview')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','WeaponAimPose','WeaponPresentation','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)

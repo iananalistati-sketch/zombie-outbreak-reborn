@@ -6,6 +6,8 @@ local RunService=game:GetService("RunService")
 if not RunService:IsStudio() or not RunService:IsServer() then return end
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
+local combatConfig=require(RS:WaitForChild("K17Gameplay"):WaitForChild("Config"))
+local roundConfig=require(RS:WaitForChild("Shared"):WaitForChild("RoundConfig"))
 local channel=Instance.new("RemoteEvent")
 channel.Name="ZO_StudioSurvivalTest"
 channel.Parent=RS
@@ -16,6 +18,7 @@ local rotation: {[Humanoid]: boolean}={}
 local checks=0
 local serial=0
 local stage="startup"
+local movementConnection: RBXScriptConnection?
 script:SetAttribute("Status","Running")
 local function waitUntil(label: string,predicate: ()->boolean,seconds: number)
     stage=label;script:SetAttribute("Stage",label)
@@ -100,6 +103,18 @@ local ok,problem=xpcall(function()
     place(zombie,Vector3.new(-238,4,123),Vector3.new(-248,4,123))
     task.wait(.5)
     local _,victim,_,target=living(zombie)
+    local baseSpeed=victim.WalkSpeed
+    local taggedSpeed=baseSpeed*combatConfig.Containment.TagWalkScale
+    local minimumSpeed=baseSpeed
+    local function near(actual: number,expected: number): boolean
+        return math.abs(actual-expected)<.001
+    end
+    check(near(baseSpeed,roundConfig.ZombieWalkSpeed),"zombie starts with configured movement speed")
+    -- Observe the property's real engine precision. A short tag may already
+    -- expire while the separate client acknowledgement is travelling back.
+    movementConnection=victim:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        minimumSpeed=math.min(minimumSpeed,victim.WalkSpeed)
+    end)
     local ammo=human:GetAttribute("ZO_Ammo") :: number
     local health=victim.Health
     request(human,"Fire",target.Position)
@@ -107,6 +122,10 @@ local ok,problem=xpcall(function()
         return victim.Health<health and human:GetAttribute("ZO_Ammo")==ammo-1
     end,3)
     check(true,"client fire produces real raycast damage and spends server ammunition")
+    waitUntil("single hit applies movement tag",function() return minimumSpeed<baseSpeed-.001 end,2)
+    check(near(minimumSpeed,taggedSpeed),"single hit applies only the configured movement slowdown")
+    waitUntil("single hit movement recovery",function() return near(victim.WalkSpeed,baseSpeed) end,2)
+    check(near(victim.WalkSpeed,baseSpeed),"single hit restores original zombie speed after tag expires")
     request(human,"Reload")
     waitUntil("reload starts",function() return human:GetAttribute("ZO_Reloading")==true end,2)
     local reserve=human:GetAttribute("ZO_Reserve") :: number
@@ -114,6 +133,21 @@ local ok,problem=xpcall(function()
         return human:GetAttribute("ZO_Reloading")==false and human:GetAttribute("ZO_Ammo")==ammo
     end,5)
     check(human:GetAttribute("ZO_Reserve")==reserve-1,"timed reload transfers exactly one reserve round")
+    minimumSpeed=baseSpeed
+    for shot=1,6 do
+        local beforeAmmo=human:GetAttribute("ZO_Ammo") :: number
+        local beforeHealth=victim.Health
+        local nextShot=os.clock()+combatConfig.Weapons.Rifle.FireInterval+.02
+        request(human,"Fire",target.Position)
+        waitUntil("burst hit "..shot,function()
+            return victim.Health<beforeHealth and human:GetAttribute("ZO_Ammo")==beforeAmmo-1
+        end,3)
+        task.wait(math.max(0,nextShot-os.clock()))
+    end
+    check(victim.Health>0 and near(minimumSpeed,taggedSpeed),"six confirmed hits never compound zombie movement slowdown")
+    waitUntil("burst movement recovery",function() return near(victim.WalkSpeed,baseSpeed) end,2)
+    check(near(victim.WalkSpeed,baseSpeed),"zombie recovers original speed after the final burst hit")
+    if movementConnection then movementConnection:Disconnect();movementConnection=nil end
     place(zombie,Vector3.new(-243.5,4,123),Vector3.new(-248,4,123))
     task.wait(.3)
     local _,_,_,humanHead=living(human)
@@ -136,6 +170,7 @@ local ok,problem=xpcall(function()
     nextPreparation(id)
     check(true,"automatic next-round reset restores both humans")
 end,debug.traceback)
+if movementConnection then movementConnection:Disconnect() end
 for root,anchored in roots do if root.Parent then root.Anchored=anchored end end
 for humanoid,autoRotate in rotation do if humanoid.Parent then humanoid.AutoRotate=autoRotate end end
 for _,player in Players:GetPlayers() do channel:FireClient(player,0,"Stop") end
