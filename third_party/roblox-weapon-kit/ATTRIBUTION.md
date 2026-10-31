@@ -35,6 +35,11 @@ de idle. A integração mantém a pose neutra em primeira e terceira pessoa; a
 recarga continua avançando normalmente. A inclinação da câmera não é replicada
 por esse adaptador. O conteúdo permanece sob as licenças acima.
 
+O `HitSound` original de impacto (`1489924400`) foi excluído apenas da extração
+ativa após o Studio informar que o asset está arquivado. As partículas de
+impacto e os sons originais de tiro/recarga foram preservados, sem substituir
+o som indisponível por um ID não verificado. O arquivo original continua intacto.
+
 O recuo em `Weapons.client.luau` segue a composição do estado completo de recuo
 de `ShoulderCamera:onRenderStep` do kit, com integração local antes/depois da
 câmera padrão Roblox para remover o offset anterior e evitar acumulação.

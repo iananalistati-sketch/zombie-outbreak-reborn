@@ -38,8 +38,15 @@ if permissionIssue then
     warn("[K17 ASSETS] Ownership/permission error: review Experience Settings > Allow Loading Third Party Assets for public free models, or acquire the official model in the experience creator's inventory. This setting is only needed when the asset does not already meet Roblox ownership/sharing rules.")
 end
 game:GetService("Selection"):Set({kit})
+print(("[K17 ASSETS] Resultado: %d importadas agora; %d oficiais ja disponiveis; %d falhas; %d pendentes.")
+    :format(kit:GetAttribute("ImportedCount") or 0,kit:GetAttribute("CachedCount") or 0,
+        kit:GetAttribute("FailedCount") or 0,kit:GetAttribute("PendingCount") or 0))
 if kit:GetAttribute("Status")=="Loading" then
     warn("[K17 ASSETS] Still loading after 25 seconds. Wait and run this command again before exporting; these are pending requests, not confirmed imports.")
+    return
+end
+if kit:GetAttribute("Status")=="Failed" then
+    warn("[K17 ASSETS] Nenhuma arma oficial foi obtida nesta tentativa. A carabina anterior foi preservada. Corrija os erros acima e tente novamente; ainda nao ha novos modelos para exportar.")
     return
 end
 if (kit:GetAttribute("FailedCount") or 0)>0 then

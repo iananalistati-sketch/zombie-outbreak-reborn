@@ -90,21 +90,29 @@ function Import.loadAll()
     running=true
     local kit,weapons=Import.ensure()
     local jobs={}
+    local cached=0
     for id,assetId in sources do
         local existing=weapons:FindFirstChild(id)
         if existing and existing:GetAttribute("ZO_SourceAssetId")==assetId then
             kit:SetAttribute("Status_"..id,"Ready")
+            kit:SetAttribute("Error_"..id,nil)
+            cached+=1
         else table.insert(jobs,{id=id,assetId=assetId}) end
     end
     local pending=#jobs
     local failures=0
+    local imported=0
     kit:SetAttribute("ImportMethod","AssetService:LoadAssetAsync")
+    kit:SetAttribute("AttemptedCount",pending)
+    kit:SetAttribute("PendingCount",pending)
+    kit:SetAttribute("ImportedCount",0)
+    kit:SetAttribute("CachedCount",cached)
+    kit:SetAttribute("FailedCount",0)
     kit:SetAttribute("Status","Loading")
     local function complete()
         if pending>0 then return end
         running=false
-        kit:SetAttribute("Status",if failures==0 then "Ready" else "Partial")
-        kit:SetAttribute("FailedCount",failures)
+        kit:SetAttribute("Status",if failures==0 then "Ready" elseif imported+cached>0 then "Partial" else "Failed")
     end
     for _,job in jobs do
         local id,assetId=job.id,job.assetId
@@ -123,8 +131,12 @@ function Import.loadAll()
                 failures+=1;kit:SetAttribute("Status_"..id,"Failed")
                 kit:SetAttribute("Error_"..id,tostring(problem):sub(1,600))
                 warn(("[K17 ASSETS] %s (%d): %s"):format(id,assetId,tostring(problem)))
-            end
-            pending-=1;complete()
+            else imported+=1 end
+            pending-=1
+            kit:SetAttribute("ImportedCount",imported)
+            kit:SetAttribute("FailedCount",failures)
+            kit:SetAttribute("PendingCount",pending)
+            complete()
         end)
     end
     complete()

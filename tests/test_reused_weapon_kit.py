@@ -54,5 +54,17 @@ class ReusedWeaponKit(unittest.TestCase):
             self.assertEqual(self.named[name].get('class'),'Animation')
             self.assertIn(asset,self.named[name].findtext('./Properties/Content[@name="AnimationContent"]/uri'))
 
+    def test_archived_impact_audio_is_excluded_without_discarding_particles(self):
+        effect=self.named['HitEffect']
+        self.assertEqual(effect.get('class'),'Attachment')
+        particles=effect.find('Item[@class="ParticleEmitter"]')
+        self.assertIsNotNone(particles)
+        self.assertEqual(particles.findtext('./Properties/string[@name="Name"]'),'HitParticles')
+        self.assertEqual(particles.findtext('./Properties/Content[@name="TextureContent"]/uri'),
+                         'rbxasset://textures/particles/smoke_main.dds')
+        references=[node.text or '' for node in self.tree.findall('.//Properties/Content/uri')]
+        self.assertFalse(any('1489924400' in reference for reference in references),
+                         'Archived impact audio must not return to the runtime package')
+
 
 if __name__=='__main__':unittest.main()

@@ -57,7 +57,8 @@ Ele precisa ser executado no Studio, em modo de edição, usando a conta local:
    cole na Command Bar fora de Play. Também é possível copiar o arquivo inteiro.
 2. O importador faz backup em `ServerStorage`, tenta os quatro prefabs e remove
    seus scripts/remotes antes de publicar os templates em `ZO_WeaponAssets`.
-   Confira o Output: a operação e suas permissões ainda não foram executadas aqui.
+   Confira o Output: a tentativa local de 31/10 negou os quatro modelos por
+   autorização; o usuário confirmou a opção de terceiros desativada.
 3. O carregador usa `AssetService:LoadAssetAsync`, conforme a
    [documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
    Em erro de permissão, confira **Experience Settings → Allow Loading Third
@@ -67,8 +68,8 @@ Ele precisa ser executado no Studio, em modo de edição, usando a conta local:
    como `ZO_WeaponAssets_Official.rbxmx` e sincronize pelo GitHub Desktop para
    que os modelos realmente obtidos possam ser incorporados ao repositório.
 
-O importador foi compilado em Luau; sua execução e a autorização para carregar
-os assets ainda dependem do Studio. Uma falha individual é informada no Output.
+O importador foi compilado em Luau; a execução local já foi tentada, mas carregar
+os assets ainda depende de autorização no Studio. Uma falha individual é informada no Output.
 Se todas as importações falharem, ele não deixa uma pasta vazia no projeto.
 
 ## Componentes pequenos verificados

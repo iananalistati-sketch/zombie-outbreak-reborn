@@ -96,6 +96,25 @@ permissão, preserva backup e orienta salvar uma cópia fora de `builds`.
 Backup: `backup/before-fps-polish-c1fc793`, tar verificado e cópia das alterações
 pendentes antes da retomada. Os três modelos ausentes continuam sem ser obtidos.
 
+## Resultado real do Studio — 31/10
+
+O Output enviado pelo usuário confirma que o comando foi executado em modo de
+edição e preservou o backup. Os quatro prefabs retornaram
+`User is not authorized to access Asset.` Nenhum modelo oficial novo foi obtido.
+O usuário confirmou que **Allow Loading Third Party Assets** estava desligada.
+Habilitar essa opção permite modelos públicos gratuitos de terceiros, mas não
+concede acesso a assets privados ou indisponíveis. A nova tentativa fica pendente.
+
+O mesmo Output confirmou o `HitSound` de impacto `1489924400` arquivado. Esse
+Sound foi removido da extração ativa; as partículas e sons de tiro/recarga foram
+preservados. O ID `203785492` com erro de tipo não aparece nos fontes ou chunks
+descomprimidos dos places e do kit original; sua origem continua não identificada.
+
+O importador agora distingue falha total de importação parcial, informa quantos
+modelos foram importados/cacheados/falharam e não orienta exportar modelos novos
+quando todas as tentativas falham. O arquivo anterior da carabina permanece.
+Backup: `backup/before-asset-errors-5e0227f` e tar verificado.
+
 ## Dependência de modelos que continua aberta
 
 | Arma | Prefab oficial | Situação nesta nuvem |
@@ -122,8 +141,8 @@ a mudança.** Salvar o rascunho não liberou a rede desta execução.
 `WeaponAssets.server` tenta carregar os prefabs por `AssetService:LoadAssetAsync`,
 substituto moderno de `InsertService:LoadAsset` conforme a
 [documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
-A operação depende das permissões da experiência/conta Roblox e ainda não foi
-executada no motor. O importador elimina scripts, remotes e PackageLinks no
+A operação depende das permissões da experiência/conta Roblox. A tentativa local
+documentada acima foi executada e falhou por autorização. O importador elimina scripts, remotes e PackageLinks no
 container desconectado, valida Tool/meshes/grip/áudio e só então publica a cópia.
 Uma falha fica em `ReplicatedStorage.ZO_WeaponAssets`, atributos `Status_<id>` e
 `Error_<id>`, sem paralisar as rodadas. O rifle embutido continua disponível.
@@ -150,8 +169,9 @@ Para tentar a importação local sem VS Code:
    `ZO_WeaponAssets` selecionada como **`ZO_WeaponAssets_Official.rbxmx`** para
    compartilhar/incorporar os modelos realmente obtidos ao Git.
 
-O atalho Windows, as permissões e a importação real ainda precisam ser executados
-no computador do usuário. A importação não publica a experiência no Roblox.
+O comando local já foi executado pelo usuário, mas a importação após habilitar a
+opção ainda está pendente. O atalho Windows não foi executado nesta máquina Linux.
+A importação não publica a experiência no Roblox.
 
 ## Testes e limites
 
@@ -179,6 +199,11 @@ importador com APIs simuladas. O teste de câmera executa quadros em ordem de
 prioridade, com reconstrução da base e realimentação da orientação; o controlador
 anterior falha no caso de inversão do recuo. Esses testes não aprovam a sensação
 de tiro no motor nem comprovam o download dos prefabs.
+
+Após o Output de falha total, passaram 27 verificações do importador, incluindo
+quatro recusas de autorização, preservação da carabina e recuperação posterior
+com APIs simuladas. A regressão de assets verifica que a referência arquivada
+não retorna ao pacote, preservando partículas e áudio original de tiro/recarga.
 
 O arquivo de validação Survival separado foi mantido. Antes de aprovar o pacote,
 testar dois clientes, quatro templates carregados, mira/recarga/troca/compra,

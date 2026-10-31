@@ -46,7 +46,15 @@ def extract(source):
     package.append(copy.deepcopy(child(assets,'Animations')))
     effects=folder('Effects','ZO_WeaponAssets_Effects');package.append(effects)
     shots=child(child(assets,'Effects'),'Shots')
-    effects.append(copy.deepcopy(child(child(shots,'Bullet'),'HitEffect')))
+    hit_effect=copy.deepcopy(child(child(shots,'Bullet'),'HitEffect'))
+    # Studio confirmed this archived sound cannot load (even at volume zero).
+    # Keep the original particle effect and working gun audio; do not substitute
+    # an unverified ID or mutate the preserved upstream archive.
+    hit_sound=child(hit_effect,'HitSound')
+    assert hit_sound.get('class')=='Sound'
+    assert hit_sound.findtext('./Properties/Content[@name="AudioContent"]/uri')=='rbxassetid://1489924400'
+    hit_effect.remove(hit_sound)
+    effects.append(hit_effect)
     strings=source.find('SharedStrings')
     if strings is not None:root.append(copy.deepcopy(strings))
     assert not any(i.get('class') in ('Script','LocalScript','ModuleScript') for i in root.iter('Item'))
@@ -64,4 +72,4 @@ if __name__=='__main__':
     else:
         TARGET.parent.mkdir(parents=True,exist_ok=True)
         TARGET.write_text(data,encoding='utf-8')
-    print('PASS bundled arsenal: original Rifle meshes, animations and used impact effect; no scripts or unused bullet/casing templates')
+    print('PASS bundled arsenal: original Rifle meshes, firing/reload audio, animations and impact particles; no archived impact sound or executable templates')

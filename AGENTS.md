@@ -57,3 +57,11 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
 - `WeaponAssetImport` só aceita IDs oficiais fixos e remove código externo antes
   de publicar templates. Compra/equipamento de modelos ausentes fica bloqueada.
   Scripts legados removidos permanecem recuperáveis pelo backup Git.
+- O usuário executou a importação no Studio em 31/10: os quatro IDs retornaram
+  `User is not authorized to access Asset`; confirmou que **Allow Loading Third
+  Party Assets** estava desligada. Não tratar essa tentativa como importação
+  bem-sucedida, nem afirmar que o comando nunca foi executado localmente.
+- O mesmo Output confirmou que o HitSound `1489924400` está arquivado. Removê-lo
+  da extração ativa preserva as partículas e os sons originais de tiro/recarga.
+  O ID `203785492`, com erro de tipo, não foi localizado nos fontes/binários;
+  não inventar sua origem ou substituir IDs por suposição.

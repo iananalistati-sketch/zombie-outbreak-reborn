@@ -82,11 +82,13 @@ end
 rs=make("ReplicatedStorage","ReplicatedStorage")
 local failPistol=false
 local failRifle=false
+local failAll=false
 local downloads=0
 local serviceRequests={}
 local ids={Rifle=96131146947811,SMG=119916677125479,Shotgun=104068096273092,Pistol=118912302094201}
 local assetService=setmetatable({LoadAssetAsync=function(_,id)
     downloads+=1
+    if failAll then error("User is not authorized to access Asset.") end
     if (failPistol and id==ids.Pistol) or (failRifle and id==ids.Rifle) then error("asset permission denied") end
     return prefab()
 end},{__index=function(_,key) error("Unexpected or privileged AssetService property: "..key) end,
@@ -126,4 +128,26 @@ check(weapons:FindFirstChild("Rifle")==previous,"failed official update preserve
 check(kit:GetAttribute("Status")=="Partial" and kit:GetAttribute("Status_Rifle")=="Failed","preserved rifle does not hide a failed update")
 failRifle=false;Import.loadAll()
 check(weapons:FindFirstChild("Rifle")~=previous and kit:GetAttribute("Status")=="Ready","later successful update replaces the preserved rifle only after validation")
+local retained=weapons:FindFirstChild("Rifle")
+for _,tool in weapons:GetChildren() do
+    if tool==retained then tool:SetAttribute("ZO_SourceAssetId",nil) else tool:Destroy() end
+end
+failAll=true;Import.loadAll()
+check(kit:GetAttribute("Status")=="Failed" and kit:GetAttribute("ImportedCount")==0
+    and kit:GetAttribute("FailedCount")==4,"four denied official assets report total failure rather than partial import")
+check(kit:GetAttribute("AttemptedCount")==4 and kit:GetAttribute("PendingCount")==0
+    and kit:GetAttribute("CachedCount")==0,"denied batch accounts for every completed attempt without pretending models were cached")
+check(weapons:FindFirstChild("Rifle")==retained and #weapons:GetChildren()==1,"total authorization failure preserves the previous playable rifle")
+for id in ids do
+    check(kit:GetAttribute("Status_"..id)=="Failed"
+        and string.find(kit:GetAttribute("Error_"..id),"User is not authorized",1,true)~=nil,
+        id.." retains the concrete authorization error")
+end
+failAll=false;Import.loadAll()
+check(kit:GetAttribute("Status")=="Ready" and kit:GetAttribute("ImportedCount")==4
+    and kit:GetAttribute("FailedCount")==0,"retry after authorization becomes available can install all official models")
+local beforeCached=downloads;Import.loadAll()
+check(downloads==beforeCached and kit:GetAttribute("CachedCount")==4
+    and kit:GetAttribute("ImportedCount")==0 and kit:GetAttribute("AttemptedCount")==0
+    and kit:GetAttribute("Status")=="Ready","fully cached arsenal stays ready without claiming a new download")
 print(("PASS official weapon importer: %d assertions; tree/AssetService doubles, no network or engine execution"):format(passed))

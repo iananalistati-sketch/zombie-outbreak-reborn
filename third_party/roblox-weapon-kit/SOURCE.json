@@ -21,5 +21,9 @@
   },
   "runtime_prefab_loader": "AssetService:LoadAssetAsync",
   "loader_documentation": "https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml",
+  "excluded_runtime_assets": {
+    "1489924400": "HitEffect/HitSound: Roblox Studio reported this original impact sound is archived; particles and original firing/reload audio remain"
+  },
+  "studio_import_status": "2026-10-31: all four prefabs denied authorization; user confirmed Allow Loading Third Party Assets was disabled",
   "runtime_prefab_status": "Requires Roblox asset permissions or the conditional third-party asset setting; not downloaded in cloud"
 }
