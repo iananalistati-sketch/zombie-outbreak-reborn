@@ -48,9 +48,19 @@ Não são ativados o controlador de dano, a rede de acertos ou a câmera do kit
 completo. A AR usa os assets originais de mesh, textura, áudio e animação; a
 disponibilidade e as permissões desses assets devem ser verificadas no Studio.
 
-O catálogo atual contém Rifle, SMG, Shotgun e Pistol. **Somente Rifle está
-empacotada neste arquivo.** `WeaponAssetImport` declara os quatro IDs oficiais
-documentados e tenta carregar as versões oficiais por `AssetService:LoadAssetAsync` no Roblox,
-removendo todos os scripts antes de publicar os templates. Os outros prefabs não
-foram baixados nesta nuvem; disponibilidade, hierarquia e permissões permanecem
-pendentes. Não se afirma que quatro modelos estão embutidos ou testados.
+O catálogo atual contém Rifle, SMG, Shotgun e Pistol. **Rifle e Pistol estão
+empacotadas.** A pistola preta vem do modelo oficial `118912302094201`, obtido pelo
+usuário no Toolbox e fornecido em `Pistolas_Oficiais.rbxl`. A Tool registra esse
+SourceAssetId. A variante selecionada é `Workspace/Pistol2`; sua fonte completa
+está em [pistol/OriginalPistol2.rbxmx](pistol/OriginalPistol2.rbxmx), fora do perfil
+ativo. Hashes, sons e origem estão em [SOURCE.json](SOURCE.json).
+
+A pistola usa a **Roblox Limited Use License** do kit oficial. As correções MIT
+do fork separado não são atribuídas aos novos assets. Sua pasta `WeaponsSystem`
+com os 16 scripts originais foi revista e excluída da extração ativa, junto de
+remotes, tags sem consumidor e efeitos arquivados. Malhas, texturas, grip,
+ferrolho, flash e áudio originais foram preservados. As mesmas animações de
+RifleAim/ADS/Reload já presentes são as usadas pelo próprio kit da pistola.
+
+SMG e Shotgun ainda não estão embutidas. `WeaponAssetImport` é uma ferramenta
+manual opcional; Play não baixa prefabs nem substitui os modelos incluídos.

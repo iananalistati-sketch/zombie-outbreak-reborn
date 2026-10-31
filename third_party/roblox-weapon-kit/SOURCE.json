@@ -11,8 +11,24 @@
   "runtime_assets": "src/third_party/roblox-weapon-kit/Arsenal.rbxmx",
   "runtime_upstream_scripts": false,
   "bundled_weapons": [
-    "Rifle"
+    "Rifle",
+    "Pistol"
   ],
+  "pistol": {
+    "asset_id": 118912302094201,
+    "source_url": "https://create.roblox.com/store/asset/118912302094201/Pistol",
+    "received_file": "Pistolas_Oficiais.rbxl",
+    "received_file_bytes": 181456,
+    "received_file_sha256": "49edede93e584f648a9006a196cbff4af5c4e5cde1e8186fad04493cdfcfa038",
+    "selected_tool": "Workspace/Pistol2",
+    "archive": "pistol/OriginalPistol2.rbxmx",
+    "archive_sha256": "704f204cd3eb51a361c449f8718dd30b10869e7dcc823a1d186598176f89993e",
+    "license": "Roblox Limited Use License",
+    "fired_sound": 3806566911,
+    "reload_sound": 3821789416,
+    "scripts_in_active_template": false
+  },
+  "automatic_prefab_import": false,
   "official_runtime_prefabs": {
     "Rifle": 96131146947811,
     "SMG": 119916677125479,
@@ -24,6 +40,6 @@
   "excluded_runtime_assets": {
     "1489924400": "HitEffect/HitSound: Roblox Studio reported this original impact sound is archived; particles and original firing/reload audio remain"
   },
-  "studio_import_status": "2026-10-31: first attempt denied authorization; latest saved-experience attempt loaded all four but rejected expected Tool/Handle structure; actual hierarchy capture pending",
-  "runtime_prefab_status": "Requires Roblox asset permissions or the conditional third-party asset setting; not downloaded in cloud"
+  "studio_import_status": "Official pistol obtained by user through Toolbox and supplied as native Studio place; selected black Pistol2 reviewed and bundled with rifle",
+  "runtime_prefab_status": "Rifle and Pistol bundled; SMG and Shotgun still absent. Optional manual imports require Roblox asset permissions. Play never downloads prefabs automatically."
 }

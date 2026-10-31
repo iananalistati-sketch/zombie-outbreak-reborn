@@ -1,6 +1,13 @@
 # Reutilizar sistemas existentes
 
 Estado atual: [pacote FPS e dependências dos modelos oficiais](FPS_COMBAT_PACKAGE.md).
+
+**Pistola recebida e integrada:** `Pistolas_Oficiais.rbxl` forneceu as variantes
+oficiais. A preta `Workspace/Pistol2` foi revisada e incluída com a carabina,
+mantendo meshes, texturas, áudio e attachments reais. O runtime exclui o sistema
+de combate aninhado. Play usa esses dois modelos sem importação automática.
+SMG e Shotgun continuam pendentes; as tentativas e ferramentas abaixo documentam
+o processo anterior e opções para obter os modelos restantes.
 Os blocos de armas anteriores e o importador de mera revisão foram substituídos.
 Os demais prefabs oficiais ainda não foram baixados na nuvem.
 

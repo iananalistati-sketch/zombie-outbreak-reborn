@@ -2,23 +2,18 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-**Pacote FPS em desenvolvimento:** [implementação e pendência dos modelos oficiais](docs/FPS_COMBAT_PACKAGE.md).
-O pacote usa quatro armas configuradas, mira, braços R15 e prévia 3D. Somente a
-carabina está embutida; os outros prefabs dependem de importação autorizada no
-Roblox. Na experiência salva, a tentativa mais recente de 31/10 passou da
-autorização e falhou na validação da estrutura pelo importador. A branch
-`feat/fps-combat-package` permite revisar esse trabalho.
+**Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
+Carabina e **pistola preta oficial** estão embutidas, com meshes, texturas e sons
+originais. A pistola foi extraída do arquivo `Pistolas_Oficiais.rbxl` enviado pelo
+usuário e revisada antes da integração. SMG e escopeta continuam sem modelos.
+Use a branch **`feat/fps-combat-package`** e abra `ABRIR_K17.cmd`. Com a loja
+fechada, **2** equipa a pistola, **1** a carabina, **R** recarrega e **B** abre a
+loja com prévia 3D. A validação no motor Roblox continua pendente.
 
-**Importar os modelos no Studio:** depois de abrir o K-17 atualizado, execute
-`IMPORTAR_ARMAS.cmd`, cole o comando na Command Bar fora de Play e confira o
-Output. O atalho copia o comando; a importação depende das permissões Roblox.
-[Passos e limites](docs/FPS_COMBAT_PACKAGE.md#importação-preparada-para-o-roblox).
-
-Se o carregamento passar da autorização e falhar com **`Prefab must contain
-exactly one complete weapon Tool`**, execute **`INSPECIONAR_ARMAS.cmd`** e cole
-na Command Bar da experiência salva, em edição. A captura independente guarda
-os modelos para revisão sem executar os scripts deles. Exporte a pasta
-selecionada como `.rbxm`/`.rbxmx` para adaptar a estrutura real no Git.
+O jogo usa os templates incluídos e **não importa prefabs automaticamente ao
+iniciar Play**. Não é necessário executar comandos para obter a carabina ou a
+pistola desta versão. Os comandos de importação/captura permanecem ferramentas
+opcionais de desenvolvimento para os modelos restantes.
 
 **Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
 Carregamento tardio de personagens, remoção durante combate e acertos em modelos

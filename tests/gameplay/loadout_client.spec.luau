@@ -256,8 +256,11 @@ do
 end
 
 do
-    local s=simulation();s.rs.ZO_WeaponAssets.Weapons.SMG:Destroy();open(s);choose(s,"SMG")
+    local s=simulation();s.rs.ZO_WeaponAssets.Weapons.SMG:Destroy()
+    s.rs.ZO_WeaponAssets:SetAttribute("Status_SMG","Missing");open(s);choose(s,"SMG")
     check(not s.buy.Active,"shop disables purchase until the actual weapon template is present")
+    check(s.cards.SMG.Price.Text:find("MODELO INDISPONÍVEL",1,true)~=nil
+        and s.availability.Text=="Modelo ainda não incluído nesta versão.","unbundled models report availability rather than pretending a download is running")
     s.click(s.buy,true)
     check(#s.requests==0,"queued purchase callback cannot request an unavailable template")
 end

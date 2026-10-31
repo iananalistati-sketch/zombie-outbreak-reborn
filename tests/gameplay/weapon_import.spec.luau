@@ -5,11 +5,13 @@ local methods={}
 local make
 local rs
 make=function(class,name)
-    local data={ClassName=class,Name=name or class,children={},attributes={}}
+    local data={ClassName=class,Name=name or class,children={},attributes={},tags={}}
     local object={_data=data}
     return setmetatable(object,{__index=function(_,key) return methods[key] or data[key] end,
         __newindex=function(_,key,value)
             if key=="Parent" then
+                if class=="Tool" and value and rs and value:IsDescendantOf(rs)
+                    and object:GetAttribute("FailPublish")==true then error("Simulated publication failure") end
                 if data.Parent then data.Parent._data.children[object]=nil end
                 data.Parent=value
                 if value then
@@ -48,6 +50,9 @@ end
 function methods:IsDescendantOf(ancestor) local p=self.Parent;while p do if p==ancestor then return true end;p=p.Parent end;return false end
 function methods:SetAttribute(name,value) self._data.attributes[name]=value end
 function methods:GetAttribute(name) return self._data.attributes[name] end
+function methods:AddTag(name) self._data.tags[name]=true end
+function methods:RemoveTag(name) self._data.tags[name]=nil end
+function methods:HasTag(name) return self._data.tags[name]==true end
 function methods:Destroy() for _,child in self:GetChildren() do child:Destroy() end;self.Parent=nil end
 function methods:Clone()
     local copies={}
@@ -57,6 +62,7 @@ function methods:Clone()
             if key~="children" and key~="attributes" and key~="Parent" then result[key]=value end
         end
         for name,value in source._data.attributes do result:SetAttribute(name,value) end
+        result._data.tags=table.clone(source._data.tags)
         for _,child in source:GetChildren() do clone(child).Parent=result end
         return result
     end
@@ -68,6 +74,7 @@ local function add(parent,class,name) local result=make(class,name);result.Paren
 local function prefab(mesh)
     local root=make("Model","Prefab")
     local tool=add(root,"Tool","Original")
+    tool:AddTag("WeaponsSystemWeapon")
     add(tool,"Part","Handle")
     local model=add(tool,"Model","Geometry")
     local body=add(model,if mesh==false then "Part" else "MeshPart","Body");model.PrimaryPart=body
@@ -110,8 +117,40 @@ check(installed:FindFirstChild("UnsafeServer",true)==nil and installed:FindFirst
 check(installed:FindFirstChild("AutoUpdate",true)==nil,"package auto-updates cannot reintroduce upstream code")
 check(installed:GetAttribute("ZO_SourceAssetId")==ids.Pistol,"original source id retained")
 check(animations:FindFirstChild("RifleAim")~=nil,"actual source animation retained")
+check(not installed:HasTag("WeaponsSystemWeapon"),"imported presentation cannot be registered by the full kit tag")
 check(not pcall(function() Import.install(prefab(),"Unknown",123) end),"unknown external asset rejected")
 check(not pcall(function() Import.install(prefab(false),"SMG",ids.SMG) end),"primitive stand-in is not accepted as imported mesh")
+do
+    -- The uploaded official asset has three cosmetic Tools, all with Handles.
+    local variants=make("Model","OfficialPistols")
+    for _,name in {"Pistol","Pistol2","Pistol3"} do
+        local item=prefab():FindFirstChild("Original");item.Name=name;item.Parent=variants
+        add(item,"StringValue","WeaponType")
+        local fullKit=add(item,"Folder","WeaponsSystem")
+        local effects=add(fullKit,"Folder","Effects")
+        local archived=add(effects,"Sound","HitSound");archived.SoundId="rbxassetid://1489924400"
+    end
+    installed=Import.install(variants,"Pistol",ids.Pistol)
+    check(installed:GetAttribute("ZO_SourceVariant")=="Pistol2","three official pistol variants choose the reviewed black Pistol2 deterministically")
+    check(installed:FindFirstChild("WeaponsSystem")==nil and installed:FindFirstChild("HitSound",true)==nil,
+        "the full kit and its archived global effect are omitted rather than leaving inert debris in the Tool")
+    check(installed:FindFirstChild("WeaponType")==nil,"unused full-kit weapon classifier is removed")
+    local ambiguous=make("Model","DuplicateBlackVariants")
+    for _=1,2 do local item=prefab():FindFirstChild("Original");item.Name="Pistol2";item.Parent=ambiguous end
+    local ok,problem=pcall(function() Import.install(ambiguous,"Pistol",ids.Pistol) end)
+    check(not ok and string.find(problem,"2 candidate Tools [Pistol2, Pistol2]",1,true)~=nil,
+        "ambiguous duplicate variants include count and names in the rejection")
+    check(weapons:FindFirstChild("Pistol")==installed,"ambiguous variants never destroy the prior working template")
+    local publicationFailure=prefab();publicationFailure:FindFirstChild("Original"):SetAttribute("FailPublish",true)
+    check(not pcall(function() Import.install(publicationFailure,"Pistol",ids.Pistol) end)
+        and weapons:FindFirstChild("Pistol")==installed,"publication failure preserves the previous installed model")
+    local unknownVariants=make("Model","UnreviewedVariants")
+    for _,name in {"Pistol","Pistol2","Pistol3"} do
+        local item=prefab():FindFirstChild("Original");item.Name=name;item.Parent=unknownVariants
+    end
+    check(not pcall(function() Import.install(unknownVariants,"Shotgun",ids.Shotgun) end),
+        "pistol variant naming is never guessed for a different official weapon")
+end
 installed:Destroy();failPistol=true
 Import.loadAll()
 check(kit:GetAttribute("ImportMethod")=="AssetService:LoadAssetAsync","diagnostics identify the actual supported loader")

@@ -1,9 +1,53 @@
 # Pacote FPS — implementação e pendência de modelos
 
-**Estado: código integrado e compilável; entrega completa ainda pendente.**
-Os novos prefabs oficiais não foram obtidos pela nuvem. Só a carabina do kit
-anterior está embutida. Não houve execução de Roblox Studio, reprodução de áudio
-ou validação de braços/animações nesta máquina.
+**Estado: carabina e pistola preta embutidas; SMG e escopeta ainda pendentes.**
+A pistola oficial foi extraída do arquivo `Pistolas_Oficiais.rbxl` fornecido pelo
+usuário. O pacote é compilável e usa os modelos incluídos sem importação de
+prefabs ao iniciar Play. A integração ainda precisa de validação visual, áudio
+e multiplayer no Roblox Studio; esta máquina não executou o motor.
+
+## Pistola oficial incluída — 31/10
+
+Foi selecionada a variante preta `Workspace/Pistol2`, com SourceAssetId
+`118912302094201`. O arquivo recebido contém três variantes com cópias em
+StarterPack: nove Tools e 144 instâncias de scripts, equivalentes a 16 fontes
+únicas. Todas têm Handle direto. O problema demonstrado era a multiplicidade de
+variantes, não a ausência de Handle. O importador manual agora seleciona Pistol2
+de forma determinística e rejeita ambiguidades com contagem e nomes.
+
+A Tool completa revisada está arquivada fora do perfil ativo. A extração mantém
+os três meshes, texturas pretas, grip, attachments, flash, ferrolho e sons
+originais de tiro `3806566911` e recarga `3821789416`. Remove WeaponsSystem,
+controladores, remotes, tags e efeitos globais antigos. Não há um segundo sistema
+de combate/câmera rodando. A pistola usa as mesmas animações RifleAim/ADS/Reload
+que o próprio kit original especifica, já presentes com a AR.
+
+O runtime contém exatamente duas Tools e seis MeshParts. A carabina foi
+preservada. O arranque não chama LoadAssetAsync; publica os estados Bundled/Missing
+e a loja informa os modelos ausentes sem fingir download. SMG e Shotgun continuam
+indisponíveis, sem cobrança. Backup: `backup/before-pistol-integration-e892a4f` e
+tar verificado. Origem, hashes e licença estão no manifesto e na revisão da
+[pistola](../third_party/roblox-weapon-kit/pistol/REVIEW.md).
+
+Para testar esta entrega:
+
+1. Atualize `feat/fps-combat-package` no GitHub Desktop. Preserve seu trabalho e
+   abra `ABRIR_K17.cmd` para carregar o novo binário. Um Pull não atualiza uma
+   experiência já aberta/salva no Roblox.
+2. Em Play, humano vivo, **feche a loja e pressione 2**. Confira a pistola preta,
+   alinhamento e braços R15. Clique para cada tiro; ela é semiautomática.
+3. Dispare, recarregue com **R**, use a mira e volte à carabina com **1**. Confira
+   os dois sons originais e a preservação da munição ao trocar.
+4. Abra **B** e selecione a pistola: a prévia 3D deve usar o mesmo modelo. As
+   teclas numéricas com a loja aberta selecionam linhas do catálogo, não slots.
+5. Com dois clientes, confira a pistola nas mãos do outro jogador, áudio de tiro
+   e recarga, remoção na infecção e retorno na rodada seguinte.
+
+Passaram 35 verificações do importador, 22 do bootstrap sem rede, 53 da loja,
+88 do cliente de armas, 151 de combate e 39 do ciclo integrado, com APIs
+simuladas. Os oito testes de assets conferem a origem e conteúdo reais, referências
+resolvidas, meshes/áudio preservados e ausência de código na extração. Isso não
+comprova aparência, execução auditiva ou comportamento físico no motor.
 
 ## Alterações implementadas nos fontes
 
@@ -111,6 +155,11 @@ rejeitou a estrutura com `Prefab must contain exactly one complete weapon Tool`.
 O comando e o contador da versão atual aparecem no log. O bloqueio agora é nossa
 suposição de uma Tool com Handle direto; a estrutura precisa ser inspecionada.
 
+Às 08:18, a captura independente voltou a receber recusa de autorização para os
+quatro IDs e terminou com zero modelos. O usuário então obteve a pistola pelo
+Toolbox e enviou o arquivo nativo. Sua integração atual está descrita no início
+deste documento; as tentativas anteriores não comprovam acesso estável às APIs.
+
 O mesmo Output confirmou o `HitSound` de impacto `1489924400` arquivado. Esse
 Sound foi removido da extração ativa; as partículas e sons de tiro/recarga foram
 preservados. O ID `203785492` com erro de tipo não aparece nos fontes ou chunks
@@ -156,10 +205,10 @@ Play. A captura ainda precisa ser executada no Studio. Backup:
 
 | Arma | Prefab oficial | Situação nesta nuvem |
 | --- | --- | --- |
-| Rifle | 96131146947811 | AR anterior embutida; atualização oficial não obtida |
+| Rifle | 96131146947811 | AR anterior embutida e preservada |
 | SMG | 119916677125479 | Prefab não obtido |
 | Shotgun | 104068096273092 | Prefab não obtido |
-| Pistol | 118912302094201 | Prefab não obtido |
+| Pistol | 118912302094201 | Pistol2 preta fornecida pelo usuário, revisada e embutida |
 
 Fonte: documentação oficial do [Roblox Weapons Kit](https://create.roblox.com/docs/resources/weapons-kit),
 registrada também em `third_party/roblox-weapon-kit/SOURCE.json` e nas licenças
@@ -175,7 +224,8 @@ a mudança.** Salvar o rascunho não liberou a rede desta execução.
 
 ## Importação preparada para o Roblox
 
-`WeaponAssets.server` tenta carregar os prefabs por `AssetService:LoadAssetAsync`,
+`WeaponAssets.server` usa apenas os templates incluídos ao iniciar Play. A
+importação por `AssetService:LoadAssetAsync` é uma ação manual opcional de edição,
 substituto moderno de `InsertService:LoadAsset` conforme a
 [documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
 A operação depende das permissões da experiência/conta Roblox. A primeira tentativa
@@ -206,8 +256,9 @@ Para tentar a importação local sem VS Code:
    `ZO_WeaponAssets` selecionada como **`ZO_WeaponAssets_Official.rbxmx`** para
    compartilhar/incorporar os modelos realmente obtidos ao Git.
 
-O comando local já foi executado pelo usuário. Após o carregamento ser permitido,
-a validação de estrutura falhou; use a captura acima para investigar esse caso.
+O comando local já foi executado pelo usuário. A pistola foi finalmente fornecida
+como arquivo nativo após inserção pelo Toolbox e agora está incluída no binário.
+As instruções de importação/captura acima servem para modelos adicionais.
 O atalho Windows não foi executado nesta máquina Linux.
 A importação não publica a experiência no Roblox.
 

@@ -51,7 +51,7 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
   Preservar backup e conferir dependências antes de excluir; não manter dois
   controladores ou dois catálogos visuais ativos.
 - O pacote FPS na branch `feat/fps-combat-package` tem dependências de prefabs
-  oficiais ainda não baixadas. Somente a carabina está embutida. Não anunciar
+  oficiais ainda não baixadas. Carabina e pistola preta estão embutidas. Não anunciar
   quatro modelos prontos nem misturar esse pacote incompleto à main estável antes
   de resolver os assets ou receber autorização explícita para essa limitação.
 - `WeaponAssetImport` só aceita IDs oficiais fixos e remove código externo antes
@@ -67,10 +67,22 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
   não inventar sua origem ou substituir IDs por suposição.
 - Nova tentativa de 31/10 às 07:54 na experiência salva no Roblox passou do
   carregamento e falhou na nossa validação `Prefab must contain exactly one
-  complete weapon Tool` para os quatro assets. Não continuar tratando o erro
-  como recusa de autorização. A estrutura real ainda precisa ser capturada;
-  a documentação não exige Handle direto nem sons Fired/Reload obrigatórios.
+  complete weapon Tool` para os quatro assets. Às 08:18, a captura voltou a
+  retornar recusa de autorização e zero modelos. Não presumir que o acesso das
+  APIs ficou resolvido. A pistola foi recebida depois por Toolbox/arquivo;
+  os outros dois modelos continuam pendentes.
 - `CaptureOfficialWeapons` é uma captura independente em modo de edição:
   preserva modelos em ServerStorage e fontes como texto inerte para revisão.
   Não altera o catálogo ativo nem depende da versão dos ModuleScripts salvos.
   Um Pull do Git não sincroniza a experiência salva/Team Create automaticamente.
+- O usuário forneceu `Pistolas_Oficiais.rbxl`, SHA-256
+  `49edede93e584f648a9006a196cbff4af5c4e5cde1e8186fad04493cdfcfa038`.
+  O arquivo contém nove Tools (três variantes com cópias em StarterPack), todas
+  com Handle; o problema comprovado era a multiplicidade, não Handle ausente.
+  A variante preta Workspace/Pistol2 é a única incluída. Fonte completa revisada
+  em `third_party/roblox-weapon-kit/pistol/OriginalPistol2.rbxmx`, fora do runtime.
+  Somente apresentação é extraída: código/câmera/remotes/efeitos globais do kit
+  não são ativados. Os novos assets usam Roblox Limited Use License, não MIT.
+- Play usa os templates incluídos sem chamar LoadAssetAsync. As importações
+  restantes são ações explícitas de edição; não reintroduzir downloads como
+  dependência para equipar rifle/pistola já embutidos.

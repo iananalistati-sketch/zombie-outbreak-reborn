@@ -15,6 +15,9 @@ local sources={
     SMG=119916677125479,
 }
 local sourceURL="https://create.roblox.com/docs/resources/weapons-kit"
+-- The uploaded official Pistol asset contains three cosmetic Tools. Pistol2 is
+-- the reviewed black variant; no naming assumption is made for other assets.
+local preferredVariants={Pistol="Pistol2"}
 local running=false
 
 local function folder(parent: Instance,name: string): Folder
@@ -47,8 +50,23 @@ function Import.install(container: Model,id: string,assetId: number): Tool
     for _,item in container:GetDescendants() do
         if item:IsA("Tool") and item:FindFirstChild("Handle") then table.insert(candidates,item) end
     end
-    assert(#candidates==1,"Prefab must contain exactly one complete weapon Tool")
-    local tool=candidates[1] :: Tool
+    local tool: Tool?=nil
+    if #candidates==1 then tool=candidates[1] :: Tool
+    else
+        local preferred=preferredVariants[id]
+        local matches=0
+        for _,candidate in candidates do
+            if candidate.Name==preferred then tool=candidate :: Tool;matches+=1 end
+        end
+        if matches~=1 then
+            local names={}
+            for _,candidate in candidates do table.insert(names,candidate.Name) end
+            table.sort(names)
+            error(("Prefab contains %d candidate Tools [%s]; cannot choose a unique reviewed variant for %s")
+                :format(#candidates,table.concat(names,", "),id))
+        end
+    end
+    local tool=tool :: Tool
     local handle=tool:FindFirstChild("Handle")
     local model=tool:FindFirstChildOfClass("Model")
     local grip=model and model:FindFirstChild("HandleAttachment",true)
@@ -71,15 +89,25 @@ function Import.install(container: Model,id: string,assetId: number): Tool
     local copy=tool:Clone()
     copy.Name=id;copy.CanBeDropped=false;copy.Enabled=false;copy.ManualActivationOnly=true
     copy:SetAttribute("ZO_WeaponId",id);copy:SetAttribute("ZO_SourceAssetId",assetId)
+    copy:SetAttribute("ZO_SourceVariant",tool.Name)
     copy:SetAttribute("ZO_SourceDocumentation",sourceURL)
+    -- The complete kit includes its own camera, network, damage and effects.
+    -- Keep only this reviewed Tool's presentation, not a second live system or
+    -- the archived global HitSound retained under its unused effect templates.
+    local fullKit=copy:FindFirstChild("WeaponsSystem")
+    if fullKit then fullKit:Destroy() end
+    local weaponType=copy:FindFirstChild("WeaponType")
+    if weaponType then weaponType:Destroy() end
+    copy:RemoveTag("WeaponsSystemWeapon")
     for _,item in copy:GetDescendants() do
         if item:IsA("BasePart") then
             item.Anchored=false;item.CanCollide=false;item.CanQuery=false;item.CanTouch=false;item.Massless=true
         elseif item:IsA("Sound") then item.Playing=false end
     end
     local previous=weapons:FindFirstChild(id)
+    local published,problem=pcall(function() copy.Parent=weapons end)
+    if not published then copy:Destroy();error(tostring(problem),0) end
     if previous then previous:Destroy() end
-    copy.Parent=weapons -- The first time a sanitized weapon enters the DataModel.
     kit:SetAttribute("Status_"..id,"Ready")
     kit:SetAttribute("Error_"..id,nil)
     return copy

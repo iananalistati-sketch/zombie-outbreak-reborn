@@ -136,7 +136,8 @@ local function assetReady(id: string): boolean
 end
 local function assetFailed(id: string): boolean
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
-    return kit~=nil and kit:GetAttribute("Status_"..id)=="Failed"
+    local status=kit and kit:GetAttribute("Status_"..id)
+    return status=="Failed" or status=="Missing"
 end
 local function weaponName(id: any): string
     local item=Config.Weapons[id];return if item then item.Label else "—"
@@ -163,6 +164,10 @@ end
 local function availabilityText(): (string,Color3)
     if pending then return "Aguardando confirmação do servidor…",colors.gold end
     if not assetReady(selected) then
+        local kit=RS:FindFirstChild("ZO_WeaponAssets")
+        if kit and kit:GetAttribute("Status_"..selected)=="Missing" then
+            return "Modelo ainda não incluído nesta versão.",colors.gold
+        end
         return if assetFailed(selected) then "Falha no asset oficial · confira o Output do servidor." else "Modelo indisponível · aguardando os assets oficiais da arma.",colors.gold
     end
     if message~="" and os.clock()<messageExpires then return message,if messageOK then colors.accent else colors.red end

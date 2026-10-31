@@ -17,7 +17,7 @@ def release(binary):
               'V_StockroomVent','V_FilterVent','V_YardVent','V_CoolantVent','Startup','RefugeAudit','TacticalMap','K17Refuges',
               'R48_UnderStair','R49_UnderStair','Loadout','LoadoutState','Containment','ZO_WeaponAssets',
               'EquipmentVisuals','WeaponPresentation','WeaponAimPose','PresentationConfig','WeaponPreview','WeaponAssets','WeaponAssetImport',
-              'RifleAim','RifleReload','RifleAimDownSights','MuzzleFlash'}
+              'RifleAim','RifleReload','RifleAimDownSights','MuzzleFlash','Pistol'}
     required|={'MonitorClerestoryGlass','MonitorEndCheek','ReceivingCanopyRoof','ExhaustFlue','AirBalanceHeader',
                'ControlCabinFacade','ControlInspectionWalkway'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
@@ -26,6 +26,7 @@ def release(binary):
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
     assert not {'ZO_StudioSurvivalScenario','ZO_StudioSurvivalDriver'}&set(names),'Automated Studio drivers in playable release'
     assert not {'ZO_ReusedWeaponKit','ReusedRiflePresentation','RifleCasing','Bullet'}&set(names),'Unused former weapon templates in release'
+    assert 'WeaponsSystem' not in names,'An upstream combat system was bundled with the pistol'
     assert len(names)==sum(count for _,count in classes.values()),'Incomplete native Name properties'
     for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
                  'src/maps/k17/barricades/Server.server.luau','src/maps/k17/barricades/Config.luau','src/maps/k17/barricades/Physics.luau',
@@ -37,7 +38,8 @@ def release(binary):
                  'tests/k17/K17Audit.luau'):
         assert sources.count((ROOT/path).read_text(encoding='utf-8'))==1,'Outdated/missing native source: '+path
     data=binary.read_bytes()
-    assert sum(count for name,count in classes.values() if name=='MeshPart')>=3,'Bundled rifle meshes missing'
+    assert sum(count for name,count in classes.values() if name=='Tool')==2,'Expected only the reviewed rifle and pistol Tools'
+    assert sum(count for name,count in classes.values() if name=='MeshPart')>=6,'Bundled rifle/pistol meshes missing'
     assert sum(count for name,count in classes.values() if name=='WedgePart')>=8,'Inclined monitor end cheeks missing'
     return {'file':BINARY.name,'map':'ZO_K17Foundry','sha256':hashlib.sha256(data).hexdigest(),
             'bytes':len(data),'instances':len(names),'barricades':names.count('Hull'),'ducts':4}
