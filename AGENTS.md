@@ -1,5 +1,20 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Missão de FPS completo — 31/10
+
+- O novo pedido exige primeiro pesquisa/auditoria/comparação de bases reais,
+  com licenças e assets verificáveis, antes de integrar outra infraestrutura.
+- Counter Blox é referência de jogabilidade. Não usar fontes vazadas,
+  descompiladas ou scripts de exploração como base do jogo.
+- Nenhuma reconstrução estrutural da camada FPS está autorizada até aprovação
+  explícita após uma proposta concreta. Preservar mapas ativos/inativos,
+  barricadas, rotas, infecção, knockback, rodada e multiplayer.
+- O relatório da Etapa 1 está em `docs/FPS_BASE_AUDIT_2026-10-31.md`.
+  FPS System oficial é candidato para qualificação; arquivo nativo e avisos
+  de licença completos ainda não foram examinados. Não afirmar base completa
+  aprovada nem inferir MIT para todos os assets pela licença da documentação.
+- Receber um template para auditoria não equivale a aprovar a migração.
+
 ## Reutilização primeiro
 
 O usuário pediu repetidamente para reaproveitar sistemas e partes prontas de

@@ -2,6 +2,10 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
+**Missão atual — Etapa 1:** [auditoria e comparação de bases FPS](docs/FPS_BASE_AUDIT_2026-10-31.md).
+Nenhuma reconstrução foi iniciada. A recomendação é qualificar o template
+oficial FPS System antes de aprovar qualquer substituição da camada FPS.
+
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
 Carabina e **pistola preta oficial** estão embutidas, com meshes, texturas e sons
 originais. A pistola foi extraída do arquivo `Pistolas_Oficiais.rbxl` enviado pelo
