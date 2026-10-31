@@ -98,12 +98,18 @@ pendentes antes da retomada. Os três modelos ausentes continuam sem ser obtidos
 
 ## Resultado real do Studio — 31/10
 
-O Output enviado pelo usuário confirma que o comando foi executado em modo de
+O primeiro Output enviado pelo usuário confirma que o comando foi executado em modo de
 edição e preservou o backup. Os quatro prefabs retornaram
 `User is not authorized to access Asset.` Nenhum modelo oficial novo foi obtido.
 O usuário confirmou que **Allow Loading Third Party Assets** estava desligada.
 Habilitar essa opção permite modelos públicos gratuitos de terceiros, mas não
-concede acesso a assets privados ou indisponíveis. A nova tentativa fica pendente.
+concede acesso a assets privados ou indisponíveis.
+
+Na nova tentativa às 07:54, o usuário abriu a experiência salva no Roblox/Team
+Create. Os quatro carregamentos passaram para a validação do importador, que
+rejeitou a estrutura com `Prefab must contain exactly one complete weapon Tool`.
+O comando e o contador da versão atual aparecem no log. O bloqueio agora é nossa
+suposição de uma Tool com Handle direto; a estrutura precisa ser inspecionada.
 
 O mesmo Output confirmou o `HitSound` de impacto `1489924400` arquivado. Esse
 Sound foi removido da extração ativa; as partículas e sons de tiro/recarga foram
@@ -114,6 +120,37 @@ O importador agora distingue falha total de importação parcial, informa quanto
 modelos foram importados/cacheados/falharam e não orienta exportar modelos novos
 quando todas as tentativas falham. O arquivo anterior da carabina permanece.
 Backup: `backup/before-asset-errors-5e0227f` e tar verificado.
+
+## Capturar a estrutura real na experiência salva
+
+Salvar e abrir a experiência no Roblox é compatível com a captura. O Pull do Git
+atualiza o checkout local, mas não modifica automaticamente os ModuleScripts da
+experiência salva/Team Create. Não é necessário trocar esse place para obter os
+modelos que agora carregam com sua conta/configuração.
+
+1. Faça Pull de `feat/fps-combat-package` no GitHub Desktop e mantenha aberta a
+   experiência salva onde ocorreu a tentativa às 07:54. Pare o Play.
+2. Execute **`INSPECIONAR_ARMAS.cmd`** na pasta do repositório. Ele copia o
+   comando independente [CaptureOfficialWeapons.luau](../tools/studio/CaptureOfficialWeapons.luau).
+3. Cole na **Command Bar** com **Ctrl+V** e execute com **Enter**.
+4. Confira `[K17 REVIEW]` no Output. A pasta de revisão será selecionada em
+   `ServerStorage.ZO_OfficialWeaponReview_<timestamp>`. Exporte essa pasta como
+   **`ZO_OfficialWeaponReview.rbxm`** ou **`.rbxmx`** e envie o arquivo para revisão.
+
+A captura não depende do importador salvo nem altera os templates de combate.
+As fontes legíveis são preservadas como StringValues, sem execução. Scripts,
+remotes, bindables e PackageLinks são retirados antes de guardar os modelos;
+geometria subordinada a esses objetos é preservada, e os sons ficam parados.
+`OriginalHierarchy` registra a árvore original e os requisitos de Handle.
+O resultado é material para adaptar o importador aos modelos reais, não armas
+integradas ou aprovadas para jogo. A estrutura desses quatro modelos ainda não
+foi recebida nesta nuvem.
+
+Passaram 75 verificações do comando real com APIs simuladas, incluindo
+publicação apenas de conteúdo sanitizado, fontes em texto inerte, preservação
+dos templates existentes, falha parcial/total, captura sem Tool e bloqueio em
+Play. A captura ainda precisa ser executada no Studio. Backup:
+`backup/before-prefab-review-23f703b` e tar verificado.
 
 ## Dependência de modelos que continua aberta
 
@@ -141,8 +178,8 @@ a mudança.** Salvar o rascunho não liberou a rede desta execução.
 `WeaponAssets.server` tenta carregar os prefabs por `AssetService:LoadAssetAsync`,
 substituto moderno de `InsertService:LoadAsset` conforme a
 [documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
-A operação depende das permissões da experiência/conta Roblox. A tentativa local
-documentada acima foi executada e falhou por autorização. O importador elimina scripts, remotes e PackageLinks no
+A operação depende das permissões da experiência/conta Roblox. A primeira tentativa
+falhou por autorização; a mais recente falhou na estrutura esperada. O importador elimina scripts, remotes e PackageLinks no
 container desconectado, valida Tool/meshes/grip/áudio e só então publica a cópia.
 Uma falha fica em `ReplicatedStorage.ZO_WeaponAssets`, atributos `Status_<id>` e
 `Error_<id>`, sem paralisar as rodadas. O rifle embutido continua disponível.
@@ -169,8 +206,9 @@ Para tentar a importação local sem VS Code:
    `ZO_WeaponAssets` selecionada como **`ZO_WeaponAssets_Official.rbxmx`** para
    compartilhar/incorporar os modelos realmente obtidos ao Git.
 
-O comando local já foi executado pelo usuário, mas a importação após habilitar a
-opção ainda está pendente. O atalho Windows não foi executado nesta máquina Linux.
+O comando local já foi executado pelo usuário. Após o carregamento ser permitido,
+a validação de estrutura falhou; use a captura acima para investigar esse caso.
+O atalho Windows não foi executado nesta máquina Linux.
 A importação não publica a experiência no Roblox.
 
 ## Testes e limites

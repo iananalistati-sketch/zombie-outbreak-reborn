@@ -24,6 +24,6 @@
   "excluded_runtime_assets": {
     "1489924400": "HitEffect/HitSound: Roblox Studio reported this original impact sound is archived; particles and original firing/reload audio remain"
   },
-  "studio_import_status": "2026-10-31: all four prefabs denied authorization; user confirmed Allow Loading Third Party Assets was disabled",
+  "studio_import_status": "2026-10-31: first attempt denied authorization; latest saved-experience attempt loaded all four but rejected expected Tool/Handle structure; actual hierarchy capture pending",
   "runtime_prefab_status": "Requires Roblox asset permissions or the conditional third-party asset setting; not downloaded in cloud"
 }

@@ -65,3 +65,12 @@ futuras. Não voltar a desenvolver cada sistema do zero por conveniência.
   da extração ativa preserva as partículas e os sons originais de tiro/recarga.
   O ID `203785492`, com erro de tipo, não foi localizado nos fontes/binários;
   não inventar sua origem ou substituir IDs por suposição.
+- Nova tentativa de 31/10 às 07:54 na experiência salva no Roblox passou do
+  carregamento e falhou na nossa validação `Prefab must contain exactly one
+  complete weapon Tool` para os quatro assets. Não continuar tratando o erro
+  como recusa de autorização. A estrutura real ainda precisa ser capturada;
+  a documentação não exige Handle direto nem sons Fired/Reload obrigatórios.
+- `CaptureOfficialWeapons` é uma captura independente em modo de edição:
+  preserva modelos em ServerStorage e fontes como texto inerte para revisão.
+  Não altera o catálogo ativo nem depende da versão dos ModuleScripts salvos.
+  Um Pull do Git não sincroniza a experiência salva/Team Create automaticamente.

@@ -5,14 +5,20 @@ Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 **Pacote FPS em desenvolvimento:** [implementação e pendência dos modelos oficiais](docs/FPS_COMBAT_PACKAGE.md).
 O pacote usa quatro armas configuradas, mira, braços R15 e prévia 3D. Somente a
 carabina está embutida; os outros prefabs dependem de importação autorizada no
-Roblox. A tentativa local de 31/10 foi negada por permissão; a opção de carregar
-assets de terceiros estava desativada. A branch `feat/fps-combat-package` permite
-revisar esse trabalho.
+Roblox. Na experiência salva, a tentativa mais recente de 31/10 passou da
+autorização e falhou na validação da estrutura pelo importador. A branch
+`feat/fps-combat-package` permite revisar esse trabalho.
 
 **Importar os modelos no Studio:** depois de abrir o K-17 atualizado, execute
 `IMPORTAR_ARMAS.cmd`, cole o comando na Command Bar fora de Play e confira o
 Output. O atalho copia o comando; a importação depende das permissões Roblox.
 [Passos e limites](docs/FPS_COMBAT_PACKAGE.md#importação-preparada-para-o-roblox).
+
+Se o carregamento passar da autorização e falhar com **`Prefab must contain
+exactly one complete weapon Tool`**, execute **`INSPECIONAR_ARMAS.cmd`** e cole
+na Command Bar da experiência salva, em edição. A captura independente guarda
+os modelos para revisão sem executar os scripts deles. Exporte a pasta
+selecionada como `.rbxm`/`.rbxmx` para adaptar a estrutura real no Git.
 
 **Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
 Carregamento tardio de personagens, remoção durante combate e acertos em modelos

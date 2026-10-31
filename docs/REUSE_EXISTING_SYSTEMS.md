@@ -48,6 +48,11 @@ ativo. Origem, hash e as duas licenças estão na
 Não foram obtidos os outros três prefabs da tabela acima. A apresentação da AR
 ainda precisa de validação no Studio; não há conexão com o computador do usuário.
 
+A tentativa seguinte no place salvo passou da autorização e falhou na validação
+de Tool/Handle. Para esse caso, **`INSPECIONAR_ARMAS.cmd`** captura a estrutura
+real e fontes como texto inerte, sem depender dos ModuleScripts salvos. Exporte a
+pasta de revisão como `.rbxm`/`.rbxmx` para adaptação e incorporação dos modelos.
+
 O [importador de prefabs](../tools/studio/ImportOfficialWeapons.luau) usa o novo
 `WeaponAssetImport`, após abrir o arquivo da branch FPS. A AR embutida continua
 independente dessa operação.
