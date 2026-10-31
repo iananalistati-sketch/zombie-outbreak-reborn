@@ -82,6 +82,7 @@ local nextAction,hitUntil,swingUntil=0,0,0
 local hitHead=false
 local viewKick,cameraKick,appliedCameraKick,bloom=0,0,0,0
 local kickCamera: Camera?=nil
+local appliedCameraFrame: CFrame?=nil
 local fovCamera: Camera?=nil
 local normalFov=70
 local controlsFov=false
@@ -194,11 +195,17 @@ local function restoreFov()
     if fovCamera and controlsFov then fovCamera.FieldOfView=normalFov end
     controlsFov=false
 end
-local function clearCameraKick()
-    if kickCamera and kickCamera==workspace.CurrentCamera and appliedCameraKick~=0 then
+local function removeCameraKick()
+    -- Remove only our last output. A new camera/controller may already have
+    -- supplied another frame; subtracting old recoil there would tilt it down.
+    if kickCamera and appliedCameraFrame and kickCamera.CFrame==appliedCameraFrame and appliedCameraKick~=0 then
         kickCamera.CFrame*=CFrame.Angles(math.rad(-appliedCameraKick),0,0)
     end
-    cameraKick=0;appliedCameraKick=0;viewKick=0;bloom=0;kickCamera=nil
+    appliedCameraKick=0;appliedCameraFrame=nil;kickCamera=nil
+end
+local function clearCameraKick()
+    removeCameraKick()
+    cameraKick=0;viewKick=0;bloom=0
 end
 local function stop()
     held=false;aimHeld=false;aimAlpha=0;nextAction=0;swingUntil=0
@@ -394,10 +401,14 @@ connect(effects.OnClientEvent,function(kind: string,origin: any,destination: any
     trace.Parent=workspace;Debris:AddItem(trace,.045)
 end)
 local renderName="ZO_WeaponPresentation"
+local preCameraName="ZO_WeaponRecoilBeforeCamera"
 RunService:UnbindFromRenderStep(renderName)
+RunService:UnbindFromRenderStep(preCameraName)
+RunService:BindToRenderStep(preCameraName,Enum.RenderPriority.Camera.Value-1,function()
+    if not disposed then removeCameraKick() end
+end)
 RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,function(dt: number)
     if disposed then return end
-    if held and (canMelee() or weapon().Automatic) then action() end
     local camera=workspace.CurrentCamera
     if not camera then return end
     if fovCamera~=camera then
@@ -427,10 +438,15 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         if not controlsFov then normalFov=camera.FieldOfView;controlsFov=true end
         camera.FieldOfView=normalFov+(PresentationConfig.get(equipped.Id).AimFov-normalFov)*aimAlpha
     elseif controlsFov then restoreFov() else normalFov=camera.FieldOfView end
-    -- Apply the change in recoil, so each impulse rises and recovers gradually.
-    local kickDelta=cameraKick-appliedCameraKick
-    if math.abs(kickDelta)>.0001 then camera.CFrame*=CFrame.Angles(math.rad(kickDelta),0,0) end
-    appliedCameraKick=cameraKick;kickCamera=camera
+    -- Match the reused kit's ShoulderCamera: build each frame with the complete
+    -- remaining recoil, then decay it. Roblox's camera has just supplied a new
+    -- base; a delta from last frame would reverse the kick during recovery.
+    if math.abs(cameraKick)>.0001 then
+        camera.CFrame*=CFrame.Angles(math.rad(cameraKick),0,0)
+        appliedCameraKick=cameraKick;kickCamera=camera;appliedCameraFrame=camera.CFrame
+    end
+    -- Automatic shots use the same direction currently presented to the player.
+    if held and (canMelee() or weapon().Automatic) then action() end
     cameraKick*=math.exp(-dt*9);viewKick*=math.exp(-dt*14);bloom*=math.exp(-dt*8)
     local narrow=camera.ViewportSize.X<620
     ammo.TextSize=if narrow then 14 else 19
@@ -496,7 +512,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
 end)
 connect(script.Destroying,function()
     if disposed then return end
-    disposed=true;stop();RunService:UnbindFromRenderStep(renderName)
+    disposed=true;stop();RunService:UnbindFromRenderStep(renderName);RunService:UnbindFromRenderStep(preCameraName)
     for _,name in {"ZO_Trigger","ZO_Aim","ZO_Reload","ZO_Equip"} do CAS:UnbindAction(name) end
     disconnectAll(connections);disconnectAll(assetConnections);disconnectAll(characterConnections)
     destroyPresentation();if zombieArms then Presentation.destroyArms(zombieArms) end

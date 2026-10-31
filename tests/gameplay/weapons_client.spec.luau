@@ -19,6 +19,9 @@ vectorMeta.__div=function(a,b) return vector(a.X/b,a.Y/b,a.Z/b) end
 local cfMeta={}
 local function cf(x,y,z,pitch) return setmetatable({_type="CFrame",Position=vector(x,y,z),pitch=pitch or 0},cfMeta) end
 cfMeta.__mul=function(a,b) return cf(a.Position.X+b.Position.X,a.Position.Y+b.Position.Y,a.Position.Z+b.Position.Z,a.pitch+b.pitch) end
+cfMeta.__eq=function(a,b)
+    return a.pitch==b.pitch and a.Position.X==b.Position.X and a.Position.Y==b.Position.Y and a.Position.Z==b.Position.Z
+end
 cfMeta.__index=function(v,k)
     if k=="LookVector" then return vector(0,math.sin(v.pitch),-math.cos(v.pitch)) end
     if k=="Lerp" then return function(a,b,t) return cf(0,0,0,a.pitch+(b.pitch-a.pitch)*t) end end
@@ -180,6 +183,19 @@ local function simulation(options)
     local runService={callbacks={},IsStudio=function() return false end}
     function runService:BindToRenderStep(name,priority,callback) self.callbacks[name]={priority=priority,callback=callback} end
     function runService:UnbindFromRenderStep(name) self.callbacks[name]=nil end
+    local cameraBase=cf()
+    local inputPitch=0
+    logs.cameraBases={}
+    -- CameraModule writes a frame at priority 200 before the weapon pass. One
+    -- mode rebuilds from controller state; another reads the previous camera so
+    -- an unremoved overlay would feed back into later frames.
+    runService:BindToRenderStep("FakeRobloxCameraModule",200,function()
+        local current=world.CurrentCamera
+        table.insert(logs.cameraBases,current.CFrame.pitch)
+        if options.cameraMode=="feedback" then current.CFrame*=CFrame.Angles(inputPitch,0,0)
+        else current.CFrame=cameraBase end
+        inputPitch=0
+    end)
     local enum={Font={RobotoMono="RobotoMono"},CoreGuiType={Backpack="Backpack"},AssetFetchStatus={Success="Success"},
         UserInputState={Begin="Begin",End="End",Cancel="Cancel"},ContextActionResult={Pass="Pass",Sink="Sink"},
         UserInputType={MouseButton1="MouseButton1",MouseButton2="MouseButton2",Touch="Touch",Gamepad1="Gamepad1"},
@@ -212,14 +228,106 @@ local function simulation(options)
     local fn=assert(loadstring(WEAPONS_CLIENT_SOURCE,"Weapons.client.luau"));setfenv(fn,env);tasks.spawn(fn);advance(0)
     local s={player=player,other=other,hum=hum,character=character,rs=rs,world=world,camera=camera,cas=cas,guiService=guiService,
         uis=uis,logs=logs,requests=requests,remotes=remotes,advance=advance,addAssets=addAssets,instance=instance,oldHUD=oldHUD,oldWeaponHUD=oldWeaponHUD,oldModel=oldModel,
-        gui=playerGui:FindFirstChild("ZO_WeaponHUD"),playerGui=playerGui,script=localScript}
+        gui=playerGui:FindFirstChild("ZO_WeaponHUD"),playerGui=playerGui,script=localScript,runService=runService}
     function s.key(name,state,inputType,keyCode)
         local action=assert(cas.actions[name],name)
         local result=action.callback(name,state or "Begin",{UserInputType=inputType or "MouseButton1",KeyCode=keyCode or "Unknown"});advance(0);return result
     end
-    function s.render(dt) for _,entry in runService.callbacks do entry.callback(dt or .1) end;advance(0) end
+    function s.render(dt)
+        local ordered={};for _,entry in runService.callbacks do table.insert(ordered,entry) end
+        table.sort(ordered,function(a,b) return a.priority<b.priority end)
+        for _,entry in ordered do entry.callback(dt or .1) end
+        advance(0)
+    end
+    function s.input(pitch) inputPitch=pitch end
+    function s.base(frame) cameraBase=frame end
     function s.event(name,...) remotes[name].OnClientEvent:Fire(...);advance(0) end
     return s
+end
+
+local function singleShot(s)
+    s.key("ZO_Trigger","Begin","MouseButton1")
+    s.key("ZO_Trigger","End","MouseButton1")
+end
+
+do
+    for _,mode in {"reset","feedback"} do
+        local s=simulation({cameraMode=mode});s.render(1/60);singleShot(s)
+        local previous=math.huge
+        local positive,monotone,bounded=true,true,true
+        for frame=1,120 do
+            s.advance(1/60);s.render(1/60)
+            local pitch=math.deg(s.camera.CFrame.pitch)
+            positive=positive and pitch>=-1e-8
+            monotone=monotone and pitch<=previous+1e-8
+            bounded=bounded and pitch<=.65+1e-8
+            if frame==1 then check(close(pitch,.65),mode.." camera receives the full initial recoil") end
+            previous=pitch
+        end
+        check(positive and monotone and bounded,mode.." camera recoil recovers upward-to-neutral without a downward reversal or accumulation")
+        check(close(s.camera.CFrame.pitch,0),mode.." camera has no residual recoil after recovery")
+        local baseClean=true;for _,pitch in s.logs.cameraBases do baseClean=baseClean and math.abs(pitch)<1e-8 end
+        check(baseClean,mode.." camera controller never reads back the weapon overlay as input")
+    end
+end
+
+do
+    local s=simulation({cameraMode="feedback"});s.render(1/60);singleShot(s);s.render(1/60)
+    s.input(math.rad(4));s.render(1/60)
+    check(s.camera.CFrame.pitch>math.rad(4),"mouse rotation and remaining recoil coexist on the fresh base")
+    for _=1,120 do s.advance(1/60);s.render(1/60) end
+    check(close(s.camera.CFrame.pitch,math.rad(4)),"recoil recovery preserves the player's new camera direction")
+    local beforeRequests=#s.requests
+    singleShot(s);s.render(1/60)
+    check(#s.requests==beforeRequests+1 and s.requests[#s.requests].args[1]=="Fire",
+        "replacement-frame scenario delivers a new shot after the previous cooldown")
+    s.camera.CFrame=cf(0,0,0,math.rad(12))
+    s.render(1/60)
+    check(s.camera.CFrame.pitch>math.rad(12),"pre-camera removal respects a replacement frame supplied by another controller")
+    s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0)
+    check(close(s.camera.CFrame.pitch,math.rad(12)),"cancelling recoil removes only the overlay from the external replacement base")
+end
+
+do
+    local s=simulation({cameraMode="feedback"});s.render(1/60)
+    s.key("ZO_Trigger","Begin","MouseButton1")
+    for _=1,10 do s.advance(1/60);s.render(1/60) end
+    s.key("ZO_Trigger","End","MouseButton1")
+    local shots={};for _,request in s.requests do
+        if request.remote=="ZO_FireRifle" and request.args[1]=="Fire" then table.insert(shots,request) end
+    end
+    check(#shots>=2 and shots[2].args[2].Y>0,"held automatic fire samples the visible recoiled direction after CameraModule updates")
+end
+
+do
+    for _,cancel in {
+        function(s) s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0) end,
+        function(s) s.key("ZO_Equip","Begin","Keyboard","Two") end,
+        function(s) s.uis.WindowFocusReleased:Fire();s.advance(0) end,
+        function(s) s.player.Team={Name="Zombies"};s.advance(0) end,
+    } do
+        local s=simulation({cameraMode="feedback"});s.render(1/60)
+        s.key("ZO_Aim","Begin","MouseButton2");s.render(.1);singleShot(s);s.render(1/60)
+        check(s.camera.CFrame.pitch>0 and s.camera.FieldOfView<80,"cancellation scenario begins with ADS and visible recoil")
+        cancel(s);s.render(1/60)
+        check(close(s.camera.CFrame.pitch,0) and close(s.camera.FieldOfView,80),"menu/equip/focus/infection clears recoil and FOV without camera drift")
+    end
+end
+
+do
+    local s=simulation({cameraMode="feedback"});s.render(1/60);singleShot(s);s.render(1/60)
+    local replacement=s.instance("Camera","Replacement",s.world)
+    replacement.CFrame=cf(0,0,0,math.rad(7));replacement.FieldOfView=75;replacement.ViewportSize={X=1000,Y=700}
+    s.world.CurrentCamera=replacement;s.render(1/60)
+    check(close(s.camera.CFrame.pitch,0) and close(replacement.CFrame.pitch,math.rad(7)),"camera replacement restores owned old frame without applying stale recoil to the new camera")
+    s.script:Destroy();s.advance(0)
+    local count=0;for _ in s.runService.callbacks do count+=1 end
+    check(count==1 and s.runService.callbacks.FakeRobloxCameraModule~=nil,"destruction removes both recoil render passes while preserving the camera controller")
+end
+
+do
+    local s=simulation({noAssets=true});s.render(1/60);singleShot(s);s.render(1/60)
+    check(close(s.camera.CFrame.pitch,0),"an unavailable template cannot produce fake recoil")
 end
 
 local function beginAim(s,inputType,keyCode)

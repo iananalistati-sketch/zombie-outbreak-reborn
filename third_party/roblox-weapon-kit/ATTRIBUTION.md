@@ -35,13 +35,17 @@ de idle. A integração mantém a pose neutra em primeira e terceira pessoa; a
 recarga continua avançando normalmente. A inclinação da câmera não é replicada
 por esse adaptador. O conteúdo permanece sob as licenças acima.
 
+O recuo em `Weapons.client.luau` segue a composição do estado completo de recuo
+de `ShoulderCamera:onRenderStep` do kit, com integração local antes/depois da
+câmera padrão Roblox para remover o offset anterior e evitar acumulação.
+
 Não são ativados o controlador de dano, a rede de acertos ou a câmera do kit
 completo. A AR usa os assets originais de mesh, textura, áudio e animação; a
 disponibilidade e as permissões desses assets devem ser verificadas no Studio.
 
 O catálogo atual contém Rifle, SMG, Shotgun e Pistol. **Somente Rifle está
 empacotada neste arquivo.** `WeaponAssetImport` declara os quatro IDs oficiais
-documentados e tenta carregar as versões oficiais por InsertService no Roblox,
+documentados e tenta carregar as versões oficiais por `AssetService:LoadAssetAsync` no Roblox,
 removendo todos os scripts antes de publicar os templates. Os outros prefabs não
 foram baixados nesta nuvem; disponibilidade, hierarquia e permissões permanecem
 pendentes. Não se afirma que quatro modelos estão embutidos ou testados.

@@ -1,4 +1,4 @@
--- Real importer, simulated InsertService/tree only. No asset download or engine.
+-- Real importer, simulated AssetService/tree only. No asset download or engine.
 local passed=0
 local function check(ok,label) assert(ok,label);passed+=1 end
 local methods={}
@@ -81,14 +81,24 @@ local function prefab(mesh)
 end
 rs=make("ReplicatedStorage","ReplicatedStorage")
 local failPistol=false
+local failRifle=false
 local downloads=0
+local serviceRequests={}
 local ids={Rifle=96131146947811,SMG=119916677125479,Shotgun=104068096273092,Pistol=118912302094201}
+local assetService=setmetatable({LoadAssetAsync=function(_,id)
+    downloads+=1
+    if (failPistol and id==ids.Pistol) or (failRifle and id==ids.Rifle) then error("asset permission denied") end
+    return prefab()
+end},{__index=function(_,key) error("Unexpected or privileged AssetService property: "..key) end,
+    __newindex=function(_,key) error("Unexpected or privileged AssetService write: "..key) end})
 local env=setmetatable({game={GetService=function(_,name)
+    table.insert(serviceRequests,name)
     if name=="ReplicatedStorage" then return rs end
-    assert(name=="InsertService")
-    return {LoadAsset=function(_,id) downloads+=1;if failPistol and id==ids.Pistol then error("asset permission denied") end;return prefab() end}
+    assert(name=="AssetService","importer must use the supported AssetService API")
+    return assetService
 end},Instance={new=function(class) return make(class) end},task={spawn=function(fn) fn() end},warn=function() end},{__index=getfenv()})
 local module=assert(loadstring(IMPORT_SOURCE));setfenv(module,env);local Import=module()
+check(table.find(serviceRequests,"AssetService")~=nil and table.find(serviceRequests,"InsertService")==nil,"supported asset service replaces the legacy loader")
 local kit,weapons,animations=Import.ensure()
 local source=prefab()
 local installed=Import.install(source,"Pistol",ids.Pistol)
@@ -102,10 +112,18 @@ check(not pcall(function() Import.install(prefab(),"Unknown",123) end),"unknown 
 check(not pcall(function() Import.install(prefab(false),"SMG",ids.SMG) end),"primitive stand-in is not accepted as imported mesh")
 installed:Destroy();failPistol=true
 Import.loadAll()
+check(kit:GetAttribute("ImportMethod")=="AssetService:LoadAssetAsync","diagnostics identify the actual supported loader")
 check(kit:GetAttribute("Status")=="Partial" and kit:GetAttribute("FailedCount")==1,"one failure yields partial status without aborting other weapons")
 check(weapons:FindFirstChild("Rifle")~=nil and weapons:FindFirstChild("SMG")~=nil,"successful imports remain available")
 check(weapons:FindFirstChild("Pistol")==nil and kit:GetAttribute("Status_Pistol")=="Failed","failed import never invents a replacement gun")
 failPistol=false;local before=downloads;Import.loadAll()
 check(downloads==before+1,"retry only downloads the missing source")
 check(kit:GetAttribute("Status")=="Ready" and kit:GetAttribute("Error_Pistol")==nil,"successful retry clears its error")
-print(("PASS official weapon importer: %d assertions; tree/InsertService doubles, no network or engine execution"):format(passed))
+local previous=weapons:FindFirstChild("Rifle")
+previous:SetAttribute("ZO_SourceAssetId",nil)
+failRifle=true;Import.loadAll()
+check(weapons:FindFirstChild("Rifle")==previous,"failed official update preserves the already bundled rifle")
+check(kit:GetAttribute("Status")=="Partial" and kit:GetAttribute("Status_Rifle")=="Failed","preserved rifle does not hide a failed update")
+failRifle=false;Import.loadAll()
+check(weapons:FindFirstChild("Rifle")~=previous and kit:GetAttribute("Status")=="Ready","later successful update replaces the preserved rifle only after validation")
+print(("PASS official weapon importer: %d assertions; tree/AssetService doubles, no network or engine execution"):format(passed))

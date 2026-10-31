@@ -2,7 +2,10 @@
 -- Official Roblox Weapons Kit prefabs, documented in the preserved attribution.
 -- Imported containers stay outside the DataModel. Only a sanitized Tool and
 -- Animation instances are copied; upstream combat/network scripts never run.
-local InsertService=game:GetService("InsertService")
+-- LoadAssetAsync is the supported loader documented in Roblox/creator-docs
+-- c8f5276703948ef4868c9b9fd44fae619dbe2f11, AssetService.yaml. The experience's
+-- third-party asset setting is managed in Studio, never read/set by this script.
+local AssetService=game:GetService("AssetService")
 local RS=game:GetService("ReplicatedStorage")
 local Import={}
 local sources={
@@ -95,6 +98,7 @@ function Import.loadAll()
     end
     local pending=#jobs
     local failures=0
+    kit:SetAttribute("ImportMethod","AssetService:LoadAssetAsync")
     kit:SetAttribute("Status","Loading")
     local function complete()
         if pending>0 then return end
@@ -108,7 +112,9 @@ function Import.loadAll()
         task.spawn(function()
             local container: Model?=nil
             local ok,problem=pcall(function()
-                container=InsertService:LoadAsset(assetId)
+                -- The supported API also returns sandboxed containers. Keep
+                -- our explicit detached inspection and code removal regardless.
+                container=AssetService:LoadAssetAsync(assetId) :: Model
                 assert(container,"Empty official prefab")
                 Import.install(container :: Model,id,assetId)
             end)

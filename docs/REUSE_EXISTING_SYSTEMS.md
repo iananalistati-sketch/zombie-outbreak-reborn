@@ -53,12 +53,19 @@ O [importador de prefabs](../tools/studio/ImportOfficialWeapons.luau) usa o novo
 independente dessa operação.
 Ele precisa ser executado no Studio, em modo de edição, usando a conta local:
 
-1. Copie o arquivo inteiro para a Command Bar e execute fora de Play.
+1. Execute `IMPORTAR_ARMAS.cmd` na raiz do repositório para copiar o comando e
+   cole na Command Bar fora de Play. Também é possível copiar o arquivo inteiro.
 2. O importador faz backup em `ServerStorage`, tenta os quatro prefabs e remove
    seus scripts/remotes antes de publicar os templates em `ZO_WeaponAssets`.
    Confira o Output: a operação e suas permissões ainda não foram executadas aqui.
-3. Salve/exporte a pasta selecionada como `.rbxmx` e sincronize pelo GitHub Desktop
-   para que os modelos realmente obtidos possam ser incorporados ao repositório.
+3. O carregador usa `AssetService:LoadAssetAsync`, conforme a
+   [documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
+   Em erro de permissão, confira **Experience Settings → Allow Loading Third
+   Party Assets**, quando o modelo gratuito não atender às regras de propriedade
+   ou compartilhamento da experiência. O script não lê nem altera essa opção.
+4. Salve o place como uma cópia fora de `builds`. Exporte a pasta selecionada
+   como `ZO_WeaponAssets_Official.rbxmx` e sincronize pelo GitHub Desktop para
+   que os modelos realmente obtidos possam ser incorporados ao repositório.
 
 O importador foi compilado em Luau; sua execução e a autorização para carregar
 os assets ainda dependem do Studio. Uma falha individual é informada no Output.

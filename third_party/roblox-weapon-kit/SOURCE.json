@@ -19,5 +19,7 @@
     "Shotgun": 104068096273092,
     "Pistol": 118912302094201
   },
-  "runtime_prefab_status": "Requires Roblox InsertService and asset permission; not downloaded in cloud"
+  "runtime_prefab_loader": "AssetService:LoadAssetAsync",
+  "loader_documentation": "https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml",
+  "runtime_prefab_status": "Requires Roblox asset permissions or the conditional third-party asset setting; not downloaded in cloud"
 }

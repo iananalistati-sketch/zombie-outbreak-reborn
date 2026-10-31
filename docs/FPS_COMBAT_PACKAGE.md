@@ -78,6 +78,24 @@ cenário são ancorados: ele verifica a propriedade de velocidade, não deslocam
 ou física de contato. As verificações visuais acima precisam dos clientes reais.
 **Nenhuma dessas validações no motor foi executada nesta nuvem.**
 
+## Recuo e carregamento oficial — 31/10
+
+O recuo agora compõe o estado completo restante sobre a câmera fornecida pelo
+Roblox em cada quadro, como no `ShoulderCamera` do kit reutilizado. Antes da
+atualização da câmera, remove apenas o offset que ainda pertence ao pacote.
+Isso evita a inversão para baixo na recuperação e a realimentação do recuo na
+orientação base. Disparos automáticos usam a direção apresentada naquele quadro.
+Menus, infecção, foco, troca de arma e de câmera continuam cancelando o efeito.
+
+O importador passou para a API oficial atual `AssetService:LoadAssetAsync`.
+`IMPORTAR_ARMAS.cmd` copia o comando de edição para a área de transferência no
+Windows, sem exigir VS Code. Ele não executa comandos remotamente no Studio.
+O comando informa importações parciais, pedidos ainda pendentes e erros de
+permissão, preserva backup e orienta salvar uma cópia fora de `builds`.
+
+Backup: `backup/before-fps-polish-c1fc793`, tar verificado e cópia das alterações
+pendentes antes da retomada. Os três modelos ausentes continuam sem ser obtidos.
+
 ## Dependência de modelos que continua aberta
 
 | Arma | Prefab oficial | Situação nesta nuvem |
@@ -101,25 +119,45 @@ a mudança.** Salvar o rascunho não liberou a rede desta execução.
 
 ## Importação preparada para o Roblox
 
-`WeaponAssets.server` tenta carregar os prefabs por `InsertService:LoadAsset`.
+`WeaponAssets.server` tenta carregar os prefabs por `AssetService:LoadAssetAsync`,
+substituto moderno de `InsertService:LoadAsset` conforme a
+[documentação oficial fixada](https://github.com/Roblox/creator-docs/blob/c8f5276703948ef4868c9b9fd44fae619dbe2f11/content/en-us/reference/engine/classes/AssetService.yaml).
 A operação depende das permissões da experiência/conta Roblox e ainda não foi
 executada no motor. O importador elimina scripts, remotes e PackageLinks no
 container desconectado, valida Tool/meshes/grip/áudio e só então publica a cópia.
 Uma falha fica em `ReplicatedStorage.ZO_WeaponAssets`, atributos `Status_<id>` e
 `Error_<id>`, sem paralisar as rodadas. O rifle embutido continua disponível.
 
-No Studio, é possível tentar a importação em modo de edição executando o arquivo
-inteiro [ImportOfficialWeapons.luau](../tools/studio/ImportOfficialWeapons.luau)
-na Command Bar. Ele faz backup antes de substituir templates. Depois, confira o
-Output e os modelos selecionados; salve/exporte `ZO_WeaponAssets` como RBXMX para
-que os prefabs efetivamente obtidos possam ser incorporados ao Git. Essa execução
-local também permanece pendente e pode exigir obter os assets oficiais na conta.
+Para tentar a importação local sem VS Code:
+
+1. Atualize `feat/fps-combat-package`, abra `ABRIR_K17.cmd` e pare o teste no
+   Studio. Salve uma cópia do seu trabalho antes de continuar.
+2. Execute **`IMPORTAR_ARMAS.cmd`** na raiz do repositório. Ele copia o arquivo
+   [ImportOfficialWeapons.luau](../tools/studio/ImportOfficialWeapons.luau).
+3. No Studio, abra **Command Bar** e **Output**, cole o comando com **Ctrl+V**
+   e execute com **Enter**, em modo de edição. Ele faz backup em `ServerStorage`
+   antes de substituir templates.
+4. Confira os quatro resultados `[K17 ASSETS]` e os modelos selecionados. Se o
+   carregamento ainda estiver pendente após 25 segundos, espere e execute o
+   comando novamente. Uma falha parcial não equivale a quatro armas prontas.
+5. Em erro de propriedade/permissão, revise **Experience Settings → Allow
+   Loading Third Party Assets** para permitir modelos públicos gratuitos que
+   não atendam às regras de propriedade/compartilhamento. Essa exigência depende
+   do asset e da conta; não foi verificada para os quatro prefabs. O script não
+   lê nem altera essa opção protegida.
+6. Salve o place **como uma cópia fora de `builds`**. Não sobrescreva o arquivo
+   verificado: isso faria o checksum do `ABRIR_K17.cmd` divergir. Exporte a pasta
+   `ZO_WeaponAssets` selecionada como **`ZO_WeaponAssets_Official.rbxmx`** para
+   compartilhar/incorporar os modelos realmente obtidos ao Git.
+
+O atalho Windows, as permissões e a importação real ainda precisam ser executados
+no computador do usuário. A importação não publica a experiência no Roblox.
 
 ## Testes e limites
 
 Foram executados testes dos controladores reais de combate, loja e armas, com
 APIs substitutas; o teste de armas usa um spy para apresentação. O importador foi
-exercitado com árvore/InsertService simulados: remoção de scripts, falhas parciais,
+exercitado com árvore/AssetService simulados: remoção de scripts, falhas parciais,
 rejeição de modelo sem mesh e recuperação posterior. Isso não comprova permissões
 nem compatibilidade dos prefabs que não foram baixados.
 
@@ -135,6 +173,12 @@ controlador corporal com o adaptador real. A simulação de combate agora arredo
 testes falham com os controladores anteriores. Também passaram os 23 testes
 Python, a compilação Luau e a conferência dos dois places recompilados. Isso
 continua sem executar o Animator, a rede ou os contatos físicos do motor Roblox.
+
+Na revisão de 31/10, passaram 88 verificações do cliente de armas e 18 do
+importador com APIs simuladas. O teste de câmera executa quadros em ordem de
+prioridade, com reconstrução da base e realimentação da orientação; o controlador
+anterior falha no caso de inversão do recuo. Esses testes não aprovam a sensação
+de tiro no motor nem comprovam o download dos prefabs.
 
 O arquivo de validação Survival separado foi mantido. Antes de aprovar o pacote,
 testar dois clientes, quatro templates carregados, mira/recarga/troca/compra,

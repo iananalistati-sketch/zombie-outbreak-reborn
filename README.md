@@ -7,6 +7,11 @@ O pacote usa quatro armas configuradas, mira, braços R15 e prévia 3D. Somente 
 carabina está embutida; os outros prefabs dependem de importação Roblox ainda não
 executada. A branch `feat/fps-combat-package` permite revisar esse trabalho.
 
+**Importar os modelos no Studio:** depois de abrir o K-17 atualizado, execute
+`IMPORTAR_ARMAS.cmd`, cole o comando na Command Bar fora de Play e confira o
+Output. O atalho copia o comando; a importação depende das permissões Roblox.
+[Passos e limites](docs/FPS_COMBAT_PACKAGE.md#importação-preparada-para-o-roblox).
+
 **Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
 Carregamento tardio de personagens, remoção durante combate e acertos em modelos
 aninhados foram corrigidos. Os controladores de rodada e combate agora possuem
