@@ -7,6 +7,7 @@ if not RunService:IsStudio() or not RunService:IsServer() then return end
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local combatConfig=require(RS:WaitForChild("K17Gameplay"):WaitForChild("Config"))
+local movementConfig=require(RS:WaitForChild("K17Gameplay"):WaitForChild("MovementConfig"))
 local roundConfig=require(RS:WaitForChild("Shared"):WaitForChild("RoundConfig"))
 local channel=Instance.new("RemoteEvent")
 channel.Name="ZO_StudioSurvivalTest"
@@ -19,6 +20,7 @@ local checks=0
 local serial=0
 local stage="startup"
 local movementConnection: RBXScriptConnection?
+local standBlocker: Part?
 script:SetAttribute("Status","Running")
 local function waitUntil(label: string,predicate: ()->boolean,seconds: number)
     stage=label;script:SetAttribute("Stage",label)
@@ -92,6 +94,7 @@ local ok,problem=xpcall(function()
         if #list~=2 then return false end
         for _,player in list do if not ready[player] then return false end end
         return RS:GetAttribute("ZO_GameplayRoundReady")==true and RS:GetAttribute("ZO_GameplayCombatReady")==true
+            and RS:FindFirstChild("ZO_MoveIntent")~=nil
     end,55)
     check(true,"production round and combat controllers ready; two client drivers connected")
     local id=nextPreparation(RS:GetAttribute("ZO_RoundId") or 0)
@@ -102,13 +105,62 @@ local ok,problem=xpcall(function()
     place(human,Vector3.new(-248,4,123),Vector3.new(-238,4,123))
     place(zombie,Vector3.new(-238,4,123),Vector3.new(-248,4,123))
     task.wait(.5)
+    local _,movingHuman,_,movingHead=living(human)
+    local standingHead=movingHead.Position
+    local normalHumanSpeed=roundConfig.HumanWalkSpeed
+    local function near(actual: number,expected: number): boolean
+        return math.abs(actual-expected)<.001
+    end
+    request(human,"MoveWalk")
+    waitUntil("human walking mode",function()
+        return movingHuman:GetAttribute("ZO_MovementMode")=="Walk"
+            and near(movingHuman.WalkSpeed,normalHumanSpeed*movementConfig.WalkScale)
+    end,2)
+    check(true,"client walk intent uses the configured human speed multiplier")
+    request(human,"MoveCrouch")
+    waitUntil("human crouching mode",function()
+        return movingHuman:GetAttribute("ZO_Crouching")==true
+            and movingHuman:GetAttribute("ZO_MovementMode")=="Crouch"
+            and near(movingHuman.WalkSpeed,normalHumanSpeed*movementConfig.CrouchScale)
+    end,2)
+    check(true,"client crouch intent changes authoritative stance and speed")
+    local drop=movingHuman:GetAttribute("ZO_CrouchDrop")
+    assert(type(drop)=="number" and drop>.1,"Crouch pose requires a supported character rig")
+    waitUntil("crouch lowers the real head",function()
+        return movingHead.Position.Y<=standingHead.Y-drop*.5
+    end,3)
+    check(true,"crouch lowers the actual character head rather than only the camera")
+    -- Only the isolated test place creates this temporary headroom obstacle.
+    -- It is outside the authored map model and is removed on success or failure.
+    standBlocker=Instance.new("Part")
+    standBlocker.Name="ZO_StudioStandClearanceBlocker"
+    standBlocker.Size=Vector3.new(4,.2,4)
+    standBlocker.Position=standingHead+Vector3.new(0,.25,0)
+    standBlocker.Anchored=true;standBlocker.CanCollide=true
+    standBlocker.CanQuery=true;standBlocker.CanTouch=false
+    standBlocker.Transparency=.5;standBlocker.Parent=workspace
+    task.wait(.1)
+    request(human,"MoveRun")
+    waitUntil("ceiling blocks standing",function()
+        return movingHuman:GetAttribute("ZO_StandBlocked")==true
+            and movingHuman:GetAttribute("ZO_Crouching")==true
+            and movingHead.Position.Y<=standingHead.Y-drop*.5
+    end,2)
+    check(true,"standing intent is refused while the real headroom probe intersects a ceiling")
+    standBlocker:Destroy();standBlocker=nil
+    request(human,"MoveRun")
+    waitUntil("standing after clearance",function()
+        return movingHuman:GetAttribute("ZO_StandBlocked")==false
+            and movingHuman:GetAttribute("ZO_Crouching")==false
+            and movingHuman:GetAttribute("ZO_MovementMode")=="Run"
+            and near(movingHuman.WalkSpeed,normalHumanSpeed)
+            and movingHead.Position.Y>=standingHead.Y-.25
+    end,3)
+    check(true,"clearing the ceiling restores standing head position and the original human speed")
     local _,victim,_,target=living(zombie)
     local baseSpeed=victim.WalkSpeed
     local taggedSpeed=baseSpeed*combatConfig.Containment.TagWalkScale
     local minimumSpeed=baseSpeed
-    local function near(actual: number,expected: number): boolean
-        return math.abs(actual-expected)<.001
-    end
     check(near(baseSpeed,roundConfig.ZombieWalkSpeed),"zombie starts with configured movement speed")
     -- Observe the property's real engine precision. A short tag may already
     -- expire while the separate client acknowledgement is travelling back.
@@ -170,6 +222,7 @@ local ok,problem=xpcall(function()
     nextPreparation(id)
     check(true,"automatic next-round reset restores both humans")
 end,debug.traceback)
+if standBlocker then standBlocker:Destroy();standBlocker=nil end
 if movementConnection then movementConnection:Disconnect() end
 for root,anchored in roots do if root.Parent then root.Anchored=anchored end end
 for humanoid,autoRotate in rotation do if humanoid.Parent then humanoid.AutoRotate=autoRotate end end

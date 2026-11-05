@@ -498,14 +498,16 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         line.BackgroundColor3=if zombie then Color3.fromRGB(211,128,101) else Color3.fromRGB(230,222,192)
     end
     local assetFailure=gun and currentTemplate and templateStates[currentTemplate]=="Failed"
+    local standBlocked=hum~=nil and hum.Health>0 and hum:GetAttribute("ZO_StandBlocked")==true
     status.Text=if os.clock()<noticeUntil then notice
+        elseif standBlocked then "Sem espaço para levantar"
         elseif gun and presentationStatus=="Loading" then "Carregando modelo da arma..."
         elseif gun and not currentPresentation then "Modelo da arma indisponível · veja o Output"
         elseif assetFailure then "Assets da arma indisponíveis · veja o Output"
         elseif (gun and presentationStatus~="Ready") or (zombie and not zombieArms) then "Braços em primeira pessoa requerem personagem R15"
         elseif gun and clip==0 then "Recarregar · 1 / 2: trocar arma"
         elseif zombie then "Segure atacar para golpear e infectar" else ""
-    status.Visible=active
+    status.Visible=active or standBlocked
     local triggerButton=CAS:GetButton("ZO_Trigger");if triggerButton then triggerButton.Visible=active end
     local reloadButton=CAS:GetButton("ZO_Reload");if reloadButton then reloadButton.Visible=gun end
     local aimButton=CAS:GetButton("ZO_Aim");if aimButton then aimButton.Visible=gun and not reloading and not equipping end

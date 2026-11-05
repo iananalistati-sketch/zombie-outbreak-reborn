@@ -48,6 +48,15 @@
         "Containment": {
           "$path": "src/maps/k17/gameplay/Containment.luau"
         },
+        "MovementState": {
+          "$path": "src/maps/k17/gameplay/MovementState.luau"
+        },
+        "MovementConfig": {
+          "$path": "src/maps/k17/gameplay/MovementConfig.luau"
+        },
+        "MovementPose": {
+          "$path": "src/maps/k17/gameplay/MovementPose.luau"
+        },
         "WeaponAimPose": {
           "$path": "src/maps/k17/gameplay/WeaponAimPose.luau"
         },
@@ -99,6 +108,9 @@
         "WeaponAssets": {
           "$path": "src/maps/k17/gameplay/WeaponAssets.server.luau"
         },
+        "Movement": {
+          "$path": "src/maps/k17/gameplay/Movement.server.luau"
+        },
         "WeaponAssetImport": {
           "$path": "src/maps/k17/gameplay/WeaponAssetImport.luau"
         }
@@ -124,6 +136,9 @@
           },
           "Loadout": {
             "$path": "src/maps/k17/gameplay/Loadout.client.luau"
+          },
+          "Movement": {
+            "$path": "src/maps/k17/gameplay/Movement.client.luau"
           }
         },
         "K17_Barricades": {

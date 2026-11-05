@@ -29,6 +29,7 @@ def run(luau):
         'MAP_CONFIG':'src/maps/k17/Config.luau',
         'ROUND_RULES':'src/maps/k17/gameplay/RoundRules.luau',
         'GAMEPLAY_RULES':'src/maps/k17/gameplay/Rules.luau',
+        'MOVEMENT_STATE':'src/maps/k17/gameplay/MovementState.luau',
     }
     lines=[]
     for key,path in sources.items():

@@ -9,7 +9,7 @@ Clients**, selecione **2** clientes e inicie. Aguarde a execução automática s
 comandar os personagens. No Output do servidor, procure:
 
 ```text
-[SURVIVAL STUDIO] COMPLETE: 16 checks passed in the Roblox engine.
+[SURVIVAL STUDIO] COMPLETE: 21 checks passed in the Roblox engine.
 ```
 
 Um erro gera `[SURVIVAL STUDIO] FAIL at ...`, com a etapa e o motivo. No servidor,
@@ -26,9 +26,18 @@ uma sequência de seis acertos sem acumular lentidão e recuperação após o ú
 A observação usa o `Humanoid.WalkSpeed` real, incluindo o arredondamento da
 propriedade que os testes anteriores com APIs simuladas não representavam.
 
+As cinco verificações de movimento adicionais enviam intenções reais de
+caminhar/agachar/voltar ao normal. Conferem o multiplicador de velocidade, a
+postura replicada e o abaixamento da posição real da cabeça por joints. Um teto
+temporário, criado somente fora do modelo do mapa nesse place de teste, deve
+bloquear a tentativa de levantar. Depois de removido, a cabeça e a velocidade
+precisam voltar à condição normal. O bloqueador é destruído também se ocorrer
+uma falha. Nenhuma geometria dos mapas de produção é editada.
+
 Os personagens são posicionados e ancorados para tornar os raios repetíveis;
-ForceFields de nascimento são removidos. As novas verificações conferem a
-propriedade de velocidade; não medem deslocamento nem resolvem contatos físicos.
+ForceFields de nascimento são removidos. As verificações conferem propriedades
+de velocidade, posição dos joints/cabeça e consulta de espaço; não medem
+deslocamento nem aprovam os contatos físicos do personagem em movimento.
 Isso não aprova navegação, knockback,
 controles de teclado/toque, armas visuais, sons, animações, equilíbrio ou latência.
 O resultado só pode ser chamado de aprovado depois de executar esse place no

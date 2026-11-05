@@ -29,6 +29,7 @@ local Config=require(dependency(shared,"RoundConfig","ModuleScript"))
 local MapConfig=require(dependency(shared,"MapConfig","ModuleScript"))
 local RoundRules=require(dependency(gameplay,"RoundRules","ModuleScript"))
 local Rules=require(dependency(gameplay,"Rules","ModuleScript"))
+local MovementState=require(dependency(gameplay,"MovementState","ModuleScript"))
 RS:SetAttribute("ZO_MinimumPlayers",Config.MinimumPlayers)
 local rng=Random.new()
 local function ensureTeam(name: string,color: string): Team
@@ -93,7 +94,7 @@ local function style(player: Player)
     if hum and hum.Health>0 then
         hum.MaxHealth=if player.Team==zombies then Config.ZombieHealth else Config.HumanHealth
         hum.Health=hum.MaxHealth
-        hum.WalkSpeed=if player.Team==zombies then Config.ZombieWalkSpeed else Config.HumanWalkSpeed
+        MovementState.setBase(hum,if player.Team==zombies then Config.ZombieWalkSpeed else Config.HumanWalkSpeed,os.clock())
     end
     -- Remove the old full-body team glow; role is represented by HUD and character tint.
     local old=char and char:FindFirstChild("ZO_RoleHighlight")

@@ -89,6 +89,7 @@ local function simulation(options)
     module(shared,"MapConfig",MAP_CONFIG)
     module(gameplay,"RoundRules",ROUND_RULES)
     module(gameplay,"Rules",GAMEPLAY_RULES)
+    module(gameplay,"MovementState",MOVEMENT_STATE)
     local scriptContext={Error=signal()}
     local run={IsStudio=function() return options.studio~=false end}
     local services={Players=players,ReplicatedStorage=rs,ServerStorage=ss,Teams=teams,RunService=run,Workspace=world,ScriptContext=scriptContext}

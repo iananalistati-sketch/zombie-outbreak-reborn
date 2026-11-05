@@ -2,9 +2,16 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-**Missão atual — Etapa 1:** [auditoria e comparação de bases FPS](docs/FPS_BASE_AUDIT_2026-10-31.md).
-Nenhuma reconstrução foi iniciada. A recomendação é qualificar o template
-oficial FPS System antes de aprovar qualquer substituição da camada FPS.
+**Entrega de 05/11:** [movimentação tática e categorias da loja](docs/OFFLINE_FPS_PROGRESS_2026-11-05.md).
+**Shift** para andar devagar; **Ctrl** para agachar enquanto segura ou **C** para
+alternar. O servidor verifica espaço para levantar e combina a postura com a
+lentidão temporária dos tiros. A loja tem filtros por categoria e atalhos para
+as armas visíveis. Os controles também têm ações de controle/toque.
+
+A [auditoria e comparação de bases FPS](docs/FPS_BASE_AUDIT_2026-10-31.md)
+recomendou qualificar o template oficial FPS System. Essa migração continua
+pendente do arquivo; esta entrega amplia a base atual com componentes de
+movimentação adaptados de Extract (MIT), sem ativar outro sistema completo de FPS.
 
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
 Carabina e **pistola preta oficial** estão embutidas, com meshes, texturas e sons
@@ -130,6 +137,7 @@ src/maps/k17/gameplay/             combate, infecção por golpe, rodada e HUD a
 src/maps/k17/gameplay/TacticalMap.client.luau mapa tático com filtros, aberto por M
 src/third_party/roblox-weapon-kit/   AR e apresentação extraídas, sem scripts externos
 third_party/roblox-weapon-kit/       kit original arquivado, origem e licenças
+third_party/extract-movement/       fontes MIT de movimentação, revisão e atribuição
 src/server/                       bootstrap compartilhado e protótipos desativados
 src/client/                       cliente anterior e bootstrap compartilhado
 scripts/validate_k17.py            checagem de colisão e circulação
@@ -173,12 +181,17 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 215 percursos com 38.374
-amostras de apoio/espaço livre, 19 testes de geometria e quatro de identidade/
-licenças do kit, 160 asserções do combate/
-rodada, 215 de inventário/economia e 96 de contenção. Os controladores reais
-passaram 119 verificações de combate, 41 de rodada, 39 do ciclo integrado e 7.554 de barricadas com APIs
-simuladas; há também 202 da política de impulso e 85 das regras preservadas. Verificação das fontes ativas
-no place. Os percursos também foram checados com os 164 objetos presentes.
+amostras de apoio/espaço livre, 27 testes Python, 172 verificações das regras de
+combate, 162 de inventário/economia e 96 de contenção. O controlador real de
+barricadas passou 7.554 verificações com APIs simuladas; há também 202 da política
+de impulso e 85 das regras preservadas. Fontes ativos conferidos no place.
+Os percursos também foram checados com os 164 objetos presentes.
+
+**Movimentação/loja — 05/11:** 66 verificações da composição de velocidade,
+35 do servidor de postura, 57 do cliente de movimento, 156 do combate real,
+41 da rodada, 39 do ciclo integrado, 73 da loja e 91 do cliente de armas,
+com APIs simuladas. Fontes atuais conferidos nos places compilados. O cenário
+separado do Studio inclui 21 etapas e ainda não foi executado no motor.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer, equilíbrio e renderização/

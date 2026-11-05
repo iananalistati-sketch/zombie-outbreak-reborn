@@ -3,7 +3,7 @@
 -- Roblox units and initial tuning: these numbers still need engine playtests.
 local Weapons = table.freeze({
     Rifle = table.freeze({
-        Id="Rifle", Label="Carabina", Slot="Primary", Price=1500,
+        Id="Rifle", Label="Carabina", Slot="Primary", Category="Rifles", Price=1500,
         Magazine=30, Reserve=120, FireInterval=.105, ReloadSeconds=2.4,
         Range=280, Damage=22, Knockback=1, PropScale=1,
         Spread=.5, MoveSpread=1.3, AimSpread=.22, AimMoveSpread=.9, Recoil=1, Automatic=true, Pellets=1,
@@ -11,7 +11,7 @@ local Weapons = table.freeze({
         Description="Precisão e cadência equilibradas para segurar corredores.",
     }),
     SMG = table.freeze({
-        Id="SMG", Label="Submetralhadora", Slot="Primary", Price=1000,
+        Id="SMG", Label="Submetralhadora", Slot="Primary", Category="SMG", Price=1000,
         Magazine=32, Reserve=160, FireInterval=.075, ReloadSeconds=2,
         Range=200, Damage=14, Knockback=.75, PropScale=.7,
         Spread=.9, MoveSpread=1.6, AimSpread=.5, AimMoveSpread=1.2, Recoil=.65, Automatic=true, Pellets=1,
@@ -19,7 +19,7 @@ local Weapons = table.freeze({
         Description="Rajadas rápidas e recarga curta; melhor a curta distância.",
     }),
     Shotgun = table.freeze({
-        Id="Shotgun", Label="Escopeta", Slot="Primary", Price=2200,
+        Id="Shotgun", Label="Escopeta", Slot="Primary", Category="Shotguns", Price=2200,
         Magazine=8, Reserve=48, FireInterval=.85, ReloadSeconds=2.9,
         Range=140, Damage=10, Knockback=1.25, PropScale=1.6,
         Spread=4, MoveSpread=5, AimSpread=3, AimMoveSpread=4, Recoil=2, Automatic=false, Pellets=7,
@@ -27,7 +27,7 @@ local Weapons = table.freeze({
         Description="Sete projéteis por disparo para conter entradas próximas.",
     }),
     Pistol = table.freeze({
-        Id="Pistol", Label="Pistola", Slot="Secondary", Price=0,
+        Id="Pistol", Label="Pistola", Slot="Secondary", Category="Pistols", Price=0,
         Magazine=12, Reserve=72, FireInterval=.23, ReloadSeconds=1.6,
         Range=180, Damage=18, Knockback=.75, PropScale=.6,
         Spread=.5, MoveSpread=1.2, AimSpread=.25, AimMoveSpread=.9, Recoil=.8, Automatic=false, Pellets=1,

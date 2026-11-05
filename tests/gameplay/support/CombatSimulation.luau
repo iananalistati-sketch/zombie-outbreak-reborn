@@ -3,6 +3,7 @@
 return function(deps)
 local Config,Rules,WeaponState=deps.Config,deps.Rules,deps.WeaponState
 local LoadoutState,Containment=deps.LoadoutState,deps.Containment
+local MovementState=deps.MovementState
 local COMBAT_SOURCE=deps.CombatSource
 -- Engine float properties do not preserve every Luau double. Model that storage
 -- boundary so equality-based effect ownership cannot pass on table precision.
@@ -130,7 +131,7 @@ local function simulation(options)
     local templates=instance("Folder","Weapons",weaponAssets)
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local modules={}
-    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment} do
+    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState} do
         local module=instance("ModuleScript",name,shared);modules[module]=result
     end
     local heartbeat=signal()

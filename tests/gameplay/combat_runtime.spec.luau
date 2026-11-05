@@ -4,6 +4,7 @@ local Config=assert(loadstring(CONFIG_SOURCE))()
 local Rules=assert(loadstring(RULES_SOURCE))()
 local WeaponState=assert(loadstring(WEAPON_SOURCE))()
 local Containment=assert(loadstring(CONTAINMENT_SOURCE))()
+local MovementState=assert(loadstring(MOVEMENT_STATE_SOURCE))()
 local LoadoutState
 do
     local dependency={}
@@ -18,7 +19,7 @@ local function check(ok,label) assert(ok,label);checks+=1 end
 local function near(a,b) return math.abs(a-b)<.00001 end
 local tools=assert(loadstring(SIMULATION_SOURCE))()({
     Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,
-    Containment=Containment,CombatSource=COMBAT_SOURCE,
+    Containment=Containment,MovementState=MovementState,CombatSource=COMBAT_SOURCE,
 })
 local simulation,Vector=tools.simulation,tools.Vector
 local function attr(player,key) return player:GetAttribute("ZO_"..key) end
@@ -265,6 +266,22 @@ do
     check(hum.WalkSpeed==19,"leaving Active immediately removes the owned slowdown")
     hum.WalkSpeed=16;s.advance(Config.Containment.TagSeconds+.1)
     check(hum.WalkSpeed==16,"cancelled tag cannot overwrite later lobby movement")
+end
+
+do
+    local s,p=twoHumans();local zombie=s.add("StanceDuringFire","Zombies");s.phase("Active");ready(s,p)
+    local hum=zombie.Character.Humanoid;hum.Health=1000
+    MovementState.setBase(hum,19,s.now());MovementState.setMode(hum,"Crouch",.5,s.now())
+    s.ray(function() return hit(zombie.Character.UpperTorso) end);s.fire(p)
+    check(near(hum.WalkSpeed,19*.5*Config.Containment.TagWalkScale),"real confirmed hit contains the crouched speed from the original role baseline")
+    s.advance(.05);MovementState.setMode(hum,"Run",1,s.now())
+    check(near(hum.WalkSpeed,19*Config.Containment.TagWalkScale),"standing during the controller's active hit preserves suppression")
+    s.advance(Config.Containment.TagSeconds+.1)
+    check(hum.WalkSpeed==19,"controller expiry restores the current run mode rather than the stance at impact")
+    s.fire(p);MovementState.setMode(hum,"Walk",.5,s.now())
+    check(near(hum.WalkSpeed,19*.5*Config.Containment.TagWalkScale),"walking during a second actual hit still composes one tag")
+    s.advance(Config.Containment.TagSeconds+.1)
+    check(hum.WalkSpeed==9.5,"controller expiry preserves the newly selected walking mode")
 end
 
 do

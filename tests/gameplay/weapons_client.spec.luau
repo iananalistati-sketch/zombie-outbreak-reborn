@@ -337,6 +337,16 @@ end
 local function restored(s,label) check(close(s.camera.FieldOfView,80),label) end
 
 do
+    local s=simulation();s.hum:SetAttribute("ZO_StandBlocked",true);s.render(.1)
+    local feedback=s.gui:FindFirstChild("Feedback")
+    check(feedback.Visible and feedback.Text=="Sem espaço para levantar","authoritative blocked stand explains why crouch remains engaged")
+    s.hum:SetAttribute("ZO_StandBlocked",false);s.render(.1)
+    check(feedback.Text~="Sem espaço para levantar","stand feedback clears when headroom becomes available")
+    s.player.Team={Name="Lobby"};s.hum:SetAttribute("ZO_StandBlocked",true);s.advance(0);s.render(.1)
+    check(feedback.Visible and feedback.Text=="Sem espaço para levantar","solo lobby movement still shows blocked stand feedback")
+end
+
+do
     local s=simulation();s.render(.1)
     check(s.oldHUD._destroyed and s.oldWeaponHUD._destroyed and s.oldModel._destroyed,"startup removes both old HUD names and old local model")
     check(s.cas.actions.ZO_Aim.createButton and s.cas:GetButton("ZO_Aim").Text=="Mira","touch aim action has a named button")

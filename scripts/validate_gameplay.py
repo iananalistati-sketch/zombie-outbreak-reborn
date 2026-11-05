@@ -32,10 +32,12 @@ def validate(path,studio_test=False):
         'ServerScriptService/ZO_Server/EquipmentVisuals':'src/maps/k17/gameplay/EquipmentVisuals.server.luau',
         'ServerScriptService/ZO_Server/WeaponAssets':'src/maps/k17/gameplay/WeaponAssets.server.luau',
         'ServerScriptService/ZO_Server/WeaponAssetImport':'src/maps/k17/gameplay/WeaponAssetImport.luau',
+        'ServerScriptService/ZO_Server/Movement':'src/maps/k17/gameplay/Movement.server.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Weapons':'src/maps/k17/gameplay/Weapons.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/RoundHUD':'src/maps/k17/gameplay/HUD.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/TacticalMap':'src/maps/k17/gameplay/TacticalMap.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Loadout':'src/maps/k17/gameplay/Loadout.client.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_Client/Movement':'src/maps/k17/gameplay/Movement.client.luau',
         'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
         'ServerStorage/ZO_Validation/BarricadeAudit':'tests/k17/BarricadeAudit.luau',
@@ -43,7 +45,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','WeaponAimPose','WeaponPresentation','PresentationConfig','WeaponPreview')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)

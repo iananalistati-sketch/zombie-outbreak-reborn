@@ -28,6 +28,7 @@ def run(luau):
         "WEAPON_SOURCE": "WeaponState.luau",
         "LOADOUT_SOURCE": "LoadoutState.luau",
         "CONTAINMENT_SOURCE": "Containment.luau",
+        "MOVEMENT_STATE_SOURCE": "MovementState.luau",
     }
     folder = ROOT / "src/maps/k17/gameplay"
     lines = [

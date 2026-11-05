@@ -10,6 +10,7 @@ local Config=require(shared.Config)
 local Rules=require(shared.Rules)
 local LoadoutState=require(shared.LoadoutState)
 local Containment=require(shared.Containment)
+local MovementState=require(shared.MovementState)
 local function event(name: string): RemoteEvent
     local remote=Instance.new("RemoteEvent");remote.Name=name;remote.Parent=RS;return remote
 end
@@ -104,22 +105,16 @@ local function clearSuppression(model: Model?,restore: boolean)
     if not entry then return end
     suppressed[model]=nil
     local hum=entry.hum
-    -- Never overwrite a new role's speed, another effect, or a replaced Humanoid.
-    if restore and model:FindFirstChildOfClass("Humanoid")==hum and hum.Health>0
-        and targetRole(model)=="Zombies" and hum.WalkSpeed==entry.applied then hum.WalkSpeed=entry.base end
+    -- Never overwrite a new role's speed or a replaced Humanoid. The movement
+    -- authority restores the current stance, not a speed saved before crouch.
+    MovementState.clearTag(hum,restore and model:FindFirstChildOfClass("Humanoid")==hum
+        and hum.Health>0 and targetRole(model)=="Zombies")
 end
 local function suppress(model: Model,hum: Humanoid,now: number)
     local entry=suppressed[model]
     if entry and entry.hum~=hum then clearSuppression(model,false);entry=nil end
-    if not entry then entry={hum=hum,base=hum.WalkSpeed,untilTime=0,applied=hum.WalkSpeed};suppressed[model]=entry end
-    if hum.WalkSpeed~=entry.applied then entry.base=hum.WalkSpeed end
-    entry.untilTime=Containment.tagUntil(entry.untilTime,now,Config.Containment.TagSeconds)
-    entry.applied=Containment.walkSpeed(entry.base,now,entry.untilTime,Config.Containment.TagWalkScale)
-    hum.WalkSpeed=entry.applied
-    -- Humanoid stores WalkSpeed at engine precision, not Luau double precision.
-    -- Own the value actually read back: otherwise our own rounded tag looks
-    -- like another system's new baseline, compounds each hit and fails restore.
-    entry.applied=hum.WalkSpeed
+    if not entry then entry={hum=hum,untilTime=0};suppressed[model]=entry end
+    entry.untilTime=MovementState.tag(hum,now,Config.Containment.TagSeconds,Config.Containment.TagWalkScale)
 end
 local function beginRound(player: Player)
     local loadout=loadouts[player]
@@ -424,7 +419,10 @@ task.spawn(function()
             local victim=Players:GetPlayerFromCharacter(model)
             if not model.Parent or entry.hum.Health<=0 or targetRole(model)~="Zombies"
                 or (victim and victim.Character~=model) then clearSuppression(model,false)
-            elseif now>=entry.untilTime then clearSuppression(model,true) end
+            else
+                MovementState.step(entry.hum,now)
+                if now>=entry.untilTime then clearSuppression(model,true) end
+            end
         end
     end
 end)

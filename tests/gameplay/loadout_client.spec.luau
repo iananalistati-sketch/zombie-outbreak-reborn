@@ -26,7 +26,11 @@ local function simulation()
     local function instance(class,name,parent)
         local data={ClassName=class,Name=name or class,_children={},_attrs={},_attributeSignals={},_propertySignals={}}
         local result={_data=data}
-        setmetatable(result,{__index=function(_,key) return methods[key] or data[key] or data._children[key] end,
+        setmetatable(result,{__index=function(_,key)
+                if methods[key]~=nil then return methods[key] end
+                if data[key]~=nil then return data[key] end
+                return data._children[key]
+            end,
             __newindex=function(_,key,value)
                 local previous=data[key]
                 if key=="Parent" then
@@ -72,6 +76,11 @@ local function simulation()
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local modules={}
     for name,value in {Config=Config,Rules=Rules} do local module=instance("ModuleScript",name,shared);modules[module]=value end
+    local previewWeapons={}
+    local previewModule=instance("ModuleScript","WeaponPreview",shared)
+    modules[previewModule]={new=function()
+        return {setWeapon=function(_,id) table.insert(previewWeapons,id) end,destroy=function() end}
+    end}
     local remote=instance("RemoteEvent","ZO_LoadoutAction",rs);remote.OnClientEvent=signal()
     local requests={}
     function remote:FireServer(...) table.insert(requests,{...}) end
@@ -90,7 +99,8 @@ local function simulation()
         ZIndexBehavior={Sibling="Sibling"},ApplyStrokeMode={Border="Border"},Font={Gotham="Gotham",GothamMedium="GothamMedium",GothamBold="GothamBold"},
         TextXAlignment={Left="Left"},TextYAlignment={Top="Top"},AutomaticSize={Y="Y"},SortOrder={LayoutOrder="LayoutOrder"},
         MouseBehavior={Default="Default",LockCenter="LockCenter"},UserInputState={Begin="Begin",End="End"},ContextActionResult={Pass="Pass",Sink="Sink"},
-        KeyCode={B="B",DPadUp="DPadUp",Escape="Escape",ButtonB="ButtonB"},RenderPriority={Camera={Value=200}},
+        KeyCode={B="B",DPadUp="DPadUp",Escape="Escape",ButtonB="ButtonB",One="One",Two="Two",Three="Three",Four="Four",
+            Five="Five",Six="Six",Seven="Seven",Eight="Eight",Nine="Nine"},RenderPriority={Camera={Value=200}},
     }
     local services={Players=players,ReplicatedStorage=rs,UserInputService=uis,ContextActionService=cas,GuiService=guiService,RunService=runService}
     local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
@@ -126,14 +136,61 @@ local function simulation()
     end
     return {player=player,hum=hum,character=character,rs=rs,world=world,remote=remote,requests=requests,gui=gui,panel=panel,
         availability=panel.Availability,credits=panel.Credits,inventory=panel.Inventory,buy=actions.Buy,equip=actions.Equip,ammo=actions.Ammo,
-        cards=panel.Catalog.Weapons,advance=advance,click=click,uis=uis,guiService=guiService,cas=cas,
-        key=function(name,state) local action=assert(cas.actions[name],name);local result=action.callback(name,state or "Begin");advance(0);return result end,
+        cards=panel.Catalog.Weapons,categories=panel.Categories,previewWeapons=previewWeapons,advance=advance,click=click,uis=uis,guiService=guiService,cas=cas,
+        key=function(name,state,keyCode) local action=assert(cas.actions[name],name);local result=action.callback(name,state or "Begin",{KeyCode=keyCode});advance(0);return result end,
         result=function(...) remote.OnClientEvent:Fire(...);advance(0) end,
         render=function(dt) for _,entry in runService.callbacks do entry.callback(dt) end;advance(0) end}
 end
 local function opened(s) return s.player:GetAttribute("ZO_ShopOpen")==true and s.panel.Visible==true end
 local function open(s) s.key("ZO_OpenShop") end
 local function choose(s,id) assert(s.click(s.cards[id]),"weapon card must be reachable") end
+local function category(s,id) assert(s.click(s.categories["Category_"..id]),"category must be reachable") end
+
+do
+    local s=simulation();open(s)
+    check(s.cards.Rifle.Visible and s.cards.SMG.Visible and s.cards.Shotgun.Visible and s.cards.Pistol.Visible,"All category exposes the actual four configured weapons")
+    check(#s.previewWeapons>0 and s.previewWeapons[#s.previewWeapons]=="Rifle","shop preview starts with the selected real weapon id")
+    category(s,"Pistols")
+    check(s.cards.Pistol.Visible and not s.cards.Rifle.Visible and not s.cards.SMG.Visible and not s.cards.Shotgun.Visible,"pistol category hides all primary cards")
+    check(s.cards.Pistol.QuickSelect.Text=="1" and s.previewWeapons[#s.previewWeapons]=="Pistol","filtered key label and 3D preview follow the newly visible pistol")
+    check(not s.buy.Active and s.equip.Active,"category selection preserves owned secondary equipment rules")
+    check(not s.click(s.cards.Rifle),"hidden cards cannot be activated by pointer navigation")
+    s.click(s.cards.Rifle,true)
+    check(s.previewWeapons[#s.previewWeapons]=="Pistol","late activation from a hidden card cannot change the filtered selection")
+    s.key("ZO_ShopSelect","Begin","Four")
+    check(s.previewWeapons[#s.previewWeapons]=="Pistol","keys beyond the visible category leave selection unchanged")
+    category(s,"All");s.key("ZO_ShopSelect","Begin","Four")
+    check(s.previewWeapons[#s.previewWeapons]=="Pistol" and s.cards.Pistol.QuickSelect.Text=="4","all-category keys retain the existing catalog ordering")
+    category(s,"Rifles");s.key("ZO_ShopSelect","Begin","One")
+    check(s.cards.Rifle.Visible and not s.cards.Pistol.Visible and s.previewWeapons[#s.previewWeapons]=="Rifle","rifle category key 1 targets its first visible entry")
+    category(s,"Shotguns")
+    check(s.cards.Shotgun.Visible and s.cards.Shotgun.QuickSelect.Text=="1" and s.previewWeapons[#s.previewWeapons]=="Shotgun","shotgun category selects only its real configured entry")
+    category(s,"SMG")
+    check(s.cards.SMG.Visible and s.cards.SMG.QuickSelect.Text=="1" and s.previewWeapons[#s.previewWeapons]=="SMG","SMG category targets its own entry")
+    check(#s.requests==0,"browsing and keyboard category selection do not purchase or mutate inventory")
+    s.key("ZO_CloseShop");s.key("ZO_OpenShop")
+    check(s.cards.Rifle.Visible and s.cards.Pistol.Visible and s.previewWeapons[#s.previewWeapons]=="Rifle","reopening resets to All and selects the authoritative equipped weapon")
+end
+
+do
+    local s=simulation();open(s);category(s,"Shotguns");s.click(s.buy)
+    category(s,"Pistols");s.click(s.equip,true);s.click(s.ammo,true)
+    check(#s.requests==1 and s.requests[1][1]=="Buy" and s.requests[1][2]=="Shotgun","changing categories cannot bypass a pending purchase guard")
+    check(s.previewWeapons[#s.previewWeapons]=="Pistol" and not s.equip.Active,"preview browsing remains available while overlapping economic actions stay blocked")
+    s.result("Result",true,"Compra confirmada.")
+    check(s.equip.Active and s.availability.Text=="Compra confirmada.","server acknowledgement releases actions in the currently visible category")
+end
+
+do
+    local s=simulation();open(s)
+    s.guiService.SelectedObject=s.cards.Rifle
+    category(s,"Pistols")
+    check(s.guiService.SelectedObject==s.cards.Pistol,"gamepad focus leaves a card that becomes hidden after filtering")
+    check(s.categories.Category_Pistols.NextSelectionDown==s.cards.Pistol
+        and s.cards.Pistol.NextSelectionUp==s.categories.Category_Pistols,"category and weapon links provide consistent vertical gamepad navigation")
+    s.uis.TouchEnabled=true;s.panel.AbsoluteSize={X=320,Y=360};s.advance(0)
+    check(s.categories.Size[4]==44 and s.categories.Category_Pistols.Text=="PIST.","compact touch layout keeps all categories in a 44-pixel row with short labels")
+end
 
 do
     local s=simulation()

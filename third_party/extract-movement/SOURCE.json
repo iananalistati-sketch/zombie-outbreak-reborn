@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/voximity/extract",
+  "revision": "45afa80c93eeb8f4b21a84bab8a4b14a30ff33cc",
+  "license": "MIT Copyright (c) 2019 voximity",
+  "archived_files": {
+    "Client/Character.lua": {
+      "archived": "source/Character.lua",
+      "sha256": "e46fe9de715b8add0f4c8082879241821120215538d659c19d9fe14e764d3000"
+    },
+    "Server/Weapons.lua": {
+      "archived": "source/Weapons.lua",
+      "sha256": "0dd4274e2846dc5963c7fd07a4dfb1753327a67ac0b362b36e305540a32eab7b"
+    },
+    "LICENSE": {
+      "archived": "LICENSE",
+      "sha256": "55512d48e2ac25ef3e70d06f6a5604f1018d619aae5087941bfb09176da7ba07"
+    }
+  },
+  "active_upstream_scripts": false,
+  "adapted_components": [
+    "Character crouch/walk mode selection and camera offset smoothing",
+    "Server crouch torso/hip offset pattern adapted to existing R6/R15 Motor6D joints"
+  ],
+  "excluded_systems": [
+    "upstream weapon damage/network",
+    "upstream camera",
+    "upstream inventory and rounds",
+    "upstream accessory removal"
+  ],
+  "missing_upstream_assets_imported": false
+}

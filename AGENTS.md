@@ -1,5 +1,19 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Continuidade sem Studio — 05/11/2026
+
+- O usuário autorizou continuar editando o projeto agora e deixar as ações que
+  dependem dele/Roblox Studio para mais tarde. Não parar novamente para pedir o
+  template ou execução local antes de concluir melhorias compatíveis autorizadas.
+- Esta entrega integra movimentação tática e categorias da loja à base atual.
+  Não equivale à migração para o FPS System oficial: o arquivo e a auditoria
+  dessa base continuam pendentes. Manter a distinção nos relatos de entrega.
+- A composição de velocidade pertence a `MovementState`: base da equipe ×
+  postura × contenção temporária por tiro. Round, Combat e Movement usam essa
+  autoridade; não adicionar outro escritor concorrente de WalkSpeed.
+- As adaptações de movimentação de `voximity/extract` têm licença MIT e fontes
+  originais arquivados em `third_party/extract-movement`, fora do perfil ativo.
+
 ## Missão de FPS completo — 31/10
 
 - O novo pedido exige primeiro pesquisa/auditoria/comparação de bases reais,

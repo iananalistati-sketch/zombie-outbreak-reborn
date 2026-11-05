@@ -54,6 +54,21 @@ local credits=text(panel,"Credits","",16);credits.Font=Enum.Font.GothamBold;cred
 local timer=text(panel,"BuyTime","",12);timer.TextColor3=colors.muted;timer.Position=UDim2.new(.55,0,0,52);timer.Size=UDim2.new(.45,-64,0,24)
 local inventory=text(panel,"Inventory","",12);inventory.Position=UDim2.fromOffset(20,82);inventory.Size=UDim2.new(1,-40,0,34);inventory.TextColor3=colors.muted
 local availability=text(panel,"Availability","",12);availability.Position=UDim2.fromOffset(20,122);availability.Size=UDim2.new(1,-40,0,30)
+local categories=Instance.new("Frame");categories.Name="Categories";categories.BackgroundTransparency=1;categories.Parent=panel
+local categoryOrder={
+    {Id="All",Label="TODAS",Short="TODAS"},
+    {Id="Pistols",Label="PISTOLAS",Short="PIST."},
+    {Id="Rifles",Label="RIFLES",Short="RIFLES"},
+    {Id="SMG",Label="SMG",Short="SMG"},
+    {Id="Shotguns",Label="ESCOPETAS",Short="ESCOP."},
+}
+local categoryButtons: {[string]: TextButton}={}
+for index,category in categoryOrder do
+    local tab=button(categories,"Category_"..category.Id,category.Label,12)
+    tab.Position=UDim2.new((index-1)/#categoryOrder,2,0,0)
+    tab.Size=UDim2.new(1/#categoryOrder,-4,1,0)
+    categoryButtons[category.Id]=tab
+end
 local body=Instance.new("Frame");body.Name="Catalog";body.BackgroundTransparency=1;body.Position=UDim2.fromOffset(20,160);body.Size=UDim2.new(1,-40,1,-242);body.Parent=panel
 local list=Instance.new("ScrollingFrame");list.Name="Weapons";list.BackgroundTransparency=1;list.BorderSizePixel=0
 list.Size=UDim2.new(.31,-8,1,0);list.ScrollBarThickness=3;list.ScrollBarImageColor3=colors.accent;list.CanvasSize=UDim2.new();list.AutomaticCanvasSize=Enum.AutomaticSize.Y;list.Parent=body
@@ -103,6 +118,20 @@ end
 local preview: any=nil
 local shownWeapon: string?=nil
 local selected=Config.WeaponOrder[1]
+local selectedCategory="All"
+local function categoryFor(id: string): string
+    local item=Config.Weapons[id]
+    if typeof(item.Category)=="string" and categoryButtons[item.Category] then return item.Category end
+    if id=="SMG" then return "SMG" elseif id=="Shotgun" then return "Shotguns" end
+    return if item.Slot=="Secondary" then "Pistols" else "Rifles"
+end
+local function categoryWeapons(category: string): {string}
+    local result={}
+    for _,id in Config.WeaponOrder do
+        if category=="All" or categoryFor(id)==category then table.insert(result,id) end
+    end
+    return result
+end
 local open=false
 local pending: string?=nil
 local pendingSerial=0
@@ -159,7 +188,10 @@ for index,id in Config.WeaponOrder do
     local key=text(card,"QuickSelect",tostring(index),11);key.Position=UDim2.new(1,-27,0,13);key.Size=UDim2.fromOffset(18,18);key.TextColor3=colors.muted
     local price=text(card,"Price","",11);price.Position=UDim2.fromOffset(18,55);price.Size=UDim2.new(1,-24,0,22);price.TextColor3=colors.muted
     cards[id]={Button=card,Price=price,Stroke=border,Name=name,Key=key}
-    card.Activated:Connect(function() selected=id;message="";refresh() end)
+    card.Activated:Connect(function()
+        if selectedCategory~="All" and categoryFor(id)~=selectedCategory then return end
+        selected=id;message="";refresh()
+    end)
 end
 local function availabilityText(): (string,Color3)
     if pending then return "Aguardando confirmação do servidor…",colors.gold end
@@ -183,7 +215,19 @@ local function availabilityText(): (string,Color3)
     return "O arsenal abre para compras durante a preparação da rodada.",colors.muted
 end
 refresh=function()
-    if not Config.Weapons[selected] then selected=Config.WeaponOrder[1] end
+    local visible=categoryWeapons(selectedCategory)
+    if #visible==0 then selectedCategory="All";visible=categoryWeapons(selectedCategory) end
+    if not table.find(visible,selected) then selected=visible[1] end
+    for index,category in categoryOrder do
+        local tab=categoryButtons[category.Id]
+        local active=selectedCategory==category.Id
+        tab.BackgroundColor3=if active then colors.accent else colors.raised
+        tab.TextColor3=if active then colors.base else colors.muted
+        tab.Active=#categoryWeapons(category.Id)>0;tab.Selectable=tab.Active
+        tab.NextSelectionLeft=categoryButtons[categoryOrder[math.max(1,index-1)].Id]
+        tab.NextSelectionRight=categoryButtons[categoryOrder[math.min(#categoryOrder,index+1)].Id]
+        tab.NextSelectionDown=cards[visible[1]].Button
+    end
     local balance=player:GetAttribute("ZO_Credits") or 0
     local primary,secondary=player:GetAttribute("ZO_PrimaryWeapon"),player:GetAttribute("ZO_SecondaryWeapon")
     credits.Text=("CRÉDITOS  $%d"):format(balance)
@@ -196,6 +240,12 @@ refresh=function()
     local modelReady=assetReady(selected)
     for id,card in cards do
         local entry=Config.Weapons[id]
+        local visibleIndex=table.find(visible,id)
+        card.Button.Visible=visibleIndex~=nil
+        card.Button.Selectable=visibleIndex~=nil
+        card.Key.Text=if visibleIndex then tostring(visibleIndex) else ""
+        card.Button.NextSelectionUp=if visibleIndex and visibleIndex>1 then cards[visible[visibleIndex-1]].Button else categoryButtons[selectedCategory]
+        card.Button.NextSelectionDown=if visibleIndex and visibleIndex<#visible then cards[visible[visibleIndex+1]].Button else nil
         card.Stroke.Color=if id==selected then colors.accent else colors.line
         card.Stroke.Thickness=if id==selected then 2 else 1
         card.Button.BackgroundColor3=if id==selected then Color3.fromRGB(41,60,58) else colors.raised
@@ -236,12 +286,23 @@ refresh=function()
     toggle.Text=if UIS.TouchEnabled then "ARSENAL" elseif UIS.GamepadEnabled and string.find(UIS:GetLastInputType().Name,"Gamepad") then "↑  ARSENAL" else "B  ARSENAL"
     toggle.Visible=not open and player:GetAttribute("ZO_TacticalMapOpen")~=true
 end
+for _,category in categoryOrder do
+    categoryButtons[category.Id].Activated:Connect(function()
+        if #categoryWeapons(category.Id)==0 then return end
+        local focus=GuiService.SelectedObject
+        selectedCategory=category.Id;message=""
+        list.CanvasPosition=Vector2.new(0,0);detail.CanvasPosition=Vector2.new(0,0)
+        refresh()
+        if focus and focus:IsDescendantOf(list) and not focus.Visible then GuiService.SelectedObject=cards[selected].Button end
+    end)
+end
 setOpen=function(value: boolean)
     if open==value then return end
     open=value
     if value then
         previousMouse=UIS.MouseBehavior;previousIcon=UIS.MouseIconEnabled;previousSelection=GuiService.SelectedObject
-        message="";selected=if Config.Weapons[player:GetAttribute("ZO_WeaponId")] then player:GetAttribute("ZO_WeaponId") else Config.WeaponOrder[1]
+        message="";selectedCategory="All"
+        selected=if Config.Weapons[player:GetAttribute("ZO_WeaponId")] then player:GetAttribute("ZO_WeaponId") else Config.WeaponOrder[1]
     end
     shade.Visible=value;panel.Visible=value
     player:SetAttribute("ZO_ShopOpen",value)
@@ -305,6 +366,15 @@ local function layout()
     timer.TextSize=if narrow then 10 else 12
     selectedName.TextSize=if narrow then 19 else 24
     local header=if compact then 109 else 160
+    local categoryHeight=if UIS.TouchEnabled then 44 else 34
+    categories.Position=UDim2.fromOffset(12,header)
+    categories.Size=UDim2.new(1,-24,0,categoryHeight)
+    for _,category in categoryOrder do
+        local tab=categoryButtons[category.Id]
+        tab.Text=if narrow then category.Short else category.Label
+        tab.TextSize=if narrow then 10 else 12
+    end
+    header+=categoryHeight+8
     inventory.Visible=not compact
     credits.Position=UDim2.fromOffset(20,if compact then 43 else 50)
     timer.Position=UDim2.new(.55,0,0,if compact then 44 else 52)
@@ -380,7 +450,7 @@ CAS:BindActionAtPriority("ZO_ShopSelect",function(_,state: Enum.UserInputState,i
     if not open or UIS:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
     if state==Enum.UserInputState.Begin then
         local index=table.find(quickKeys,input.KeyCode)
-        local id=index and Config.WeaponOrder[index]
+        local id=index and categoryWeapons(selectedCategory)[index]
         if id then selected=id;message="";detail.CanvasPosition=Vector2.new(0,0);refresh() end
     end
     return Enum.ContextActionResult.Sink
