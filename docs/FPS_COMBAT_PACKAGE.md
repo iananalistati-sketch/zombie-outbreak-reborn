@@ -1,5 +1,9 @@
 # Pacote FPS — implementação e pendência de modelos
 
+Atualização: [skins oficiais recebidas e situação da busca do arsenal](ARSENAL_ASSET_STATUS_2026-11-05.md).
+As variantes Classic/Gold são cosméticas da pistola existente, sem ampliar o
+número de classes de arma. A entrega ainda não é um arsenal completo.
+
 Evolução atual dos controles/precisão/viewmodel:
 [entrega de jogabilidade FPS de 05/11](FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
 

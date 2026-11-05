@@ -2,6 +2,14 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
+**Arsenal — situação atual:** [modelos e acesso à loja](docs/ARSENAL_ASSET_STATUS_2026-11-05.md).
+O objetivo é um pacote com várias armas reais. A pesquisa online ainda recebe
+403 do proxy desta sessão, mesmo após o aviso de liberação da rede; o rascunho
+com os domínios foi salvo e exige publicação do ambiente. Não há novos modelos
+online recebidos. As três variantes da pistola oficial já fornecida agora podem
+ser visualizadas/aplicadas em **B → Pistolas → Aparência**; são skins da mesma
+arma, sem diferença de estatísticas. A seleção persiste durante a sessão.
+
 **Entrega atual — 05/11:** [evolução da jogabilidade FPS](docs/FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
 **Shift corre**, **Alt caminha**, **Ctrl** agacha enquanto segura e **C** alterna
 o agachamento. A arma abaixa ao correr; o servidor bloqueia tiros nessa postura.
@@ -16,7 +24,7 @@ movimentação/apresentação adaptados de Extract (MIT), sem ativar outro siste
 completo de FPS.
 
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
-Carabina e **pistola preta oficial** estão embutidas, com meshes, texturas e sons
+Carabina e **pistola oficial com três acabamentos** estão embutidas, com meshes, texturas e sons
 originais. A pistola foi extraída do arquivo `Pistolas_Oficiais.rbxl` enviado pelo
 usuário e revisada antes da integração. SMG e escopeta continuam sem modelos.
 Use a branch **`feat/fps-combat-package`** e abra `ABRIR_K17.cmd`. Com a loja
@@ -183,7 +191,7 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 215 percursos com 38.374
-amostras de apoio/espaço livre, 27 testes Python, 196 verificações das regras de
+amostras de apoio/espaço livre, 28 testes Python, 196 verificações das regras de
 combate, 162 de inventário/economia e 96 de contenção. O controlador real de
 barricadas passou 7.554 verificações com APIs simuladas; há também 202 da política
 de impulso e 85 das regras preservadas. Fontes ativos conferidos no place.
@@ -191,8 +199,8 @@ Os percursos também foram checados com os 164 objetos presentes.
 
 **Movimentação/loja — 05/11:** 85 verificações da composição de velocidade,
 45 do servidor de postura, 74 do cliente de movimento, 15 de movimento do
-viewmodel, 165 do combate real, 41 da rodada, 39 do ciclo integrado, 73 da loja
-e 107 do cliente de armas,
+viewmodel, 215 do combate real, 41 da rodada, 39 do ciclo integrado, 114 da loja,
+24 do catálogo de skins, 38 de equipamento e 114 do cliente de armas,
 com APIs simuladas. Fontes atuais conferidos nos places compilados. O cenário
 separado do Studio inclui 24 etapas e ainda não foi executado no motor.
 

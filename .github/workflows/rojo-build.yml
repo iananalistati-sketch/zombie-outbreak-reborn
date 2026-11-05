@@ -36,6 +36,7 @@ jobs:
           /tmp/luau_release/luau tests/gameplay/rules.spec.luau
           /tmp/luau_release/luau tests/gameplay/loadout.spec.luau
           /tmp/luau_release/luau tests/gameplay/containment.spec.luau
+          /tmp/luau_release/luau tests/gameplay/weapon_skins.spec.luau
           python scripts/test_round_controller.py --luau /tmp/luau_release/luau
           python scripts/test_combat_controller.py --luau /tmp/luau_release/luau
           python scripts/test_survival_cycle.py --luau /tmp/luau_release/luau

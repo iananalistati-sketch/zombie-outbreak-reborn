@@ -2,6 +2,7 @@
 -- doubles advance track timelines, but do not render rigs or run Roblox physics.
 local Config=assert(loadstring(CONFIG_SOURCE))()
 local AimPose=assert(loadstring(AIM_POSE_SOURCE))()
+local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 
@@ -147,7 +148,7 @@ local function simulation(options)
     function world:GetServerTimeNow() return 100 end
     local shared=instance("Folder","K17Gameplay",rs)
     local modules={}
-    for name,value in {Config=Config,PresentationConfig=PresentationConfig,WeaponAimPose=AimPose} do modules[instance("ModuleScript",name,shared)]=value end
+    for name,value in {Config=Config,PresentationConfig=PresentationConfig,WeaponAimPose=AimPose,WeaponSkins=WeaponSkins} do modules[instance("ModuleScript",name,shared)]=value end
     local kit=instance("Folder","ZO_WeaponAssets",rs)
     local weapons=instance("Folder","Weapons",kit)
     local animations=instance("Folder","Animations",kit)
@@ -158,6 +159,13 @@ local function simulation(options)
     local primary=instance("MeshPart","Rifle",model);model.PrimaryPart=primary
     instance("Attachment","HandleAttachment",primary)
     instance("LocalScript","ExecutableMustBeRemoved",template)
+    local pistolTemplate=template:Clone();pistolTemplate.Name="Pistol";pistolTemplate.Parent=weapons
+    pistolTemplate:SetAttribute("FixtureFinish","Black")
+    local skins=instance("Folder","Skins",kit)
+    local pistolSkins=instance("Folder","Pistol",skins)
+    for _,skin in {"Classic","Gold"} do
+        local variant=pistolTemplate:Clone();variant.Name=skin;variant:SetAttribute("FixtureFinish",skin);variant.Parent=pistolSkins
+    end
     local player=instance("Player","Player",players);player.CharacterAdded=signal();player.CharacterRemoving=signal()
     player.Team={Name="Humans"};player:SetAttribute("ZO_WeaponId","Rifle");player:SetAttribute("ZO_Reloading",false)
     local character=instance("Model","Character",world);player.Character=character
@@ -186,7 +194,8 @@ local function simulation(options)
         flush()
     end
     return {player=player,character=character,humanoid=humanoid,rs=rs,world=world,players=players,
-        tracks=tracks,warnings=warnings,script=controller,flush=flush,latest=latest,advance=advance}
+        tracks=tracks,warnings=warnings,script=controller,flush=flush,latest=latest,advance=advance,
+        kit=kit,templates=weapons,variants=pistolSkins,instance=instance}
 end
 
 do
@@ -241,6 +250,44 @@ do
     local s=simulation({r6=true})
     check(#s.tracks==0 and s.character:FindFirstChild("ZO_EquippedWeapon"),"R6 keeps its mesh without attempting R15 pitch tracks")
     check(s.player:GetAttribute("ZO_WeaponVisualStatus")=="NoR15Animation","R6 limitation remains explicit")
+end
+
+do
+    local s=simulation()
+    s.player:SetAttribute("ZO_WeaponId","Pistol");s.player:SetAttribute("ZO_WeaponSkin","Black");s.flush()
+    local black=s.character:FindFirstChild("ZO_EquippedWeapon")
+    check(black and black:GetAttribute("ZO_SkinId")=="Black" and black:GetAttribute("FixtureFinish")=="Black","world equipment clones the real base black pistol")
+    check(black:GetAttribute("ZO_WeaponId")=="Pistol" and black.Enabled==false and black.ManualActivationOnly,"skin does not enable upstream weapon authority")
+    s.player:SetAttribute("ZO_WeaponSkin","Gold");s.flush()
+    local gold=s.character:FindFirstChild("ZO_EquippedWeapon")
+    check(black.Destroyed and gold~=black and gold:GetAttribute("ZO_SkinId")=="Gold" and gold:GetAttribute("FixtureFinish")=="Gold","replicated skin attribute replaces world visual using the selected gold Tool")
+    check(not gold:FindFirstChild("ExecutableMustBeRemoved"),"variant also strips every upstream script")
+    for _,part in gold:GetDescendants() do
+        if part:IsA("BasePart") then check(not part.CanCollide and not part.CanQuery and not part.CanTouch and part.Massless,"cosmetic parts cannot change collisions or hit traces") end
+    end
+    s.player.Team={Name="Zombies"};s.flush()
+    check(not s.character:FindFirstChild("ZO_EquippedWeapon"),"infection removes a variant exactly like original equipment")
+    s.player.Team={Name="Humans"};s.flush()
+    check(s.character.ZO_EquippedWeapon:GetAttribute("FixtureFinish")=="Gold","return to human presentation retains replicated selection")
+    s.rs:SetAttribute("ZO_RoundState","Results");s.flush()
+    s.rs:SetAttribute("ZO_RoundState","Preparation");s.flush()
+    check(s.character.ZO_EquippedWeapon:GetAttribute("FixtureFinish")=="Gold","next preparation retains selected variant")
+end
+
+do
+    local s=simulation()
+    s.player:SetAttribute("ZO_WeaponId","Pistol");s.player:SetAttribute("ZO_WeaponSkin","Gold");s.flush()
+    local old=s.character.ZO_EquippedWeapon
+    s.variants.Gold:Destroy();s.flush()
+    check(old.Destroyed and not s.character:FindFirstChild("ZO_EquippedWeapon") and s.player:GetAttribute("ZO_WeaponVisualStatus")=="AssetMissing","removed selected variant reports missing and never substitutes black")
+    local late=s.templates.Pistol:Clone();late.Name="Gold";late:SetAttribute("FixtureFinish","LateGold");late.Parent=s.variants;s.flush()
+    check(s.character.ZO_EquippedWeapon:GetAttribute("FixtureFinish")=="LateGold","late selected template recovers world visual from descendant events")
+    s.player:SetAttribute("ZO_WeaponSkin","Forged");s.flush()
+    check(s.character.ZO_EquippedWeapon:GetAttribute("ZO_SkinId")=="Black" and s.character.ZO_EquippedWeapon:GetAttribute("FixtureFinish")=="Black","invalid presentation data normalizes to original cosmetic")
+    s.player:SetAttribute("ZO_WeaponSkin","Classic");s.flush()
+    check(s.character.ZO_EquippedWeapon:GetAttribute("FixtureFinish")=="Classic","classic skin resolves its own reviewed Tool")
+    s.players.PlayerRemoving:Fire(s.player);s.flush()
+    check(not s.character:FindFirstChild("ZO_EquippedWeapon"),"removal disposes the selected variant")
 end
 
 print(("PASS actual EquipmentVisuals + WeaponAimPose: %d assertions; pose timelines and lifecycle with API doubles; Roblox observer rendering not executed"):format(checks))

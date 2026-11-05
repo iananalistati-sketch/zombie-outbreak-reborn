@@ -1,4 +1,6 @@
 # Keep the archived official source verbatim, including whitespace in Lua strings.
 third_party/roblox-weapon-kit/pistol/OriginalPistol2.rbxmx -whitespace
+third_party/roblox-weapon-kit/pistol/OriginalPistol.rbxmx -whitespace
+third_party/roblox-weapon-kit/pistol/OriginalPistol3.rbxmx -whitespace
 # Preserve the pinned MIT upstream movement sources without whitespace cleanup.
 third_party/extract-movement/source/*.lua -whitespace

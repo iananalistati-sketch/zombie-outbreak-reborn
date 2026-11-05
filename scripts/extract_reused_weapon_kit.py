@@ -5,15 +5,20 @@ Pass the XML place produced by Rojo from the archived upstream RBXM. The gamepla
 uses the original meshes, joints, sounds and animations; no gun mesh is generated.
 """
 import argparse
+import base64
 import copy
 import hashlib
 from pathlib import Path
+import struct
 import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
 TARGET=ROOT/'src/third_party/roblox-weapon-kit/Arsenal.rbxmx'
-PISTOL_SOURCE=ROOT/'third_party/roblox-weapon-kit/pistol/OriginalPistol2.rbxmx'
-PISTOL_SHA256='704f204cd3eb51a361c449f8718dd30b10869e7dcc823a1d186598176f89993e'
+PISTOL_VARIANTS={
+    'Black':('OriginalPistol2.rbxmx','Pistol2','704f204cd3eb51a361c449f8718dd30b10869e7dcc823a1d186598176f89993e'),
+    'Classic':('OriginalPistol.rbxmx','Pistol','9a0adb1e26e6fa15f0a46f04e24900b11d3fe9cfdf00e226e766b5e66202a16f'),
+    'Gold':('OriginalPistol3.rbxmx','Pistol3','4ed7e278a77756ab82ea0c374f055f12f0cc229cb8b7ed9ff711bc9401c14ad8'),
+}
 EXECUTABLE={'Script','LocalScript','ModuleScript','RemoteEvent','UnreliableRemoteEvent',
             'RemoteFunction','BindableEvent','BindableFunction','PackageLink'}
 PARTS={'Part','MeshPart','UnionOperation','WedgePart','CornerWedgePart'}
@@ -54,14 +59,30 @@ def visual_only(tool):
     for label,value in {'CanBeDropped':False,'Enabled':False,'ManualActivationOnly':True}.items():boolean(tool,label,value)
 
 
-def pistol():
-    """Extract the reviewed black variant; never load its WeaponsSystem scripts."""
-    assert hashlib.sha256(PISTOL_SOURCE.read_bytes()).hexdigest()==PISTOL_SHA256,'Pistol source changed; review before extracting'
-    source=ET.parse(PISTOL_SOURCE).getroot()
-    tool=copy.deepcopy(child(source,'Pistol2'))
+def string_attributes(item,values):
+    """Encode native string attributes (the same binary format emitted by Rojo)."""
+    prop=item.find('./Properties/BinaryString[@name="AttributesSerialize"]')
+    if prop is None:prop=ET.SubElement(item.find('Properties'),'BinaryString',{'name':'AttributesSerialize'})
+    assert not prop.text,'Preserve and review existing attributes before replacing them'
+    def string(value):
+        data=value.encode('utf-8')
+        return struct.pack('<I',len(data))+data
+    data=struct.pack('<I',len(values))
+    for key,value in sorted(values.items()):data+=string(key)+b'\x02'+string(value)
+    prop.text=base64.b64encode(data).decode('ascii')
+
+
+def pistol(variant='Black'):
+    """Extract a pinned official variant without its competing WeaponsSystem."""
+    filename,original,sha256=PISTOL_VARIANTS[variant]
+    path=ROOT/'third_party/roblox-weapon-kit/pistol'/filename
+    assert hashlib.sha256(path.read_bytes()).hexdigest()==sha256,'Pistol source changed; review before extracting'
+    source=ET.parse(path).getroot()
+    tool=copy.deepcopy(child(source,original))
     assert tool.get('class')=='Tool'
     assert tool.findtext('./Properties/int64[@name="SourceAssetId"]')=='118912302094201'
-    tool.find('./Properties/string[@name="Name"]').text='Pistol'
+    tool.find('./Properties/string[@name="Name"]').text='Pistol' if variant=='Black' else variant
+    if variant!='Black':string_attributes(tool,{'ZO_WeaponId':'Pistol','ZO_SkinId':variant})
 
     def clean(item):
         for descendant in list(item.findall('Item')):
@@ -73,7 +94,8 @@ def pistol():
     visual_only(tool)
     # Referents from the independently saved place may overlap those of the AR.
     # Map only retained objects; references into removed controllers become null.
-    mapping={item.get('referent'):'Pistol_'+item.get('referent') for item in tool.iter('Item')}
+    prefix='Pistol_' if variant=='Black' else 'Pistol'+variant+'_'
+    mapping={item.get('referent'):prefix+item.get('referent') for item in tool.iter('Item')}
     for item in tool.iter('Item'):
         item.set('referent',mapping[item.get('referent')])
         for reference in item.findall('./Properties/Ref'):
@@ -112,6 +134,12 @@ def extract(source):
     weapons.append(tool)
     pistol_tool,pistol_source=pistol()
     weapons.append(pistol_tool)
+    skins=folder('Skins','ZO_WeaponAssets_Skins');package.append(skins)
+    pistol_skins=folder('Pistol','ZO_WeaponAssets_Skins_Pistol');skins.append(pistol_skins)
+    skin_sources=[]
+    for variant in ('Classic','Gold'):
+        skin_tool,skin_source=pistol(variant)
+        pistol_skins.append(skin_tool);skin_sources.append(skin_source)
     package.append(copy.deepcopy(child(assets,'Animations')))
     effects=folder('Effects','ZO_WeaponAssets_Effects');package.append(effects)
     shots=child(child(assets,'Effects'),'Shots')
@@ -124,7 +152,7 @@ def extract(source):
     assert hit_sound.findtext('./Properties/Content[@name="AudioContent"]/uri')=='rbxassetid://1489924400'
     hit_effect.remove(hit_sound)
     effects.append(hit_effect)
-    merge_shared_strings(root,[source,pistol_source])
+    merge_shared_strings(root,[source,pistol_source,*skin_sources])
     assert not any(i.get('class') in EXECUTABLE for i in root.iter('Item'))
     ET.indent(root,space='  ')
     return ET.tostring(root,encoding='unicode')+'\n'
@@ -140,4 +168,4 @@ if __name__=='__main__':
     else:
         TARGET.parent.mkdir(parents=True,exist_ok=True)
         TARGET.write_text(data,encoding='utf-8')
-    print('PASS bundled arsenal: reviewed Rifle and Pistol meshes/audio, shared animations and impact particles; no archived impact sound or executable templates')
+    print('PASS bundled assets: Rifle and black Pistol, official Classic/Gold pistol skins, shared animations and impact particles; no archived impact sound or executable templates')

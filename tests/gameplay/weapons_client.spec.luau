@@ -2,6 +2,7 @@
 -- not render Roblox UI, load assets, animate arms or simulate multiplayer.
 local Config=assert(loadstring(CONFIG_SOURCE))()
 local Rules=assert(loadstring(RULES_SOURCE))()
+local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 local function close(a,b) return math.abs(a-b)<1e-5 end
@@ -160,7 +161,7 @@ local function simulation(options)
     function motion:reset() self.resets+=1 end
     logs.motion=motion
     local WeaponMotion={new=function() return motion end}
-    for name,value in {Config=Config,Rules=Rules,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
+    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
     local requests={}
     local remotes={}
     for _,name in {"ZO_FireRifle","ZO_Melee","ZO_CombatFX","ZO_LoadoutAction"} do
@@ -174,6 +175,12 @@ local function simulation(options)
         return assets
     end
     if not options.noAssets then addAssets(Config.WeaponOrder) end
+    local function addSkins()
+        local assets=addAssets({})
+        local skins=instance("Folder","Skins",assets)
+        local pistol=instance("Folder","Pistol",skins)
+        return {Classic=instance("Tool","Classic",pistol),Gold=instance("Tool","Gold",pistol)}
+    end
     local uis={TouchEnabled=options.touch==true,GamepadEnabled=false,WindowFocusReleased=signal(),TextBoxFocused=signal(),focused=false}
     function uis:GetFocusedTextBox() return if self.focused then {} else nil end
     function uis:GetMouseLocation() return {X=0,Y=0} end
@@ -235,7 +242,7 @@ local function simulation(options)
     end
     local fn=assert(loadstring(WEAPONS_CLIENT_SOURCE,"Weapons.client.luau"));setfenv(fn,env);tasks.spawn(fn);advance(0)
     local s={player=player,other=other,hum=hum,character=character,rs=rs,world=world,camera=camera,cas=cas,guiService=guiService,
-        uis=uis,logs=logs,requests=requests,remotes=remotes,advance=advance,addAssets=addAssets,instance=instance,oldHUD=oldHUD,oldWeaponHUD=oldWeaponHUD,oldModel=oldModel,
+        uis=uis,logs=logs,requests=requests,remotes=remotes,advance=advance,addAssets=addAssets,addSkins=addSkins,instance=instance,oldHUD=oldHUD,oldWeaponHUD=oldWeaponHUD,oldModel=oldModel,
         gui=playerGui:FindFirstChild("ZO_WeaponHUD"),playerGui=playerGui,script=localScript,runService=runService}
     function s.key(name,state,inputType,keyCode)
         local action=assert(cas.actions[name],name)
@@ -343,6 +350,21 @@ local function beginAim(s,inputType,keyCode)
     s.render(.1);check(s.camera.FieldOfView<80,"aim narrows current camera FOV")
 end
 local function restored(s,label) check(close(s.camera.FieldOfView,80),label) end
+
+do
+    local s=simulation();local skins=s.addSkins()
+    s.player:SetAttribute("ZO_WeaponId","Pistol");s.player:SetAttribute("ZO_WeaponSkin","Gold");s.advance(0);s.render(.1)
+    check(s.logs.new[#s.logs.new].template==skins.Gold and s.logs.new[#s.logs.new].id=="Pistol","authoritative Gold selects the actual cosmetic template while keeping the Pistol weapon identity")
+    beginAim(s)
+    local ammo,reserve,requests=s.player:GetAttribute("ZO_Ammo"),s.player:GetAttribute("ZO_Reserve"),#s.requests
+    s.player:SetAttribute("ZO_WeaponSkin","Classic");s.advance(0);s.render(.1)
+    restored(s,"changing an authoritative skin releases ADS without camera drift")
+    check(s.logs.new[#s.logs.new].template==skins.Classic,"same weapon skin changes rebuild the real first-person model")
+    check(s.player:GetAttribute("ZO_Ammo")==ammo and s.player:GetAttribute("ZO_Reserve")==reserve and #s.requests==requests,"replicated skin changes never refill ammunition or send extra combat requests")
+    s.player:SetAttribute("ZO_WeaponSkin","Gold");s.advance(0);skins.Gold:Destroy();s.advance(0);s.render(.1)
+    local shots=#s.logs.localShots;singleShot(s)
+    check(s.player:GetAttribute("ZO_WeaponPresentationStatus")=="MissingAsset" and #s.logs.localShots==shots,"missing selected skin is reported and never silently falls back to the black pistol")
+end
 
 do
     local s=simulation();s.hum.FloorMaterial="Concrete";s.render(.1)

@@ -1,5 +1,24 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Arsenal completo e acesso à loja — 05/11/2026
+
+- O usuário exige um pacote com várias armas reais da Creator Store. Skins
+  das duas armas atuais são complemento; não satisfazem esse objetivo.
+- Variantes oficiais da pistola já fornecida: Black/base, Classic e Gold. São
+  cosméticas, gratuitas e selecionadas pelo servidor, sem alterar atributos de
+  combate, munição ou créditos. Não contar essas variantes como armas distintas.
+- O rascunho de ambiente foi lido com `network_policy.type=disabled`; consultas
+  Roblox e GitHub falharam no CONNECT do proxy, inclusive fora do sandbox.
+  Foi salvo um rascunho restricted com domínios Roblox/CDN/GitHub. A ferramenta
+  retornou `requires_publish=true`. O usuário informou rede liberada, mas a
+  primeira repetição ainda retornou403 no túnel: nenhuma origem foi alcançada.
+- Não interpretar erro do proxy como recusa do asset pelo Roblox. Não repetir
+  buscas/downloads até publicação/atualização observável da configuração. Não
+  contornar a política com outros proxies ou solicitar cookies/tokens em chat.
+- Retomar a busca do arsenal completo assim que o acesso real funcionar. Não
+  anunciar novos arquivos baixados, modelos aprovados ou arsenal completo sem
+  obter e inspecionar os arquivos correspondentes.
+
 ## Missão de jogabilidade FPS — novo pedido de 05/11/2026
 
 - O prompt anexado autoriza decisões técnicas e implementação direta de

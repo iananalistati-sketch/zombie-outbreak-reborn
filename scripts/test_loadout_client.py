@@ -26,6 +26,8 @@ def run(luau):
         "LOADOUT_CLIENT_SOURCE": "Loadout.client.luau",
         "CONFIG_SOURCE": "Config.luau",
         "RULES_SOURCE": "Rules.luau",
+        "SKINS_SOURCE": "WeaponSkins.luau",
+        "PREVIEW_SOURCE": "WeaponPreview.luau",
     }
     lines = [
         "local " + name + "=" + long_string((folder / source).read_text())

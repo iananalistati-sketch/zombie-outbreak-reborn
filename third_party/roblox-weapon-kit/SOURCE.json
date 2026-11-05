@@ -26,7 +26,25 @@
     "license": "Roblox Limited Use License",
     "fired_sound": 3806566911,
     "reload_sound": 3821789416,
-    "scripts_in_active_template": false
+    "scripts_in_active_template": false,
+    "cosmetic_variants": {
+      "Classic": {
+        "selected_tool": "Workspace/Pistol",
+        "archive": "pistol/OriginalPistol.rbxmx",
+        "archive_sha256": "9a0adb1e26e6fa15f0a46f04e24900b11d3fe9cfdf00e226e766b5e66202a16f",
+        "runtime_path": "ZO_WeaponAssets/Skins/Pistol/Classic",
+        "weapon_id": "Pistol",
+        "textures": { "Pistol": 2492931263, "Bolt": 2492931686, "Magazine": null }
+      },
+      "Gold": {
+        "selected_tool": "Workspace/Pistol3",
+        "archive": "pistol/OriginalPistol3.rbxmx",
+        "archive_sha256": "4ed7e278a77756ab82ea0c374f055f12f0cc229cb8b7ed9ff711bc9401c14ad8",
+        "runtime_path": "ZO_WeaponAssets/Skins/Pistol/Gold",
+        "weapon_id": "Pistol",
+        "textures": { "Pistol": 3361055083, "Bolt": 3361057436, "Magazine": 3361057436 }
+      }
+    }
   },
   "automatic_prefab_import": false,
   "official_runtime_prefabs": {
@@ -40,6 +58,6 @@
   "excluded_runtime_assets": {
     "1489924400": "HitEffect/HitSound: Roblox Studio reported this original impact sound is archived; particles and original firing/reload audio remain"
   },
-  "studio_import_status": "Official pistol obtained by user through Toolbox and supplied as native Studio place; selected black Pistol2 reviewed and bundled with rifle",
-  "runtime_prefab_status": "Rifle and Pistol bundled; SMG and Shotgun still absent. Optional manual imports require Roblox asset permissions. Play never downloads prefabs automatically."
+  "studio_import_status": "Official pistol obtained by user through Toolbox and supplied as native Studio place; black Pistol2 bundled, original Pistol/Pistol3 reviewed and included as Classic/Gold cosmetic templates",
+  "runtime_prefab_status": "Rifle and Pistol bundled with two official cosmetic pistol variants; skins are not additional weapons. SMG and Shotgun still absent. Optional manual imports require Roblox asset permissions. Play never downloads prefabs automatically."
 }

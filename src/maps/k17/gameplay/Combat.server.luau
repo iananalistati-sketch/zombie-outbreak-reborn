@@ -11,6 +11,7 @@ local Rules=require(shared.Rules)
 local LoadoutState=require(shared.LoadoutState)
 local Containment=require(shared.Containment)
 local MovementState=require(shared.MovementState)
+local WeaponSkins=require(shared.WeaponSkins)
 local function event(name: string): RemoteEvent
     local remote=Instance.new("RemoteEvent");remote.Name=name;remote.Parent=RS;return remote
 end
@@ -23,6 +24,8 @@ local infection=internal:WaitForChild("Infect") :: BindableFunction
 local barricadeDamage=internal:WaitForChild("DamageBarricade") :: BindableFunction
 local barricadePush=internal:WaitForChild("PushBarricade") :: BindableFunction
 local loadouts: {[Player]: any}={}
+-- Cosmetics persist through equipment/round resets for the current session.
+local skins: {[Player]: {[string]: string}}={}
 local lastRequest: {[Player]: {[string]: number}}={}
 local nextMelee: {[Player]: number}={}
 -- This deadline survives equip changes: switching cannot bypass either cadence.
@@ -51,17 +54,18 @@ end
 local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
 end
-local function assetAvailable(id: string): boolean
+local function selectedSkin(player: Player,id: string): string?
+    return (skins[player] and skins[player][id]) or WeaponSkins.default(id)
+end
+local function assetAvailable(id: string,skin: string?): boolean
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
-    local templates=kit and kit:FindFirstChild("Weapons")
-    local template=templates and templates:FindFirstChild(id)
-    return template~=nil and template:IsA("Tool")
+    return WeaponSkins.resolve(kit,id,skin)~=nil
 end
 local function allowed(player: Player): boolean
     local _,_,hum=character(player)
     local loadout=loadouts[player]
     local config=loadout and loadout:current()
-    return config~=nil and assetAvailable(config.Id)
+    return config~=nil and assetAvailable(config.Id,selectedSkin(player,config.Id))
         and Rules.canFire(role(player),phase(),hum~=nil,player:GetAttribute("ZO_BarricadeSelection")~=nil)
 end
 local function targetRole(model: Model): string?
@@ -86,6 +90,8 @@ local function sync(player: Player)
     if not loadout then return end
     local config,state=loadout:current()
     player:SetAttribute("ZO_WeaponId",config.Id)
+    for _,id in Config.WeaponOrder do player:SetAttribute("ZO_Skin_"..id,selectedSkin(player,id)) end
+    player:SetAttribute("ZO_WeaponSkin",selectedSkin(player,config.Id))
     player:SetAttribute("ZO_PrimaryWeapon",loadout.primary)
     player:SetAttribute("ZO_SecondaryWeapon",loadout.secondary)
     player:SetAttribute("ZO_Credits",loadout.credits)
@@ -159,6 +165,7 @@ local function bindCharacter(player: Player,char: Model)
     end)
 end
 local function join(player: Player)
+    skins[player]={}
     loadouts[player]=LoadoutState.new(Config)
     sync(player)
     player.CharacterAdded:Connect(function(char: Model) bindCharacter(player,char) end)
@@ -193,6 +200,7 @@ Players.PlayerRemoving:Connect(function(player: Player)
     clearSuppression(player.Character,false)
     if deathConnections[player] then deathConnections[player]:Disconnect();deathConnections[player]=nil end
     loadouts[player]=nil;lastRequest[player]=nil;nextMelee[player]=nil;nextFire[player]=nil
+    skins[player]=nil
     rewardedSurvival[player]=nil
     removingCharacters[player]=nil
 end)
@@ -228,31 +236,50 @@ local messages={
     NotAlive="Aguarde um personagem vivo.",AlreadyOwned="Você já possui essa arma.",InsufficientCredits="Créditos insuficientes.",
     AmmoFull="Sua reserva já está completa.",InvalidWeapon="Essa arma não está disponível na loja.",
     AssetUnavailable="Modelo da arma indisponível. Aguarde o carregamento dos assets.",
+    InvalidSkin="Aparência inválida para essa arma.",SkinAlreadySelected="Essa aparência já está selecionada.",
+    WeaponBusy="Aguarde terminar a recarga ou a troca da arma.",
+    SkinPhase="Troque a aparência durante a preparação ou a partida.",
 }
-loadoutAction.OnServerEvent:Connect(function(player: Player,action: any,id: any)
-    if action~="Buy" and action~="Ammo" and action~="Equip" then return end
+loadoutAction.OnServerEvent:Connect(function(player: Player,action: any,id: any,skin: any)
+    if action~="Buy" and action~="Ammo" and action~="Equip" and action~="Skin" then return end
     if action~="Ammo" and (typeof(id)~="string" or #id==0 or #id>32) then return end
     if action=="Ammo" and id~=nil and (typeof(id)~="string" or #id>32) then return end
+    if action=="Skin" and (typeof(skin)~="string" or #skin==0 or #skin>32) then return end
     if not admit(player,"Loadout"..action) then return end
     local loadout=loadouts[player]
     if not loadout then return end
     local _,_,hum=character(player)
     local currentRole=role(player)
     local ok,reason=false,"HumansOnly"
-    if action=="Equip" then
+    if action=="Skin" then
+        local now=os.clock()
+        local _,weapon=loadout:current()
+        local currentPhase=phase()
+        if currentRole~="Humans" then reason="HumansOnly"
+        elseif not hum then reason="NotAlive"
+        elseif currentPhase~="Preparation" and currentPhase~="Active" then reason="SkinPhase"
+        elseif not Config.Weapons[id] then reason="UnknownWeapon"
+        elseif not loadout.states[id] then reason="NotOwned"
+        elseif not WeaponSkins.valid(id,skin) then reason="InvalidSkin"
+        elseif not assetAvailable(id,skin) then reason="AssetUnavailable"
+        elseif id==loadout.equipped and (weapon.reloadEnds>0 or now<loadout.equipReadyAt) then reason="WeaponBusy"
+        elseif selectedSkin(player,id)==skin then reason="SkinAlreadySelected"
+        else skins[player][id]=skin;ok=true;reason="" end
+    elseif action=="Equip" then
         local requested=if id=="Primary" then loadout.primary elseif id=="Secondary" then loadout.secondary else id
-        if currentRole=="Humans" and Config.Weapons[requested] and not assetAvailable(requested) then reason="AssetUnavailable"
+        if currentRole=="Humans" and Config.Weapons[requested] and not assetAvailable(requested,selectedSkin(player,requested)) then reason="AssetUnavailable"
         elseif Rules.canFire(currentRole,phase(),hum~=nil,player:GetAttribute("ZO_BarricadeSelection")~=nil) then
             ok,reason=loadout:equip(id,os.clock())
         elseif not hum then reason="NotAlive"
         elseif currentRole=="Humans" then reason="PreparationOnly" end
     elseif action=="Buy" then
-        if Config.Weapons[id] and not assetAvailable(id) then reason="AssetUnavailable"
+        if Config.Weapons[id] and not assetAvailable(id,selectedSkin(player,id)) then reason="AssetUnavailable"
         else ok,reason=loadout:buy(id,currentRole,if practice() then "Preparation" else phase(),hum~=nil,os.clock()) end
     else ok,reason=loadout:buyAmmo(currentRole,if practice() then "Preparation" else phase(),hum~=nil) end
     sync(player)
     local message=if not ok then messages[reason] or "Não foi possível concluir a ação."
         elseif action=="Buy" then "Arma comprada e equipada."
+        elseif action=="Skin" then "Aparência aplicada."
         elseif action=="Ammo" then "Reserva de munição abastecida." else "Arma equipada."
     loadoutAction:FireClient(player,"Result",ok,message)
 end)

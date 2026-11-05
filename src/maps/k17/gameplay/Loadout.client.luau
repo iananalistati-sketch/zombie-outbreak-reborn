@@ -9,6 +9,7 @@ local RunService=game:GetService("RunService")
 local player=Players.LocalPlayer
 local Config=require(RS:WaitForChild("K17Gameplay").Config)
 local Rules=require(RS.K17Gameplay.Rules)
+local WeaponSkins=require(RS.K17Gameplay:WaitForChild("WeaponSkins"))
 local remote=RS:WaitForChild("ZO_LoadoutAction") :: RemoteEvent
 local playerGui=player:WaitForChild("PlayerGui")
 local colors={base=Color3.fromRGB(16,23,27),raised=Color3.fromRGB(29,39,44),line=Color3.fromRGB(63,81,84),text=Color3.fromRGB(232,240,235),muted=Color3.fromRGB(164,183,182),accent=Color3.fromRGB(150,221,182),gold=Color3.fromRGB(232,195,122),red=Color3.fromRGB(240,146,127)}
@@ -89,9 +90,18 @@ viewport.Size=UDim2.new(1,-6,0,220);viewport.BackgroundColor3=Color3.fromRGB(20,
 round(viewport,6);stroke(viewport,colors.line)
 local missing=text(viewport,"AssetMissing","PRÉVIA DO EQUIPAMENTO",12);missing.Size=UDim2.fromScale(1,1)
 missing.TextXAlignment=Enum.TextXAlignment.Center;missing.TextYAlignment=Enum.TextYAlignment.Center;missing.TextColor3=colors.muted
-local description=detailText("Description",13,4)
-local stats=detailText("Stats",12,5);stats.TextColor3=colors.muted
-local bars=Instance.new("Frame");bars.Name="Comparison";bars.LayoutOrder=6;bars.Size=UDim2.new(1,-6,0,104);bars.BackgroundTransparency=1;bars.Parent=detail
+local skinPanel=Instance.new("Frame");skinPanel.Name="Appearances";skinPanel.LayoutOrder=4
+skinPanel.Size=UDim2.new(1,-6,0,142);skinPanel.BackgroundTransparency=1;skinPanel.Parent=detail
+local skinTitle=text(skinPanel,"Title","APARÊNCIA",11);skinTitle.Size=UDim2.new(1,0,0,17);skinTitle.TextColor3=colors.gold
+local skinChoices=Instance.new("Frame");skinChoices.Name="Choices";skinChoices.BackgroundTransparency=1
+skinChoices.Position=UDim2.fromOffset(0,23);skinChoices.Size=UDim2.new(1,0,0,36);skinChoices.Parent=skinPanel
+local skinApply=button(skinPanel,"ApplySkin","APLICAR APARÊNCIA",12)
+skinApply.Position=UDim2.fromOffset(0,67);skinApply.Size=UDim2.new(1,0,0,36);skinApply.TextWrapped=true
+local skinStatus=text(skinPanel,"Status","",11);skinStatus.Position=UDim2.fromOffset(0,110);skinStatus.Size=UDim2.new(1,0,0,28);skinStatus.TextColor3=colors.muted
+local skinButtons: {[string]: TextButton}={}
+local description=detailText("Description",13,5)
+local stats=detailText("Stats",12,6);stats.TextColor3=colors.muted
+local bars=Instance.new("Frame");bars.Name="Comparison";bars.LayoutOrder=7;bars.Size=UDim2.new(1,-6,0,104);bars.BackgroundTransparency=1;bars.Parent=detail
 local comparisons: {[string]: {Fill: Frame,Value: TextLabel}}={}
 for index,entry in {{"Damage","DANO / DISPARO"},{"Rate","CADÊNCIA"},{"Reload","TEMPO DE RECARGA"}} do
     local row=Instance.new("Frame");row.Name=entry[1];row.BackgroundTransparency=1;row.Position=UDim2.fromOffset(0,(index-1)*35);row.Size=UDim2.new(1,0,0,29);row.Parent=bars
@@ -101,7 +111,7 @@ for index,entry in {{"Damage","DANO / DISPARO"},{"Rate","CADÊNCIA"},{"Reload","
     local fill=Instance.new("Frame");fill.Name="Fill";fill.BorderSizePixel=0;fill.BackgroundColor3=colors.gold;fill.Size=UDim2.fromScale(0,1);fill.Parent=track
     comparisons[entry[1]]={Fill=fill,Value=value}
 end
-local selectedStatus=detailText("Ownership",12,7);selectedStatus.TextColor3=colors.accent
+local selectedStatus=detailText("Ownership",12,8);selectedStatus.TextColor3=colors.accent
 local footer=Instance.new("Frame");footer.Name="Actions";footer.BackgroundTransparency=1;footer.Position=UDim2.new(0,20,1,-68);footer.Size=UDim2.new(1,-40,0,52);footer.Parent=panel
 local buy=button(footer,"Buy","COMPRAR",13);buy.Size=UDim2.new(.48,-6,0,46)
 local equip=button(footer,"Equip","EQUIPAR",12);equip.Position=UDim2.new(.48,2,0,0);equip.Size=UDim2.new(.26,-4,0,46)
@@ -117,6 +127,9 @@ for _,id in Config.WeaponOrder do
 end
 local preview: any=nil
 local shownWeapon: string?=nil
+local shownSkin: string?=nil
+local previewSkins: {[string]: string}={}
+local seenSkins: {[string]: string}={}
 local selected=Config.WeaponOrder[1]
 local selectedCategory="All"
 local function categoryFor(id: string): string
@@ -157,16 +170,28 @@ local function canEquip(): boolean return role()=="Humans" and alive() and (phas
 local function owned(id: string): boolean
     return id==player:GetAttribute("ZO_PrimaryWeapon") or id==player:GetAttribute("ZO_SecondaryWeapon")
 end
+local function appliedSkin(id: string): string
+    local value=player:GetAttribute("ZO_Skin_"..id)
+    return if WeaponSkins.valid(id,value :: any) then value :: string else WeaponSkins.default(id) :: string
+end
 local function assetReady(id: string): boolean
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
-    local weapons=kit and kit:FindFirstChild("Weapons")
-    local template=weapons and weapons:FindFirstChild(id)
-    return template~=nil and template:IsA("Tool")
+    return WeaponSkins.resolve(kit,id,appliedSkin(id))~=nil
 end
 local function assetFailed(id: string): boolean
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
     local status=kit and kit:GetAttribute("Status_"..id)
     return status=="Failed" or status=="Missing"
+end
+local function skinBusy(id: string): boolean
+    return id==player:GetAttribute("ZO_WeaponId") and (player:GetAttribute("ZO_Reloading")==true
+        or workspace:GetServerTimeNow()<(player:GetAttribute("ZO_EquipReadyAt") or 0))
+end
+local function canStyle(id: string,skin: string,apply: boolean): boolean
+    return open and pending==nil and role()=="Humans" and alive()
+        and (phase()=="Preparation" or phase()=="Active") and not skinBusy(id)
+        and WeaponSkins.resolve(RS:FindFirstChild("ZO_WeaponAssets"),id,skin)~=nil
+        and (not apply or (owned(id) and appliedSkin(id)~=skin))
 end
 local function weaponName(id: any): string
     local item=Config.Weapons[id];return if item then item.Label else "—"
@@ -192,6 +217,18 @@ for index,id in Config.WeaponOrder do
         if selectedCategory~="All" and categoryFor(id)~=selectedCategory then return end
         selected=id;message="";refresh()
     end)
+end
+for _,id in Config.WeaponOrder do
+    for _,option in WeaponSkins.options(id) do
+        if not skinButtons[option.Id] then
+            local choice=button(skinChoices,"Skin_"..option.Id,option.Label,11)
+            choice.TextWrapped=true;skinButtons[option.Id]=choice
+            choice.Activated:Connect(function()
+                if not WeaponSkins.valid(selected,option.Id) or not canStyle(selected,option.Id,false) then return end
+                previewSkins[selected]=option.Id;message="";refresh()
+            end)
+        end
+    end
 end
 local function availabilityText(): (string,Color3)
     if pending then return "Aguardando confirmação do servidor…",colors.gold end
@@ -236,6 +273,35 @@ refresh=function()
     local remaining=math.max(0,math.floor(RS:GetAttribute("ZO_Remaining") or 0))
     timer.Text=if soloPractice() then "TREINO" elseif phase()=="Preparation" then ("COMPRA  %02d:%02d"):format(math.floor(remaining/60),remaining%60) else "COMPRA ENCERRADA"
     local item=Config.Weapons[selected]
+    local applied=appliedSkin(selected)
+    if not previewSkins[selected] or seenSkins[selected]~=applied then previewSkins[selected]=applied end
+    seenSkins[selected]=applied
+    local selectedSkin=previewSkins[selected]
+    local options=WeaponSkins.options(selected)
+    skinPanel.Visible=#options>1
+    for _,choice in skinButtons do choice.Visible=false;choice.Active=false;choice.Selectable=false end
+    for index,option in options do
+        local choice=skinButtons[option.Id]
+        choice.Visible=true;choice.Position=UDim2.new((index-1)/#options,2,0,0)
+        choice.Size=UDim2.new(1/#options,-4,1,0)
+        setEnabled(choice,canStyle(selected,option.Id,false))
+        choice.BackgroundColor3=if selectedSkin==option.Id then colors.gold else colors.raised
+        choice.TextColor3=if selectedSkin==option.Id then colors.base else colors.text
+        choice.NextSelectionLeft=if index>1 then skinButtons[options[index-1].Id] else cards[selected].Button
+        choice.NextSelectionRight=if index<#options then skinButtons[options[index+1].Id] else skinApply
+        choice.NextSelectionDown=skinApply
+    end
+    local appliedLabel,previewLabel=applied,selectedSkin
+    for _,option in options do
+        if option.Id==applied then appliedLabel=option.Label end
+        if option.Id==selectedSkin then previewLabel=option.Label end
+    end
+    skinStatus.Text=if selectedSkin==applied then "APLICADA: "..appliedLabel
+        else "PRÉVIA: "..previewLabel.." · aplicada: "..appliedLabel
+    if not owned(selected) then skinStatus.Text="Adquira a arma para aplicar uma aparência."
+    elseif skinBusy(selected) then skinStatus.Text="Aguarde a recarga ou a troca da arma." end
+    skinApply.Text=if selectedSkin==applied then "APARÊNCIA APLICADA" else "APLICAR APARÊNCIA · GRÁTIS"
+    setEnabled(skinApply,canStyle(selected,selectedSkin,true))
     local isOwned=owned(selected)
     local modelReady=assetReady(selected)
     for id,card in cards do
@@ -264,7 +330,9 @@ refresh=function()
     comparisons.Damage.Value.Text=damage
     comparisons.Rate.Value.Text=("%d / min"):format(math.floor(60/item.FireInterval+.5))
     comparisons.Reload.Value.Text=("%.1f s"):format(item.ReloadSeconds)
-    if preview and shownWeapon~=selected then preview:setWeapon(selected);shownWeapon=selected end
+    if preview and (shownWeapon~=selected or shownSkin~=selectedSkin) then
+        preview:setWeapon(selected,selectedSkin);shownWeapon=selected;shownSkin=selectedSkin
+    end
     selectedStatus.Text=if selected==player:GetAttribute("ZO_WeaponId") then "EQUIPADA · munição atual: "..tostring(player:GetAttribute("ZO_Ammo") or 0).." / "..tostring(player:GetAttribute("ZO_Reserve") or 0)
         elseif isOwned then "NO SEU EQUIPAMENTO · trocar preserva a munição"
         elseif item.Slot=="Primary" then "A compra substitui sua arma primária. A pistola continua com você."
@@ -302,6 +370,7 @@ setOpen=function(value: boolean)
     if value then
         previousMouse=UIS.MouseBehavior;previousIcon=UIS.MouseIconEnabled;previousSelection=GuiService.SelectedObject
         message="";selectedCategory="All"
+        table.clear(previewSkins);table.clear(seenSkins)
         selected=if Config.Weapons[player:GetAttribute("ZO_WeaponId")] then player:GetAttribute("ZO_WeaponId") else Config.WeaponOrder[1]
     end
     shade.Visible=value;panel.Visible=value
@@ -318,15 +387,16 @@ setOpen=function(value: boolean)
     end
     refresh()
 end
-local function request(action: string,id: string?)
+local function request(action: string,id: string?,skin: string?)
     if pending then return end
+    if action=="Skin" and (not id or not skin or not canStyle(id,skin,true)) then return end
     if (action=="Buy" or action=="Equip") and id and Config.Weapons[id] and not assetReady(id) then return end
     if action=="Buy" and (not canBuy() or owned(selected) or Config.Weapons[selected].Slot~="Primary") then return end
     if action=="Ammo" and not canBuy() then return end
     if action=="Equip" and (not canEquip() or not id or (id~="Primary" and id~="Secondary" and not owned(id))) then return end
     pending=action;pendingSerial+=1
     local serial=pendingSerial
-    refresh();remote:FireServer(action,id)
+    refresh();remote:FireServer(action,id,skin)
     task.delay(4,function()
         if serial~=pendingSerial or not pending then return end
         pending=nil;message="Sem resposta do servidor. Tente novamente.";messageOK=false;messageExpires=os.clock()+5;refresh()
@@ -335,6 +405,7 @@ end
 buy.Activated:Connect(function() request("Buy",selected) end)
 equip.Activated:Connect(function() request("Equip",selected) end)
 ammo.Activated:Connect(function() request("Ammo") end)
+skinApply.Activated:Connect(function() request("Skin",selected,previewSkins[selected]) end)
 touchPrimary.Activated:Connect(function() if player:GetAttribute("ZO_TacticalMapOpen")~=true then request("Equip","Primary") end end)
 touchSecondary.Activated:Connect(function() if player:GetAttribute("ZO_TacticalMapOpen")~=true then request("Equip","Secondary") end end)
 toggle.Activated:Connect(function() setOpen(not open) end)
@@ -381,6 +452,12 @@ local function layout()
     availability.Position=UDim2.fromOffset(20,if compact then 74 else 122)
     body.Position=UDim2.fromOffset(20,header);body.Size=UDim2.new(1,-40,1,-header-82)
     viewport.Size=UDim2.new(1,-6,0,if compact then 110 elseif narrow then 160 else 220)
+    local skinHeight=if UIS.TouchEnabled then 44 else 36
+    skinChoices.Size=UDim2.new(1,0,0,skinHeight)
+    skinApply.Position=UDim2.fromOffset(0,31+skinHeight)
+    skinApply.Size=UDim2.new(1,0,0,skinHeight)
+    skinStatus.Position=UDim2.fromOffset(0,38+skinHeight*2)
+    skinPanel.Size=UDim2.new(1,-6,0,70+skinHeight*2)
     local selector=if narrow then .32 else .31
     list.Size=UDim2.new(selector,-8,1,0)
     detail.Position=UDim2.new(selector,4,0,0);detail.Size=UDim2.new(1-selector,-4,1,0)
@@ -395,7 +472,8 @@ local function layout()
     ammo.TextSize=if narrow then 10 else 12
 end
 panel:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
-for _,name in {"ZO_WeaponId","ZO_PrimaryWeapon","ZO_SecondaryWeapon","ZO_Credits","ZO_Ammo","ZO_Reserve","ZO_Reloading"} do player:GetAttributeChangedSignal(name):Connect(refresh) end
+for _,name in {"ZO_WeaponId","ZO_PrimaryWeapon","ZO_SecondaryWeapon","ZO_Credits","ZO_Ammo","ZO_Reserve","ZO_Reloading","ZO_EquipReadyAt","ZO_WeaponSkin"} do player:GetAttributeChangedSignal(name):Connect(refresh) end
+for _,id in Config.WeaponOrder do player:GetAttributeChangedSignal("ZO_Skin_"..id):Connect(refresh) end
 player:GetAttributeChangedSignal("ZO_TacticalMapOpen"):Connect(function()
     if player:GetAttribute("ZO_TacticalMapOpen")==true then setOpen(false) end
     refresh()

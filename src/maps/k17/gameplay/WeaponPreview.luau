@@ -3,6 +3,7 @@
 -- second catalogue of block stand-ins. No firing, inventory or economy calls.
 local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
+local WeaponSkins=require(RS:WaitForChild("K17Gameplay"):WaitForChild("WeaponSkins"))
 local Preview={}
 Preview.__index=Preview
 
@@ -59,29 +60,42 @@ function Preview.new(viewport: ViewportFrame)
     end)
     self.removed=viewport.Destroying:Connect(function() self:destroy() end)
     self.assetAdded=RS.DescendantAdded:Connect(function(item)
-        if item:IsA("Tool") and item.Parent and item.Parent.Name=="Weapons" and item.Name==self.id then
-            local id=self.id;self.id=nil;self:setWeapon(id)
+        if item:IsA("Tool") and self.id and WeaponSkins.resolve(RS:FindFirstChild("ZO_WeaponAssets"),self.id,self.skin)==item then
+            local id,skin=self.id,self.skin;self.id=nil;self:setWeapon(id,skin)
         end
+    end)
+    self.assetRemoving=RS.DescendantRemoving:Connect(function(item)
+        local template=self.template
+        if self.destroyed or not template or (item~=template and not template:IsDescendantOf(item)) then return end
+        -- DescendantRemoving precedes detachment. Invalidate immediately and
+        -- cancel in-flight work; the matching arrival will retry this exact skin.
+        self.serial+=1;self.template=nil
+        if self.model then self.model:Destroy();self.model=nil end
+        self.message.Visible=true;self.message.Text="MODELO INDISPONÍVEL\nAtualize os assets do arsenal."
+        self.viewport:SetAttribute("ZO_PreviewStatus","Unavailable")
     end)
     return self
 end
 
-function Preview:setWeapon(id: string)
-    if self.destroyed or self.id==id then return end
-    self.id=id;self.serial+=1
+function Preview:setWeapon(id: string,skin: string?)
+    local chosen=if WeaponSkins.valid(id,skin :: any) then skin else WeaponSkins.default(id)
+    if self.destroyed or (self.id==id and self.skin==chosen) then return end
+    self.id=id;self.skin=chosen;self.serial+=1
+    self.template=nil
     local serial=self.serial
     if self.model then self.model:Destroy();self.model=nil end
     self.message.Visible=true;self.message.Text="CARREGANDO MODELO…"
     self.viewport:SetAttribute("ZO_PreviewStatus","Loading")
+    self.viewport:SetAttribute("ZO_PreviewWeapon",id)
+    self.viewport:SetAttribute("ZO_PreviewSkin",chosen)
     task.spawn(function()
         local deadline=os.clock()+10
         local template: Tool?=nil
         repeat
             if self.destroyed or self.serial~=serial then return end
             local assets=RS:FindFirstChild("ZO_WeaponAssets")
-            local weapons=assets and assets:FindFirstChild("Weapons")
-            local candidate=weapons and weapons:FindFirstChild(id)
-            if candidate and candidate:IsA("Tool") then template=candidate;break end
+            template=WeaponSkins.resolve(assets,id,chosen)
+            if template then self.template=template;break end
             task.wait(.1)
         until os.clock()>=deadline
         if self.destroyed or self.serial~=serial then return end
@@ -123,6 +137,7 @@ function Preview:destroy()
     if self.render then self.render:Disconnect() end
     if self.removed then self.removed:Disconnect() end
     if self.assetAdded then self.assetAdded:Disconnect() end
+    if self.assetRemoving then self.assetRemoving:Disconnect() end
     if self.model then self.model:Destroy() end
     self.world:Destroy();self.camera:Destroy()
 end

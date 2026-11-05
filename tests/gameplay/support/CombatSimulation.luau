@@ -4,6 +4,7 @@ return function(deps)
 local Config,Rules,WeaponState=deps.Config,deps.Rules,deps.WeaponState
 local LoadoutState,Containment=deps.LoadoutState,deps.Containment
 local MovementState=deps.MovementState
+local WeaponSkins=deps.WeaponSkins
 local COMBAT_SOURCE=deps.CombatSource
 -- Engine float properties do not preserve every Luau double. Model that storage
 -- boundary so equality-based effect ownership cannot pass on table precision.
@@ -130,13 +131,16 @@ local function simulation(options)
     local weaponAssets=instance("Folder","ZO_WeaponAssets",rs)
     local templates=instance("Folder","Weapons",weaponAssets)
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
+    local skins=instance("Folder","Skins",weaponAssets)
+    local pistolSkins=instance("Folder","Pistol",skins)
+    for _,id in {"Classic","Gold"} do instance("Tool",id,pistolSkins) end
     local modules={}
-    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState} do
+    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins} do
         local module=instance("ModuleScript",name,shared);modules[module]=result
     end
     local heartbeat=signal()
     local services={Players=players,ReplicatedStorage=rs,ServerStorage=ss,Workspace=world,
-        RunService={Heartbeat=heartbeat,IsStudio=function() return false end}}
+        RunService={Heartbeat=heartbeat,IsStudio=function() return options.studio==true end}}
     if options.roundSource then
         services.Teams=instance("Teams","Teams")
         services.ScriptContext={Error=signal()}
@@ -217,7 +221,7 @@ local function simulation(options)
         fire=function(player,direction) request("ZO_FireRifle",player,"Fire",direction or -Vector.zAxis) end,
         reload=function(player) request("ZO_FireRifle",player,"Reload") end,
         melee=function(player,direction) request("ZO_Melee",player,direction or -Vector.zAxis) end,
-        loadout=function(player,action,id) request("ZO_LoadoutAction",player,action,id) end,
+        loadout=function(player,action,id,skin) request("ZO_LoadoutAction",player,action,id,skin) end,
         request=request,
         remove=function(player) local index=table.find(list,player);if index then table.remove(list,index) end;player.Parent=nil;players.PlayerRemoving:Fire(player);advance(0) end}
 end

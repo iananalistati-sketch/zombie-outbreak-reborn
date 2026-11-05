@@ -17,6 +17,7 @@ local Config=require(shared.Config)
 local Rules=require(shared.Rules)
 local Presentation=require(shared:WaitForChild("WeaponPresentation"))
 local WeaponMotion=require(shared:WaitForChild("WeaponMotion"))
+local WeaponSkins=require(shared:WaitForChild("WeaponSkins"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
 local rifle=RS:WaitForChild("ZO_FireRifle") :: RemoteEvent
 local melee=RS:WaitForChild("ZO_Melee") :: RemoteEvent
@@ -134,10 +135,8 @@ local function canAim(): boolean
     return canShoot() and not sprinting() and not UIS:GetFocusedTextBox() and player:GetAttribute("ZO_Reloading")~=true
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0)
 end
-local function templateFor(id: string): Tool?
-    local folder=assets and assets:FindFirstChild("Weapons")
-    local template=folder and folder:FindFirstChild(id)
-    return if template and template:IsA("Tool") then template else nil
+local function templateFor(id: string,skin: string?): Tool?
+    return WeaponSkins.resolve(assets,id,skin)
 end
 local function updateAssetsStatus()
     if disposed then return end
@@ -176,8 +175,10 @@ local function preload(template: Tool)
 end
 local function scanAssets()
     for _,id in Config.WeaponOrder do
-        local template=templateFor(id)
-        if template then preload(template) end
+        for _,skin in WeaponSkins.options(id) do
+            local template=templateFor(id,skin.Id)
+            if template then preload(template) end
+        end
     end
     presentationDirty=true;updateAssetsStatus()
 end
@@ -225,7 +226,7 @@ local function destroyPresentation()
     currentTemplate=nil;presentationId="";presentationCharacter=nil
 end
 local function ensurePresentation(id: string)
-    local template=templateFor(id)
+    local template=templateFor(id,player:GetAttribute("ZO_WeaponSkin"))
     local character=player.Character
     if not presentationDirty and presentationId==id and currentTemplate==template and presentationCharacter==character then return end
     presentationDirty=false
@@ -251,7 +252,7 @@ local function action()
     local equipped=weapon()
     if canShoot() and not sprinting() and player:GetAttribute("ZO_Reloading")~=true and (player:GetAttribute("ZO_Ammo") or 0)>0
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0) then
-        if not templateFor(equipped.Id) then
+        if not templateFor(equipped.Id,player:GetAttribute("ZO_WeaponSkin")) then
             notice="Modelo da arma indisponível · veja o carregamento do arsenal";noticeUntil=os.clock()+2
             return
         end
@@ -331,6 +332,7 @@ for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_BarricadeSelection"} do
     connect(player:GetAttributeChangedSignal(name),function() if menuOpen() or not canShoot() then stop() end end)
 end
 connect(player:GetAttributeChangedSignal("ZO_WeaponId"),function() stop();presentationDirty=true end)
+connect(player:GetAttributeChangedSignal("ZO_WeaponSkin"),function() stop();presentationDirty=true end)
 connect(player:GetAttributeChangedSignal("ZO_Reloading"),function() if player:GetAttribute("ZO_Reloading")==true then stop() end end)
 connect(player:GetAttributeChangedSignal("ZO_EquipReadyAt"),function() if not canAim() then stop() end end)
 connect(UIS.WindowFocusReleased,stop);connect(UIS.TextBoxFocused,stop);connect(GuiService.MenuOpened,stop)

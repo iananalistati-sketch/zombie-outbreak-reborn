@@ -15,6 +15,7 @@ local shared=RS:WaitForChild("K17Gameplay")
 local Config=require(shared:WaitForChild("Config"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
 local WeaponAimPose=require(shared:WaitForChild("WeaponAimPose"))
+local WeaponSkins=require(shared:WaitForChild("WeaponSkins"))
 
 type Session={
     player: Player,
@@ -131,7 +132,7 @@ local function mirrorReload(session: Session,tool: Tool)
     tool:SetAttribute("ZO_Reloading",session.player:GetAttribute("ZO_Reloading")==true)
 end
 
-local function buildVisual(template: Tool,id: string): Tool
+local function buildVisual(template: Tool,id: string,skin: string): Tool
     -- Validate the source before cloning an incomplete late import.
     local sourceHandle=template:FindFirstChild("Handle")
     local sourceModel=template:FindFirstChildOfClass("Model")
@@ -149,6 +150,7 @@ local function buildVisual(template: Tool,id: string): Tool
         tool.Enabled=false -- K-17's existing server combat remains the sole authority.
         tool:SetAttribute("ZO_EquipmentVisual",true)
         tool:SetAttribute("ZO_WeaponId",id)
+        tool:SetAttribute("ZO_SkinId",skin)
         tool:SetAttribute("ZO_AnimationPrefix",animationPrefix(template,id))
         for _,descendant in tool:GetDescendants() do
             -- Defense in depth: upstream executable scripts are never activated.
@@ -197,17 +199,18 @@ local function refresh(session: Session)
         setStatus(session,"Idle")
         return
     end
-    local weapons=assetRoot and assetRoot:FindFirstChild("Weapons")
-    local template=weapons and weapons:FindFirstChild(id)
-    if not template or not template:IsA("Tool") then
+    local attribute=session.player:GetAttribute("ZO_WeaponSkin")
+    local skin=if WeaponSkins.valid(id,attribute) then attribute else WeaponSkins.default(id)
+    local template=WeaponSkins.resolve(assetRoot,id,skin)
+    if not template then
         clearVisual(session)
         setStatus(session,"AssetMissing")
         return
     end
     if not session.tool or session.tool.Parent~=session.character or session.template~=template
-        or session.tool:GetAttribute("ZO_WeaponId")~=id then
+        or session.tool:GetAttribute("ZO_WeaponId")~=id or session.tool:GetAttribute("ZO_SkinId")~=skin then
         clearVisual(session)
-        local ok,result=pcall(buildVisual,template,id)
+        local ok,result=pcall(buildVisual,template,id,skin :: string)
         if not ok then
             setStatus(session,"Error")
             warn("[K17] Weapons Kit visual unavailable (combat continues): "..tostring(result))
@@ -293,7 +296,7 @@ local function joined(player: Player)
         connections={},characterConnections={},toolConnections={},died=nil,queued=false,removed=false}
     sessions[player]=session
     setStatus(session,"Idle")
-    for _,attribute in {"ZO_WeaponId","ZO_Reloading","ZO_ReloadEndsAt"} do
+    for _,attribute in {"ZO_WeaponId","ZO_WeaponSkin","ZO_Reloading","ZO_ReloadEndsAt"} do
         table.insert(session.connections,player:GetAttributeChangedSignal(attribute):Connect(function() queueRefresh(session) end))
     end
     table.insert(session.connections,player:GetPropertyChangedSignal("Team"):Connect(function() queueRefresh(session) end))

@@ -5,6 +5,7 @@ local Rules=assert(loadstring(RULES_SOURCE))()
 local WeaponState=assert(loadstring(WEAPON_SOURCE))()
 local Containment=assert(loadstring(CONTAINMENT_SOURCE))()
 local MovementState=assert(loadstring(MOVEMENT_STATE_SOURCE))()
+local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
 local LoadoutState
 do
     local dependency={}
@@ -19,7 +20,7 @@ local function check(ok,label) assert(ok,label);checks+=1 end
 local function near(a,b) return math.abs(a-b)<.00001 end
 local tools=assert(loadstring(SIMULATION_SOURCE))()({
     Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,
-    Containment=Containment,MovementState=MovementState,CombatSource=COMBAT_SOURCE,
+    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,CombatSource=COMBAT_SOURCE,
 })
 local simulation,Vector=tools.simulation,tools.Vector
 local function attr(player,key) return player:GetAttribute("ZO_"..key) end
@@ -484,7 +485,7 @@ do
     end
     local observed=assert(loadstring(SIMULATION_SOURCE))()({
         Config=Config,Rules=table.freeze(observedRules),WeaponState=WeaponState,LoadoutState=LoadoutState,
-        Containment=Containment,MovementState=MovementState,CombatSource=COMBAT_SOURCE,
+        Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,CombatSource=COMBAT_SOURCE,
     })
     local s=observed.simulation();local p=s.add("AccuracyShooter","Humans");s.add("Second","Humans");ready(s,p)
     local hum=p.Character.Humanoid
@@ -527,4 +528,119 @@ do
     check(attr(p,"WeaponId")=="SMG" and attr(p,"Credits")==credits-Config.Weapons.SMG.Price,"late real template availability re-enables the server purchase")
 end
 
-print(("PASS actual Combat controller: %d assertions; inventory, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))
+do
+    local s,p,other=twoHumans()
+    check(attr(p,"WeaponSkin")=="Default" and attr(p,"Skin_Pistol")=="Black","server publishes initial current and per-weapon cosmetics")
+    for _,id in Config.WeaponOrder do
+        if id~="Pistol" then check(attr(p,"Skin_"..id)=="Default","all primary defaults are explicit replicated state") end
+    end
+    local credits,ammo,reserve=attr(p,"Credits"),attr(p,"Ammo"),attr(p,"Reserve")
+    s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Classic" and attr(p,"WeaponSkin")=="Default" and attr(p,"WeaponId")=="Rifle","unequipped owned cosmetic can change without equipping its weapon")
+    check(attr(other,"Skin_Pistol")=="Black","one player's cosmetic never changes another inventory")
+    check(attr(p,"Credits")==credits and attr(p,"Ammo")==ammo and attr(p,"Reserve")==reserve,"cosmetic selection spends no credits and grants no ammunition")
+    s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Classic","same-tick skin request flood respects the existing action limiter")
+    s.advance(.05);s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Gold","later valid skin request is accepted")
+    local remote=s.rs.ZO_LoadoutAction
+    local result=remote._calls[#remote._calls]
+    check(result[1]==p and result[2]=="Result" and result[3]==true and result[4]=="Aparência aplicada.","skin success uses existing Result response protocol")
+    s.loadout(p,"Equip","Pistol")
+    local equipReady=attr(p,"EquipReadyAt")
+    s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Gold" and attr(p,"EquipReadyAt")==equipReady,"equipping current weapon rejects skin change without shortening draw deadline")
+    result=remote._calls[#remote._calls]
+    check(result[3]==false,"busy current cosmetic produces a rejected Result")
+    ready(s,p);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"WeaponSkin")=="Classic" and attr(p,"Ammo")==Config.Weapons.Pistol.Magazine,"ready equipped weapon applies cosmetic without resetting ammo")
+end
+
+do
+    local s,p=twoHumans();s.loadout(p,"Equip","Pistol");ready(s,p);s.phase("Active")
+    local zombie=s.add("CosmeticDamageTarget","Zombies");zombie.Character.Humanoid.Health=1000
+    s.ray(function() return hit(zombie.Character.UpperTorso) end)
+    s.fire(p)
+    local ammo,credits,reserve=attr(p,"Ammo"),attr(p,"Credits"),attr(p,"Reserve")
+    local health=zombie.Character.Humanoid.Health
+    check(health==1000-Config.Weapons.Pistol.Damage,"base pistol damage uses the combat catalogue")
+    s.advance(.05);s.loadout(p,"Skin","Pistol","Gold")
+    local equipReady=attr(p,"EquipReadyAt")
+    check(attr(p,"WeaponSkin")=="Gold" and attr(p,"Ammo")==ammo and attr(p,"Credits")==credits and attr(p,"Reserve")==reserve,"active round skin change is cosmetic only")
+    s.fire(p)
+    check(attr(p,"Ammo")==ammo and zombie.Character.Humanoid.Health==health,"skin change cannot bypass previous shot cadence")
+    s.advance(Config.Weapons.Pistol.FireInterval);s.fire(p)
+    check(zombie.Character.Humanoid.Health==health-Config.Weapons.Pistol.Damage and attr(p,"Ammo")==ammo-1,"gold finish keeps identical server damage and ammunition use")
+    s.advance(.05);s.reload(p)
+    local deadline=attr(p,"ReloadEndsAt")
+    local pendingAmmo,pendingReserve=attr(p,"Ammo"),attr(p,"Reserve")
+    s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"WeaponSkin")=="Gold" and attr(p,"Reloading")==true and attr(p,"ReloadEndsAt")==deadline,"current weapon cosmetic cannot interrupt reload animation or timer")
+    check(attr(p,"Ammo")==pendingAmmo and attr(p,"Reserve")==pendingReserve and attr(p,"EquipReadyAt")==equipReady,"rejected cosmetic leaves magazines and equip timing unchanged")
+    s.advance(Config.Weapons.Pistol.ReloadSeconds+.1)
+    local filledAmmo,filledReserve=attr(p,"Ammo"),attr(p,"Reserve")
+    s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"WeaponSkin")=="Classic" and attr(p,"Ammo")==filledAmmo and attr(p,"Reserve")==filledReserve and attr(p,"Credits")==credits,"completed reload permits cosmetic selection with no economic or ammo side effect")
+    s.rs.ZO_WeaponAssets.Skins.Pistol.Classic:Destroy()
+    local rays=#s.raycasts;s.fire(p)
+    check(#s.raycasts==rays and attr(p,"Ammo")==filledAmmo,"a removed selected template cannot fire an invisible cosmetic gun")
+    s.advance(.05);s.loadout(p,"Skin","Pistol","Black");s.fire(p)
+    check(attr(p,"WeaponSkin")=="Black" and attr(p,"Ammo")==filledAmmo-1,"available base skin restores actual visible-weapon firing")
+end
+
+do
+    local s,p=twoHumans();ready(s,p);s.fire(p);s.advance(.05);s.reload(p)
+    local deadline=attr(p,"ReloadEndsAt")
+    s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Gold" and attr(p,"Reloading")==true and attr(p,"ReloadEndsAt")==deadline,"unequipped cosmetic does not interrupt another weapon's reload")
+    s.advance(Config.Weapons.Rifle.ReloadSeconds+.1)
+    check(attr(p,"Ammo")==Config.Weapons.Rifle.Magazine and attr(p,"Reserve")==Config.Weapons.Rifle.Reserve-1,"unrelated reload finishes normally after cosmetic change")
+    s.role(p,"Zombies");s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Gold","infected player cannot edit cosmetics through forged remote calls")
+    s.role(p,"Humans");s.character(p);s.advance(.5)
+    check(attr(p,"Skin_Pistol")=="Gold","respawn and role reset preserve session cosmetic preference")
+    s.rs:SetAttribute("ZO_RoundId",2);s.advance(0)
+    check(attr(p,"Skin_Pistol")=="Gold" and attr(p,"WeaponId")=="Rifle" and attr(p,"Ammo")==Config.Weapons.Rifle.Magazine,"new round keeps cosmetics while resetting ordinary loadout")
+    s.loadout(p,"Equip","Pistol");ready(s,p)
+    check(attr(p,"WeaponSkin")=="Gold","equipping again applies retained session preference")
+    s.remove(p);s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Gold","stale disconnected requests cannot mutate session state")
+    local rejoined=s.add("Rejoined","Humans")
+    check(attr(rejoined,"Skin_Pistol")=="Black","new player session starts from its original cosmetic")
+end
+
+do
+    local s,p=twoHumans()
+    local credits,ammo=attr(p,"Credits"),attr(p,"Ammo")
+    for _,request in {{"Pistol","Default"},{"Rifle","Gold"},{"Shotgun","Default"},{"Unknown","Gold"},
+        {"Pistol",{}},{"Pistol",0/0},{"Pistol",true},{"Pistol",string.rep("G",33)},{"Pistol",""},
+        {{},"Gold"},{string.rep("P",33),"Gold"}} do
+        s.loadout(p,"Skin",request[1],request[2]);s.advance(.05)
+        check(attr(p,"Skin_Pistol")=="Black" and attr(p,"WeaponSkin")=="Default","forged, unknown, invalid and unowned cosmetic requests are rejected")
+    end
+    s.rs.ZO_WeaponAssets.Skins.Pistol.Gold:Destroy()
+    s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Black","missing valid cosmetic template rejects selection instead of recording success")
+    s.advance(.05)
+    s.instance("Folder","Gold",s.rs.ZO_WeaponAssets.Skins.Pistol)
+    s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Black","non-Tool cosmetic template cannot masquerade as a real asset")
+    check(attr(p,"Credits")==credits and attr(p,"Ammo")==ammo,"all forged requests preserve actual economy and magazine state")
+    for _,phase in {"Waiting","Intermission","Results"} do
+        s.phase(phase);s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+        check(attr(p,"Skin_Pistol")=="Black","cosmetic changes outside preparation and active are denied")
+    end
+    s.phase("Preparation");p.Character.Humanoid.Health=0;s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Black","dead human cannot change appearance")
+end
+
+do
+    local s=simulation({studio=true});local p=s.add("PracticeSkin","Humans")
+    s.world:SetAttribute("ZO_BarricadePractice",true);s.phase("Waiting")
+    s.loadout(p,"Skin","Pistol","Gold")
+    check(attr(p,"Skin_Pistol")=="Gold","existing solo Studio practice permits owned cosmetic selection")
+    s.add("Second","Humans");s.advance(.05);s.loadout(p,"Skin","Pistol","Classic")
+    check(attr(p,"Skin_Pistol")=="Gold","waiting with two players cannot use the solo practice exception")
+end
+
+print(("PASS actual Combat controller: %d assertions; inventory, skins, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

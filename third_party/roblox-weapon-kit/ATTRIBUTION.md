@@ -62,5 +62,14 @@ remotes, tags sem consumidor e efeitos arquivados. Malhas, texturas, grip,
 ferrolho, flash e áudio originais foram preservados. As mesmas animações de
 RifleAim/ADS/Reload já presentes são as usadas pelo próprio kit da pistola.
 
+As variantes nativas `Workspace/Pistol` e `Workspace/Pistol3` do mesmo anexo
+oficial foram preservadas completas em [pistol/OriginalPistol.rbxmx](pistol/OriginalPistol.rbxmx)
+e [pistol/OriginalPistol3.rbxmx](pistol/OriginalPistol3.rbxmx). Suas apresentações
+limpas fornecem as skins Clássica e Dourada em `ZO_WeaponAssets/Skins/Pistol`.
+Usam os meshes, texturas, áudio e grip originais, sob a mesma **Roblox Limited
+Use License**. As skins mantêm a identidade `Pistol` e não adicionam armas,
+estatísticas ou controladores. Origem, hashes e IDs de textura estão no manifesto
+e a revisão está em [pistol/REVIEW.md](pistol/REVIEW.md).
+
 SMG e Shotgun ainda não estão embutidas. `WeaponAssetImport` é uma ferramenta
 manual opcional; Play não baixa prefabs nem substitui os modelos incluídos.

@@ -1,7 +1,9 @@
 """Check the actual reused native assets and their integration contract."""
+import base64
 import hashlib
 import json
 from pathlib import Path
+import struct
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -29,7 +31,9 @@ class ReusedWeaponKit(unittest.TestCase):
         executable={'Script','LocalScript','ModuleScript','RemoteEvent','RemoteFunction','UnreliableRemoteEvent',
                     'BindableEvent','BindableFunction','PackageLink'}
         self.assertFalse(any(i.get('class') in executable for i in self.items))
-        self.assertEqual(set(self.tools),{'Rifle','Pistol'})
+        self.assertEqual(set(self.tools),{'Rifle','Pistol','Classic','Gold'})
+        weapons=next(i for i in self.tree.find('Item').findall('Item') if i.findtext('./Properties/string[@name="Name"]')=='Weapons')
+        self.assertEqual({i.findtext('./Properties/string[@name="Name"]') for i in weapons.findall('Item')},{'Rifle','Pistol'})
         for tool in self.tools.values():
             self.assertEqual(tool.findtext('./Properties/bool[@name="CanBeDropped"]'),'false')
             self.assertEqual(tool.findtext('./Properties/bool[@name="Enabled"]'),'false')
@@ -57,15 +61,30 @@ class ReusedWeaponKit(unittest.TestCase):
                 self.assertTrue(ref.text=='null' or ref.text in references,(item.get('class'),ref.get('name'),ref.text))
 
     def test_uploaded_pistol_archive_is_pinned_and_keeps_reviewable_sources(self):
-        path=ROOT/'third_party/roblox-weapon-kit/pistol/OriginalPistol2.rbxmx'
-        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
-                         '704f204cd3eb51a361c449f8718dd30b10869e7dcc823a1d186598176f89993e')
-        archive=ET.parse(path)
-        tool=archive.find('Item')
-        self.assertEqual(tool.get('class'),'Tool')
-        self.assertEqual(tool.findtext('./Properties/string[@name="Name"]'),'Pistol2')
-        self.assertEqual(tool.findtext('./Properties/int64[@name="SourceAssetId"]'),'118912302094201')
-        self.assertEqual(sum(i.get('class') in ('Script','LocalScript','ModuleScript') for i in archive.findall('.//Item')),16)
+        expected={
+            'Pistol':('OriginalPistol.rbxmx','9a0adb1e26e6fa15f0a46f04e24900b11d3fe9cfdf00e226e766b5e66202a16f'),
+            'Pistol2':('OriginalPistol2.rbxmx','704f204cd3eb51a361c449f8718dd30b10869e7dcc823a1d186598176f89993e'),
+            'Pistol3':('OriginalPistol3.rbxmx','4ed7e278a77756ab82ea0c374f055f12f0cc229cb8b7ed9ff711bc9401c14ad8'),
+        }
+        script_sources=[]
+        for original,(filename,sha256) in expected.items():
+            path=ROOT/'third_party/roblox-weapon-kit/pistol'/filename
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),sha256)
+            archive=ET.parse(path)
+            tool=archive.find('Item')
+            self.assertEqual(tool.get('class'),'Tool')
+            self.assertEqual(tool.findtext('./Properties/string[@name="Name"]'),original)
+            self.assertEqual(tool.findtext('./Properties/int64[@name="SourceAssetId"]'),'118912302094201')
+            scripts=[i for i in archive.findall('.//Item') if i.get('class') in ('Script','LocalScript','ModuleScript')]
+            self.assertEqual(len(scripts),16)
+            sources={i.findtext('./Properties/string[@name="Name"]'):i.findtext('./Properties/*[@name="Source"]') for i in scripts}
+            self.assertEqual(len(sources),16)
+            self.assertTrue(all(sources.values()),'Original sources must remain present as review data')
+            script_sources.append(sources)
+            available={i.get('md5') for i in archive.findall('./SharedStrings/SharedString')}
+            self.assertEqual({p.text for p in archive.findall('.//Properties/SharedString')},available)
+        self.assertEqual(script_sources[0],script_sources[1])
+        self.assertEqual(script_sources[1],script_sources[2])
 
     def test_black_pistol_uses_the_actual_uploaded_mesh_texture_audio_and_grip(self):
         expected={
@@ -73,7 +92,7 @@ class ReusedWeaponKit(unittest.TestCase):
             'Bolt':('2492923497','3361041283'),
             'Magazine':('2492925447','3361041283'),
         }
-        self.assertEqual(sum(i.get('class')=='MeshPart' for i in self.items),6)
+        self.assertEqual(sum(i.get('class')=='MeshPart' for i in self.items),12)
         for name,(mesh,texture) in expected.items():
             item=self.pistol_named[name]
             self.assertEqual(item.get('class'),'MeshPart')
@@ -87,6 +106,51 @@ class ReusedWeaponKit(unittest.TestCase):
         self.assertEqual(grip.findtext('./Properties/CoordinateFrame[@name="CFrame"]/R00'),'-1')
         self.assertEqual(self.pistol_named['MuzzleFlash'].get('class'),'Beam')
         self.assertEqual(self.pistol_named['BoltMotor'].get('class'),'Motor6D')
+
+    def test_classic_and_gold_are_native_cosmetic_variants_of_the_same_pistol(self):
+        package=self.tree.find('Item')
+        skins=next(i for i in package.findall('Item') if i.findtext('./Properties/string[@name="Name"]')=='Skins')
+        pistol=skins.find('Item')
+        self.assertEqual(pistol.findtext('./Properties/string[@name="Name"]'),'Pistol')
+        self.assertEqual({i.findtext('./Properties/string[@name="Name"]') for i in pistol.findall('Item')},{'Classic','Gold'})
+        expected={
+            'Classic':{'Pistol':'2492931263','Bolt':'2492931686','Magazine':None},
+            'Gold':{'Pistol':'3361055083','Bolt':'3361057436','Magazine':'3361057436'},
+        }
+        for variant,textures in expected.items():
+            tool=self.tools[variant]
+            named={i.findtext('./Properties/string[@name="Name"]'):i for i in tool.iter('Item')}
+            self.assertEqual(sum(i.get('class')=='MeshPart' for i in tool.iter('Item')),3)
+            for name,texture in textures.items():
+                self.assertEqual(named[name].findtext('./Properties/Content[@name="MeshContent"]/uri'),
+                                 self.pistol_named[name].findtext('./Properties/Content[@name="MeshContent"]/uri'))
+                self.assertEqual(named[name].findtext('./Properties/Content[@name="TextureContent"]/uri'),
+                                 'rbxassetid://'+texture if texture else None)
+                if texture is None:self.assertIsNotNone(named[name].find('./Properties/Content[@name="TextureContent"]/null'))
+            for name in ('Fired','Reload'):
+                self.assertEqual(named[name].findtext('./Properties/Content[@name="AudioContent"]/uri'),
+                                 self.pistol_named[name].findtext('./Properties/Content[@name="AudioContent"]/uri'))
+            def grip_values(item):
+                return {p.tag:p.text for p in item.find('./Properties/CoordinateFrame[@name="CFrame"]')}
+            self.assertEqual(grip_values(named['HandleAttachment']),grip_values(self.pistol_named['HandleAttachment']))
+            data=base64.b64decode(tool.findtext('./Properties/BinaryString[@name="AttributesSerialize"]'))
+            count=struct.unpack_from('<I',data)[0];offset=4;attributes={}
+            def read_string():
+                nonlocal offset
+                size=struct.unpack_from('<I',data,offset)[0];offset+=4
+                value=data[offset:offset+size].decode('utf-8');offset+=size
+                return value
+            for _ in range(count):
+                key=read_string();self.assertEqual(data[offset],2);offset+=1
+                attributes[key]=read_string()
+            self.assertEqual(offset,len(data))
+            self.assertEqual(attributes,{'ZO_WeaponId':'Pistol','ZO_SkinId':variant})
+            # Source Configuration includes presentation tuning; the cosmetic
+            # template does not introduce any different weapon values.
+            def values(item):
+                config=item.find('Item[@class="Configuration"]')
+                return {i.findtext('./Properties/string[@name="Name"]'):i.findtext('./Properties/*[@name="Value"]') for i in config.findall('Item')}
+            self.assertEqual(values(tool),values(self.tools['Pistol']))
 
     def test_combined_templates_have_resolved_unique_references_and_no_physical_contacts(self):
         referents=[i.get('referent') for i in self.items]
@@ -104,6 +168,7 @@ class ReusedWeaponKit(unittest.TestCase):
                 self.assertEqual(item.findtext('./Properties/bool[@name="Massless"]'),'true')
 
     def test_r15_animations_are_retained_without_claiming_r6_compatibility(self):
+        self.assertEqual(sum(i.get('class')=='Animation' for i in self.items),3)
         for name,asset in {'RifleAim':'3972164452','RifleReload':'3972131105','RifleAimDownSights':'3972157449'}.items():
             self.assertEqual(self.named[name].get('class'),'Animation')
             self.assertIn(asset,self.named[name].findtext('./Properties/Content[@name="AnimationContent"]/uri'))

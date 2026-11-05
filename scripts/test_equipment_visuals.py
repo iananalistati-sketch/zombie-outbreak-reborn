@@ -19,6 +19,7 @@ def run(luau):
         'CONFIG_SOURCE': 'Config.luau',
         'PRESENTATION_CONFIG_SOURCE': 'PresentationConfig.luau',
         'AIM_POSE_SOURCE': 'WeaponAimPose.luau',
+        'WEAPON_SKINS_SOURCE': 'WeaponSkins.luau',
         'EQUIPMENT_SOURCE': 'EquipmentVisuals.server.luau',
     }
     lines = ['local ' + name + '=' + long_string((folder / file).read_text())

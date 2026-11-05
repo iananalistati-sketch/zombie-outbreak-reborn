@@ -2,10 +2,12 @@
 -- doubles check protocol/control flow; no UI rendering or engine input runs.
 local Config=assert(loadstring(CONFIG_SOURCE))()
 local Rules=assert(loadstring(RULES_SOURCE))()
+local WeaponSkins=assert(loadstring(SKINS_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 
-local function simulation()
+local function simulation(options)
+    options=options or {}
     local now=10
     local queue={}
     local errors={}
@@ -20,6 +22,7 @@ local function simulation()
         return {
             Connect=function(_,fn) table.insert(callbacks,fn);return {Disconnect=function() local index=table.find(callbacks,fn);if index then table.remove(callbacks,index) end end} end,
             Fire=function(_,...) for _,fn in table.clone(callbacks) do tasks.spawn(fn,...) end end,
+            FireNow=function(_,...) for _,fn in table.clone(callbacks) do fn(...) end end,
         }
     end
     local methods={}
@@ -42,6 +45,7 @@ local function simulation()
                 if key=="Health" and value~=previous and data.HealthChanged then data.HealthChanged:Fire(value) end
             end})
         result.AbsoluteSize={X=960,Y=680};result.Visible=true;result.Active=true
+        result.Destroying=signal()
         if class=="TextButton" then result.Activated=signal() end
         if class=="Humanoid" then result.Health=100;result.HealthChanged=signal() end
         if parent then result.Parent=parent end
@@ -49,6 +53,11 @@ local function simulation()
     end
     function methods:IsA(class) return self.ClassName==class or class=="Instance" end
     function methods:GetChildren() local children={};for _,child in self._children do table.insert(children,child) end;return children end
+    function methods:GetDescendants()
+        local result={}
+        local function visit(parent) for _,child in parent:GetChildren() do table.insert(result,child);visit(child) end end
+        visit(self);return result
+    end
     function methods:FindFirstChild(name) return self._children[name] end
     function methods:WaitForChild(name) return assert(self._children[name],"Unexpected dependency/yield: "..self.Name.."."..name) end
     function methods:FindFirstChildOfClass(class) for _,child in self._children do if child:IsA(class) then return child end end;return nil end
@@ -58,8 +67,12 @@ local function simulation()
     function methods:GetAttributeChangedSignal(name) self._attributeSignals[name]=self._attributeSignals[name] or signal();return self._attributeSignals[name] end
     function methods:GetPropertyChangedSignal(name) self._propertySignals[name]=self._propertySignals[name] or signal();return self._propertySignals[name] end
     function methods:Destroy() self.Parent=nil end
+    local clones={}
+    function methods:Clone() table.insert(clones,self.Name);return instance(self.ClassName,self.Name) end
     local rs=instance("ReplicatedStorage","ReplicatedStorage")
+    rs.DescendantAdded=signal();rs.DescendantRemoving=signal()
     local world=instance("Workspace","Workspace")
+    function world:GetServerTimeNow() return now+1000 end
     local players=instance("Players","Players");players.PlayerAdded=signal();players.PlayerRemoving=signal()
     local player=instance("Player","LocalPlayer",players);players.LocalPlayer=player
     player.Team={Name="Humans"};player.CharacterAdded=signal();player.CharacterRemoving=signal()
@@ -74,12 +87,24 @@ local function simulation()
     local kit=instance("Folder","ZO_WeaponAssets",rs)
     local templates=instance("Folder","Weapons",kit)
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
+    local skins=instance("Folder","Skins",kit)
+    local pistolSkins=instance("Folder","Pistol",skins)
+    for _,name in {"Classic","Gold"} do instance("Tool",name,pistolSkins) end
+    for _,id in Config.WeaponOrder do player:SetAttribute("ZO_Skin_"..id,WeaponSkins.default(id)) end
+    player:SetAttribute("ZO_WeaponSkin","Default")
     local modules={}
-    for name,value in {Config=Config,Rules=Rules} do local module=instance("ModuleScript",name,shared);modules[module]=value end
+    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins} do local module=instance("ModuleScript",name,shared);modules[module]=value end
     local previewWeapons={}
+    local previewSkins={}
+    local realPreview
+    local env
     local previewModule=instance("ModuleScript","WeaponPreview",shared)
-    modules[previewModule]={new=function()
-        return {setWeapon=function(_,id) table.insert(previewWeapons,id) end,destroy=function() end}
+    modules[previewModule]={new=function(viewport)
+        if options.realPreview then
+            local constructor=assert(loadstring(PREVIEW_SOURCE));setfenv(constructor,env)
+            realPreview=constructor().new(viewport);return realPreview
+        end
+        return {setWeapon=function(_,id,skin) table.insert(previewWeapons,id);table.insert(previewSkins,skin) end,destroy=function() end}
     end}
     local remote=instance("RemoteEvent","ZO_LoadoutAction",rs);remote.OnClientEvent=signal()
     local requests={}
@@ -93,7 +118,7 @@ local function simulation()
     function cas:BindActionAtPriority(name,callback,createButton,priority,...)
         self.actions[name]={callback=callback,createButton=createButton,priority=priority,keys={...}}
     end
-    local runService={callbacks={},IsStudio=function() return false end}
+    local runService={callbacks={},RenderStepped=signal(),IsStudio=function() return false end}
     function runService:BindToRenderStep(name,priority,callback) self.callbacks[name]={priority=priority,callback=callback} end
     local enum={
         ZIndexBehavior={Sibling="Sibling"},ApplyStrokeMode={Border="Border"},Font={Gotham="Gotham",GothamMedium="GothamMedium",GothamBold="GothamBold"},
@@ -103,12 +128,13 @@ local function simulation()
             Five="Five",Six="Six",Seven="Seven",Eight="Eight",Nine="Nine"},RenderPriority={Camera={Value=200}},
     }
     local services={Players=players,ReplicatedStorage=rs,UserInputService=uis,ContextActionService=cas,GuiService=guiService,RunService=runService}
-    local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
+    env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
         script={Destroying=signal()},
         Instance={new=function(class) return instance(class) end},Enum=enum,task=tasks,os={clock=function() return now end},
         require=function(module) return assert(modules[module],"Unexpected require") end,
         Color3={fromRGB=function(r,g,b) return {R=r,G=g,B=b} end,new=function(r,g,b) return {R=r*255,G=g*255,B=b*255} end},
         Vector2={new=function(x,y) return {X=x,Y=y} end},UDim={new=function(scale,offset) return {Scale=scale,Offset=offset} end},
+        Vector3={new=function(x,y,z) return {X=x,Y=y,Z=z} end},
         UDim2={new=function(...) return {...} end,fromOffset=function(x,y) return {0,x,0,y} end,fromScale=function(x,y) return {x,0,y,0} end}},
         {__index=getfenv()})
     local function advance(seconds)
@@ -136,7 +162,9 @@ local function simulation()
     end
     return {player=player,hum=hum,character=character,rs=rs,world=world,remote=remote,requests=requests,gui=gui,panel=panel,
         availability=panel.Availability,credits=panel.Credits,inventory=panel.Inventory,buy=actions.Buy,equip=actions.Equip,ammo=actions.Ammo,
-        cards=panel.Catalog.Weapons,categories=panel.Categories,previewWeapons=previewWeapons,advance=advance,click=click,uis=uis,guiService=guiService,cas=cas,
+        cards=panel.Catalog.Weapons,categories=panel.Categories,previewWeapons=previewWeapons,previewSkins=previewSkins,
+        skins=panel.Catalog.WeaponDetail.Appearances,advance=advance,click=click,uis=uis,guiService=guiService,cas=cas,
+        realPreview=realPreview,create=instance,clones=clones,
         key=function(name,state,keyCode) local action=assert(cas.actions[name],name);local result=action.callback(name,state or "Begin",{KeyCode=keyCode});advance(0);return result end,
         result=function(...) remote.OnClientEvent:Fire(...);advance(0) end,
         render=function(dt) for _,entry in runService.callbacks do entry.callback(dt) end;advance(0) end}
@@ -320,6 +348,124 @@ do
         and s.availability.Text=="Modelo ainda não incluído nesta versão.","unbundled models report availability rather than pretending a download is running")
     s.click(s.buy,true)
     check(#s.requests==0,"queued purchase callback cannot request an unavailable template")
+end
+
+do
+    local s=simulation();open(s);category(s,"Pistols")
+    check(s.skins.Visible and s.skins.Choices.Skin_Black.Visible and s.skins.Choices.Skin_Classic.Visible
+        and s.skins.Choices.Skin_Gold.Visible,"pistol displays the three catalogued appearance choices")
+    check(s.previewSkins[#s.previewSkins]=="Black" and not s.skins.ApplySkin.Active,"pistol preview begins with the authoritative default appearance")
+    local credits,ammo=s.player:GetAttribute("ZO_Credits"),s.player:GetAttribute("ZO_Ammo")
+    s.click(s.skins.Choices.Skin_Gold)
+    check(s.previewWeapons[#s.previewWeapons]=="Pistol" and s.previewSkins[#s.previewSkins]=="Gold","appearance choice sends the actual variant id to the preview module")
+    check(#s.requests==0 and s.player:GetAttribute("ZO_Skin_Pistol")=="Black","browsing a finish does not equip it or send a gameplay request")
+    check(s.player:GetAttribute("ZO_Credits")==credits and s.player:GetAttribute("ZO_Ammo")==ammo,"appearance previews do not change credits or ammunition")
+    check(s.skins.ApplySkin.Active and s.skins.Status.Text:find("PRÉVIA",1,true)~=nil,"unapplied appearance is labelled as a preview")
+    s.click(s.skins.ApplySkin)
+    check(#s.requests==1 and s.requests[1][1]=="Skin" and s.requests[1][2]=="Pistol" and s.requests[1][3]=="Gold","apply requests the weapon and appearance through the real loadout remote")
+    check(not s.skins.ApplySkin.Active and not s.skins.Choices.Skin_Classic.Active
+        and not s.equip.Active and not s.ammo.Active,"pending appearance request shares the existing transaction guard")
+    s.click(s.skins.ApplySkin,true);s.click(s.skins.Choices.Skin_Classic,true);s.click(s.ammo,true)
+    check(#s.requests==1 and s.previewSkins[#s.previewSkins]=="Gold","queued callbacks cannot overlap a pending appearance change")
+    s.player:SetAttribute("ZO_Skin_Pistol","Gold");s.advance(0)
+    check(not s.skins.ApplySkin.Active and s.skins.Status.Text=="APLICADA: Dourada","early server appearance replication updates display without clearing the pending request")
+    s.result("Result",true,"Aparência aplicada.")
+    check(s.availability.Text=="Aparência aplicada." and s.equip.Active,"server acknowledgement releases ordinary equipment controls")
+    check(s.player:GetAttribute("ZO_Credits")==credits and s.player:GetAttribute("ZO_Ammo")==ammo,"a cosmetic acknowledgement does not invent an economy or magazine change")
+    category(s,"Rifles")
+    check(not s.skins.Visible,"weapons with only their original finish do not create an empty skin selector")
+end
+
+do
+    local s=simulation();open(s);category(s,"Pistols");s.click(s.skins.Choices.Skin_Classic);s.click(s.skins.ApplySkin)
+    s.result("Result",false,"Aparência indisponível.")
+    check(s.skins.ApplySkin.Active and s.skins.Status.Text:find("PRÉVIA",1,true)~=nil
+        and s.player:GetAttribute("ZO_Skin_Pistol")=="Black","rejection preserves the applied appearance and permits a retry")
+    s.click(s.skins.ApplySkin);s.result("Result",true,"Aparência aplicada.")
+    check(s.skins.Status.Text:find("PRÉVIA",1,true)~=nil,"Result alone does not fabricate an appearance attribute before replication")
+    s.key("ZO_CloseShop");s.key("ZO_OpenShop");category(s,"Pistols")
+    check(s.previewSkins[#s.previewSkins]=="Black","reopening the shop restores the last server-applied appearance")
+    s.rs.ZO_WeaponAssets.Skins.Pistol.Gold:Destroy();s.render(.3)
+    check(not s.skins.Choices.Skin_Gold.Active,"a missing variant is disabled even while the default weapon remains available")
+    local before=#s.requests;s.click(s.skins.Choices.Skin_Gold,true)
+    check(#s.requests==before and s.previewSkins[#s.previewSkins]=="Black","a queued missing-variant activation cannot show or apply another model")
+end
+
+do
+    local s=simulation();open(s);category(s,"Pistols");s.click(s.skins.Choices.Skin_Gold)
+    s.player:SetAttribute("ZO_WeaponId","Pistol");s.player:SetAttribute("ZO_Reloading",true);s.advance(0)
+    check(not s.skins.ApplySkin.Active and not s.skins.Choices.Skin_Classic.Active,"current weapon reload disables appearance changes")
+    s.click(s.skins.ApplySkin,true);check(#s.requests==0,"reload guard is checked again when an apply callback arrives")
+    s.player:SetAttribute("ZO_Reloading",false);s.player:SetAttribute("ZO_EquipReadyAt",s.world:GetServerTimeNow()+1);s.advance(0)
+    check(not s.skins.ApplySkin.Active,"current weapon equip delay disables appearance application")
+    s.advance(1.1);s.render(.3)
+    check(s.skins.ApplySkin.Active,"appearance action resumes after the authoritative equip deadline")
+    s.player:SetAttribute("ZO_WeaponId","Rifle");s.player:SetAttribute("ZO_Reloading",true);s.advance(0)
+    check(s.skins.ApplySkin.Active,"reloading a different weapon does not block an owned pistol's cosmetic change")
+    s.player:SetAttribute("ZO_SecondaryWeapon",nil);s.advance(0)
+    check(not s.skins.ApplySkin.Active,"an unowned weapon can be previewed but not customized")
+    s.click(s.skins.ApplySkin,true);check(#s.requests==0,"unowned appearance callback emits no request")
+end
+
+do
+    local s=simulation();open(s);category(s,"Pistols");s.click(s.skins.Choices.Skin_Gold)
+    s.uis.TouchEnabled=true;s.panel.AbsoluteSize={X=320,Y=360};s.advance(0)
+    check(s.skins.Choices.Size[4]==44 and s.skins.ApplySkin.Size[4]==44,"compact touch skins retain 44-pixel selection and apply targets")
+    check(s.panel.Actions.Position[4]==-68 and s.panel.Catalog.WeaponDetail.AutomaticCanvasSize=="Y","skin details scroll without moving the existing purchase footer off screen")
+    s.hum.Health=0;s.advance(0);s.click(s.skins.ApplySkin,true)
+    check(not s.skins.ApplySkin.Active and #s.requests==0,"death closes and blocks a queued cosmetic action")
+    s.hum.Health=100;s.advance(0);open(s);category(s,"Pistols");s.click(s.skins.Choices.Skin_Gold)
+    s.player.Team={Name="Zombies"};s.advance(0);s.click(s.skins.ApplySkin,true)
+    check(not s.skins.Choices.Skin_Classic.Active and #s.requests==0,"infected role cannot select or apply human weapon appearances")
+end
+
+do
+    local s=simulation();s.player:SetAttribute("ZO_Skin_Pistol","Gold")
+    s.rs.ZO_WeaponAssets.Weapons.Pistol:Destroy();s.advance(0);open(s);category(s,"Pistols")
+    check(s.equip.Active and s.cards.Pistol.Price.Text=="NO SEU EQUIPAMENTO","an applied Gold variant remains equippable when the unused Black template is missing")
+    s.click(s.equip)
+    check(#s.requests==1 and s.requests[1][1]=="Equip" and s.requests[1][2]=="Pistol","equipment requests resolve the server-applied variant rather than requiring the default model")
+end
+
+do
+    local s=simulation();s.player:SetAttribute("ZO_Skin_Pistol","Gold")
+    s.rs.ZO_WeaponAssets.Skins.Pistol.Gold:Destroy();s.advance(0);open(s);category(s,"Pistols")
+    check(not s.equip.Active and s.cards.Pistol.Price.Text:find("CARREGANDO MODELO",1,true)~=nil,"a missing applied variant blocks equipment even if the Black template is present")
+    s.click(s.equip,true)
+    check(#s.requests==0,"queued equip callback cannot silently fall back to a different appearance")
+end
+
+do
+    -- Exercise the real preview's event/cancellation policy. Rendering and mesh
+    -- bounds are outside these UI doubles; seed the completed retained-clone state.
+    local s=simulation({realPreview=true});local preview=s.realPreview
+    local kit=s.rs.ZO_WeaponAssets
+    local gold=kit.Skins.Pistol.Gold
+    local function retained(template)
+        preview.id="Pistol";preview.skin="Gold";preview.template=template
+        preview.model=s.create("Model","RetainedGoldClone",preview.world)
+        preview.viewport:SetAttribute("ZO_PreviewStatus","Ready")
+        return preview.model
+    end
+    local clone=retained(gold);local serial=preview.serial;local count=#s.clones
+    s.rs.DescendantRemoving:FireNow(gold)
+    check(preview.model==nil and clone.Parent==nil and preview.viewport:GetAttribute("ZO_PreviewStatus")=="Unavailable",
+        "removing the source template immediately invalidates a retained Ready clone")
+    check(preview.serial>serial and preview.id=="Pistol" and preview.skin=="Gold","template removal cancels work while retaining the exact requested weapon and appearance")
+    check(gold.Parent~=nil and #s.clones==count,"the before-detachment removal callback never recreates the still-parented source")
+    gold:Destroy();s.rs.DescendantAdded:FireNow(kit.Weapons.Pistol);s.advance(0)
+    check(#s.clones==count,"a Black template arrival cannot satisfy a missing Gold appearance")
+    local replacement=s.create("Tool","Gold",kit.Skins.Pistol)
+    s.rs.DescendantAdded:FireNow(replacement);s.advance(0)
+    check(#s.clones==count+1 and s.clones[#s.clones]=="Gold" and preview.template==replacement,
+        "matching arrival retries cloning the exact replacement variant")
+    clone=retained(replacement);s.rs.DescendantRemoving:FireNow(kit)
+    check(preview.model==nil and clone.Parent==nil and preview.viewport:GetAttribute("ZO_PreviewStatus")=="Unavailable",
+        "removing an ancestor asset provider also invalidates the retained clone")
+    kit:Destroy();count=#s.clones;kit.Parent=s.rs;s.rs.DescendantAdded:FireNow(replacement);s.advance(0)
+    check(#s.clones==count+1 and s.clones[#s.clones]=="Gold" and preview.template==replacement,"provider restoration recovers the same selected finish")
+    preview:destroy();count=#s.clones;s.rs.DescendantAdded:FireNow(replacement);s.advance(0)
+    check(#s.clones==count,"destroyed previews disconnect asset lifecycle callbacks")
 end
 
 print(("PASS actual Loadout client: %d assertions; UI bindings, Result protocol, pending timers and server-owned attributes (Roblox API doubles)"):format(checks))

@@ -69,6 +69,9 @@
         "WeaponMotion": {
           "$path": "src/maps/k17/gameplay/WeaponMotion.luau"
         },
+        "WeaponSkins": {
+          "$path": "src/maps/k17/gameplay/WeaponSkins.luau"
+        },
         "PresentationConfig": {
           "$path": "src/maps/k17/gameplay/PresentationConfig.luau"
         },
