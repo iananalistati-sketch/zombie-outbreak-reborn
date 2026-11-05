@@ -23,7 +23,8 @@ local lastSentAt=-math.huge
 local sendQueued=false
 local disposed=false
 local removing=false
-local walkHeld,walkToggle=false,false
+local walkHeld=false
+local sprintHeld,sprintToggle=false,false
 local crouchHeld,crouchToggle=false,false
 local baseline: Vector3?=nil
 local lastOffset: Vector3?=nil
@@ -55,9 +56,10 @@ local function canInput(): boolean
 end
 local function desiredMode(): string
     if not canInput() then return "Run" end
-    -- Same stance precedence as extract; Shift is tactical walking in K-17.
+    -- Same stance precedence as extract; sprint is separate from normal Run.
     if crouchHeld or crouchToggle then return "Crouch" end
-    if walkHeld or walkToggle then return "Walk" end
+    if walkHeld then return "Walk" end
+    if sprintHeld or sprintToggle then return "Sprint" end
     return "Run"
 end
 local sendIntent: ()->()
@@ -81,13 +83,13 @@ sendIntent=function()
     remote:FireServer(mode)
 end
 local function buttons()
-    for _,name in {"ZO_Walk","ZO_Crouch"} do
+    for _,name in {"ZO_Sprint","ZO_Crouch"} do
         local button=CAS:GetButton(name)
         if button then button.Visible=UIS.TouchEnabled and canInput() end
     end
 end
 local function resetInput()
-    walkHeld=false;walkToggle=false;crouchHeld=false;crouchToggle=false
+    walkHeld=false;sprintHeld=false;sprintToggle=false;crouchHeld=false;crouchToggle=false
     sendIntent();buttons()
 end
 local function restoreCamera()
@@ -147,12 +149,19 @@ local function bindRemote()
 end
 local function walkAction(_: string,state: Enum.UserInputState,input: InputObject): Enum.ContextActionResult
     if not canInput() then resetInput();return Enum.ContextActionResult.Pass end
+    if state==Enum.UserInputState.Cancel or state==Enum.UserInputState.End then walkHeld=false
+    elseif state==Enum.UserInputState.Begin then walkHeld=true end
+    sendIntent()
+    return Enum.ContextActionResult.Sink
+end
+local function sprintAction(_: string,state: Enum.UserInputState,input: InputObject): Enum.ContextActionResult
+    if not canInput() then resetInput();return Enum.ContextActionResult.Pass end
     local toggle=input.UserInputType==Enum.UserInputType.Touch or input.KeyCode==Enum.KeyCode.ButtonL3
-    if state==Enum.UserInputState.Cancel then walkHeld=false;walkToggle=false
+    if state==Enum.UserInputState.Cancel then sprintHeld=false;sprintToggle=false
     elseif toggle then
-        if state==Enum.UserInputState.Begin then walkToggle=not walkToggle end
-    elseif state==Enum.UserInputState.Begin then walkHeld=true
-    elseif state==Enum.UserInputState.End then walkHeld=false end
+        if state==Enum.UserInputState.Begin then sprintToggle=not sprintToggle end
+    elseif state==Enum.UserInputState.Begin then sprintHeld=true
+    elseif state==Enum.UserInputState.End then sprintHeld=false end
     sendIntent()
     return Enum.ContextActionResult.Sink
 end
@@ -168,11 +177,12 @@ local function crouchAction(_: string,state: Enum.UserInputState,input: InputObj
     sendIntent()
     return Enum.ContextActionResult.Sink
 end
-CAS:BindActionAtPriority("ZO_Walk",walkAction,true,1800,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift,Enum.KeyCode.ButtonL3)
+CAS:BindActionAtPriority("ZO_Walk",walkAction,false,1800,Enum.KeyCode.LeftAlt,Enum.KeyCode.RightAlt)
+CAS:BindActionAtPriority("ZO_Sprint",sprintAction,true,1800,Enum.KeyCode.LeftShift,Enum.KeyCode.RightShift,Enum.KeyCode.ButtonL3)
 CAS:BindActionAtPriority("ZO_Crouch",crouchAction,true,1800,Enum.KeyCode.LeftControl,Enum.KeyCode.RightControl,Enum.KeyCode.C,Enum.KeyCode.ButtonB)
-CAS:SetTitle("ZO_Walk","Andar");CAS:SetPosition("ZO_Walk",UDim2.new(0,24,1,-260))
+CAS:SetTitle("ZO_Sprint","Correr");CAS:SetPosition("ZO_Sprint",UDim2.new(0,24,1,-260))
 CAS:SetTitle("ZO_Crouch","Agachar");CAS:SetPosition("ZO_Crouch",UDim2.new(0,112,1,-260))
-for _,name in {"ZO_Walk","ZO_Crouch"} do
+for _,name in {"ZO_Sprint","ZO_Crouch"} do
     local button=CAS:GetButton(name)
     if button then button.Size=UDim2.fromOffset(76,54) end
 end
@@ -242,6 +252,6 @@ connect(script.Destroying,function()
     disposed=true
     restoreCamera()
     RunService:UnbindFromRenderStep(renderName)
-    CAS:UnbindAction("ZO_Walk");CAS:UnbindAction("ZO_Crouch")
+    CAS:UnbindAction("ZO_Walk");CAS:UnbindAction("ZO_Sprint");CAS:UnbindAction("ZO_Crouch")
     disconnect(connections);disconnect(characterConnections);disconnect(humanoidConnections)
 end)

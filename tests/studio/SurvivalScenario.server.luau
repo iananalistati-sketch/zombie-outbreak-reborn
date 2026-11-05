@@ -158,6 +158,29 @@ local ok,problem=xpcall(function()
     end,3)
     check(true,"clearing the ceiling restores standing head position and the original human speed")
     local _,victim,_,target=living(zombie)
+    request(human,"MoveSprint")
+    waitUntil("human sprinting mode",function()
+        return movingHuman:GetAttribute("ZO_MovementMode")=="Sprint"
+            and near(movingHuman.WalkSpeed,20)
+            and near(movingHuman.WalkSpeed,normalHumanSpeed*movementConfig.SprintScale)
+    end,2)
+    check(true,"explicit sprint intent raises configured human speed from 16 to 20")
+    local sprintAmmo=human:GetAttribute("ZO_Ammo")
+    local sprintHealth=victim.Health
+    assert(type(sprintAmmo)=="number" and sprintAmmo>0,"Sprint fire test requires loaded ammunition")
+    request(human,"Fire",target.Position)
+    -- The acknowledgement follows the real fire request on the client transport;
+    -- allow server processing before checking that sprint blocked the attempt.
+    task.wait(.15)
+    check(movingHuman:GetAttribute("ZO_MovementMode")=="Sprint"
+        and human:GetAttribute("ZO_Ammo")==sprintAmmo and victim.Health==sprintHealth,
+        "server refuses fire during sprint without consuming ammunition or damaging the target")
+    request(human,"MoveRun")
+    waitUntil("normal speed after sprint",function()
+        return movingHuman:GetAttribute("ZO_MovementMode")=="Run"
+            and near(movingHuman.WalkSpeed,16) and near(movingHuman.WalkSpeed,normalHumanSpeed)
+    end,2)
+    check(true,"releasing sprint restores the original human speed before normal fire")
     local baseSpeed=victim.WalkSpeed
     local taggedSpeed=baseSpeed*combatConfig.Containment.TagWalkScale
     local minimumSpeed=baseSpeed

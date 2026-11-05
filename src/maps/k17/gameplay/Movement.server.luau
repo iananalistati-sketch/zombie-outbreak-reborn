@@ -15,7 +15,7 @@ local sessions: {[Player]: any}={}
 local connections: {RBXScriptConnection}={}
 local allowedPhases={Waiting=true,Intermission=true,Preparation=true,Active=true}
 local allowedRoles={Lobby=true,Humans=true,Zombies=true}
-local modes={Run=1,Walk=Config.WalkScale,Crouch=Config.CrouchScale}
+local modes={Run=1,Walk=Config.WalkScale,Crouch=Config.CrouchScale,Sprint=Config.SprintScale}
 
 local function disconnect(list)
     for _,connection in list do connection:Disconnect() end

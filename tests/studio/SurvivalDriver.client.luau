@@ -32,7 +32,7 @@ connection=channel.OnClientEvent:Connect(function(serial: number,action: string,
         elseif action=="Melee" then
             assert(target,"Missing target")
             melee:FireServer((target-head.Position).Unit)
-        elseif action=="MoveWalk" or action=="MoveCrouch" or action=="MoveRun" then
+        elseif action=="MoveWalk" or action=="MoveCrouch" or action=="MoveRun" or action=="MoveSprint" then
             local movement=RS:WaitForChild("ZO_MoveIntent",4) :: RemoteEvent?
             assert(movement and movement:IsA("RemoteEvent"),"Movement controller is not ready")
             movement:FireServer(action:sub(5))

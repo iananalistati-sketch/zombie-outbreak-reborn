@@ -1,5 +1,9 @@
 # Movimentação tática e loja — 05/11/2026
 
+**Registro histórico do commit `13603bf`.** A entrega seguinte muda Shift para
+corrida e Alt para caminhada, acrescentando integração com armas e precisão.
+Consulte o [estado atual](FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
+
 Entrega na branch `feat/fps-combat-package`, preparada sem depender de acesso
 local ao Roblox Studio. O mapa e seus objetos não foram reconstruídos nesta etapa.
 O FPS System oficial continua candidato aguardando seu arquivo para auditoria;

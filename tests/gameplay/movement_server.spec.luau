@@ -202,7 +202,7 @@ end
 
 do
     local s=simulation();s.advance(.05)
-    for _,bad in {100,math.huge,{},'Sprint','Fly'} do s.request(bad) end
+    for _,bad in {100,math.huge,{},'Sprint=100','Fly'} do s.request(bad) end
     s.advance(.05)
     check(s.hum.WalkSpeed==16,'numeric speed and unknown mode requests cannot change movement')
     s.request('Walk');s.request('Crouch');s.advance(.05)
@@ -218,6 +218,35 @@ do
     check(s.hum:GetAttribute('ZO_MovementMode')=='Run','round results cancels movement input')
     local speed=s.hum.WalkSpeed;s.request('Crouch');s.advance(.1)
     check(s.hum.WalkSpeed==speed,'results phase rejects new crouch requests')
+end
+
+do
+    local s=simulation();s.advance(.05);s.request('Sprint');s.advance(.05)
+    check(s.hum.WalkSpeed==20 and s.hum:GetAttribute('ZO_MovementMode')=='Sprint',
+        'named sprint intent uses only the configured server multiplier for humans')
+    local deadline=s.state.tag(s.hum,s.now(),.18,.55);s.advance(.05)
+    check(near(s.hum.WalkSpeed,16*Config.SprintScale*.55),'hit containment applies while sprinting')
+    s.request('Crouch');s.advance(.05)
+    check(near(s.hum.WalkSpeed,16*Config.CrouchScale*.55)
+        and s.hum:GetAttribute('ZO_TaggedUntil')==deadline,'sprint to crouch keeps the active tag and role baseline')
+    s.ceiling(true);s.request('Sprint');s.advance(.05)
+    check(s.hum:GetAttribute('ZO_Crouching') and s.hum:GetAttribute('ZO_StandBlocked')
+        and near(s.hum.WalkSpeed,16*Config.CrouchScale*.55),'sprint intent cannot bypass a ceiling or the active hit effect')
+    s.ceiling(false);s.advance(.05)
+    check(s.hum:GetAttribute('ZO_MovementMode')=='Sprint' and s.hum.WalkSpeed==20,
+        'pending sprint resumes at its configured speed once clear and the tag expires')
+    s.role('Zombies');s.advance(.05)
+    check(s.hum.WalkSpeed==19 and s.hum:GetAttribute('ZO_MovementMode')=='Run',
+        'infection resets the prior human sprint intent to the zombie base')
+    s.request('Sprint');s.advance(.05)
+    check(s.hum.WalkSpeed==23.75,'zombies sprint from their own role baseline')
+    s.state.tag(s.hum,s.now(),.18,.55);s.advance(.05)
+    check(near(s.hum.WalkSpeed,19*Config.SprintScale*.55),'zombie sprint does not escape a fresh hit slowdown')
+    s.request('Run');s.request('Sprint');s.request('Run');s.advance(.05)
+    check(s.hum:GetAttribute('ZO_MovementMode')=='Run' and near(s.hum.WalkSpeed,19*.55),
+        'a compressed sprint key release restores normal mode without losing its tag')
+    s.advance(.2)
+    check(s.hum.WalkSpeed==19,'after sprint release the tag expires to the ordinary zombie speed')
 end
 
 do

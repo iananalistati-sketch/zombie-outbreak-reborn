@@ -59,6 +59,12 @@ for _,id in Config.WeaponOrder do
     check(Rules.shotSpread(gun,false,false)==gun.Spread,"hip spread is server configured")
     check(Rules.shotSpread(gun,false,true)==gun.AimSpread,"stationary aim uses configured precision")
     check(Rules.shotSpread(gun,true,true)==gun.AimMoveSpread,"moving aim retains configured movement penalty")
+    check(near(Rules.shotSpread(gun,false,false,"Crouch",false,Config.Accuracy),gun.Spread*.75),"grounded crouch improves hip-fire accuracy")
+    check(near(Rules.shotSpread(gun,true,true,"Crouch",false,Config.Accuracy),gun.AimMoveSpread*.75),"grounded crouch composes with observed movement and ADS")
+    check(near(Rules.shotSpread(gun,false,true,"Run",true,Config.Accuracy),gun.AimSpread*1.8),"airborne ADS retains a configured accuracy penalty")
+    check(near(Rules.shotSpread(gun,false,true,"Crouch",true,Config.Accuracy),gun.AimSpread*1.8),"airborne penalty overrides the crouch bonus")
+    check(Rules.shotSpread(gun,true,false,"Run",false,Config.Accuracy)==gun.MoveSpread,"ordinary grounded movement keeps the weapon catalogue spread")
+    check(Rules.shotSpread(gun,false,true,"Crouch",true)==gun.AimSpread,"omitted optional tuning preserves the legacy API behavior")
 end
 check(Rules.hitgroup("Head")=="Head" and Rules.hitgroup("RightUpperArm")=="Arm" and Rules.hitgroup("Left Foot")=="Leg" and Rules.hitgroup("Torso")=="Body","R6/R15 hitgroup mapping")
 local body=Rules.knockback(Config,22,1,1,1,false)

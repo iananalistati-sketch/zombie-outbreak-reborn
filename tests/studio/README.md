@@ -9,7 +9,7 @@ Clients**, selecione **2** clientes e inicie. Aguarde a execução automática s
 comandar os personagens. No Output do servidor, procure:
 
 ```text
-[SURVIVAL STUDIO] COMPLETE: 21 checks passed in the Roblox engine.
+[SURVIVAL STUDIO] COMPLETE: 24 checks passed in the Roblox engine.
 ```
 
 Um erro gera `[SURVIVAL STUDIO] FAIL at ...`, com a etapa e o motivo. No servidor,
@@ -33,6 +33,12 @@ temporário, criado somente fora do modelo do mapa nesse place de teste, deve
 bloquear a tentativa de levantar. Depois de removido, a cabeça e a velocidade
 precisam voltar à condição normal. O bloqueador é destruído também se ocorrer
 uma falha. Nenhuma geometria dos mapas de produção é editada.
+
+Outras três verificações enviam a intenção real de sprint, conferem a mudança
+de 16 para 20 em `Humanoid.WalkSpeed`, tentam um disparo real durante o sprint
+e exigem que munição e vida do alvo permaneçam intactas. Ao liberar o sprint,
+a velocidade deve voltar a 16 antes do teste existente de tiro com dano. Esse
+teste usa o remote de produção; não simula a tecla Shift.
 
 Os personagens são posicionados e ancorados para tornar os raios repetíveis;
 ForceFields de nascimento são removidos. As verificações conferem propriedades

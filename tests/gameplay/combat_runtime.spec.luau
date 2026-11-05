@@ -451,6 +451,66 @@ end
 
 do
     local s,p=twoHumans();ready(s,p)
+    local hum=p.Character.Humanoid
+    MovementState.setBase(hum,16,s.now());MovementState.setMode(hum,"Sprint",1.25,s.now())
+    local ammo,rays=attr(p,"Ammo"),#s.raycasts
+    -- Calling the RemoteEvent directly models a client that ignores its local
+    -- sprint firing guard. Only authoritative mode can admit the shot.
+    s.request("ZO_FireRifle",p,"Fire",-Vector.zAxis,true)
+    check(attr(p,"Ammo")==ammo and #s.raycasts==rays,"forged sprint fire cannot spend ammunition or produce a server shot")
+    s.advance(Config.RequestInterval+.001)
+    MovementState.setMode(hum,"Run",1,s.now());s.fire(p)
+    check(attr(p,"Ammo")==ammo-1 and #s.raycasts==rays+1,
+        "release can fire before a weapon interval elapses because rejected sprint fire spent no cadence")
+    MovementState.setMode(hum,"Sprint",1.25,s.now());s.reload(p)
+    check(attr(p,"Reloading")==true,"sprinting still permits the existing reload action")
+    s.advance(Config.Weapons.Rifle.ReloadSeconds+.1)
+    check(attr(p,"Ammo")==ammo and attr(p,"Reserve")==Config.Weapons.Rifle.Reserve-1,
+        "reload completes normally while the server remains in sprint mode")
+    local credits=attr(p,"Credits");s.loadout(p,"Buy","SMG")
+    check(attr(p,"WeaponId")=="SMG" and attr(p,"Credits")==credits-Config.Weapons.SMG.Price,
+        "sprinting leaves preparation purchases under their existing rules")
+    s.advance(Config.RequestInterval+.001);s.loadout(p,"Equip","Pistol")
+    check(attr(p,"WeaponId")=="Pistol","sprinting leaves owned weapon equip under its existing rules")
+end
+
+do
+    local calls={}
+    local observedRules=table.clone(Rules)
+    observedRules.shotSpread=function(weapon,moving,aiming,mode,airborne,accuracy)
+        local spread=Rules.shotSpread(weapon,moving,aiming,mode,airborne,accuracy)
+        table.insert(calls,{weapon=weapon,moving=moving,aiming=aiming,mode=mode,airborne=airborne,accuracy=accuracy,spread=spread})
+        return spread
+    end
+    local observed=assert(loadstring(SIMULATION_SOURCE))()({
+        Config=Config,Rules=table.freeze(observedRules),WeaponState=WeaponState,LoadoutState=LoadoutState,
+        Containment=Containment,MovementState=MovementState,CombatSource=COMBAT_SOURCE,
+    })
+    local s=observed.simulation();local p=s.add("AccuracyShooter","Humans");s.add("Second","Humans");ready(s,p)
+    local hum=p.Character.Humanoid
+    MovementState.setBase(hum,16,s.now());MovementState.setMode(hum,"Crouch",.5,s.now())
+    s.request("ZO_FireRifle",p,"Fire",-observed.Vector.zAxis,true)
+    local crouched=calls[#calls]
+    check(crouched.mode=="Crouch" and not crouched.airborne and not crouched.moving
+        and crouched.aiming and crouched.accuracy==Config.Accuracy
+        and near(crouched.spread,Config.Rifle.AimSpread*.75),
+        "actual server passes authoritative grounded crouch and ADS into the real accuracy policy")
+    hum.FloorMaterial="Air";p.Character.HumanoidRootPart.AssemblyLinearVelocity=observed.Vector.new(8,4,0)
+    hum.MoveDirection=observed.Vector.zero
+    s.advance(Config.Rifle.FireInterval+.01);s.request("ZO_FireRifle",p,"Fire",-observed.Vector.zAxis,true)
+    local airborne=calls[#calls]
+    check(airborne.mode=="Crouch" and airborne.airborne and airborne.moving
+        and near(airborne.spread,Config.Rifle.AimMoveSpread*1.8),
+        "actual server uses floor material and assembly velocity so crouching in air cannot retain the grounded accuracy bonus")
+    MovementState.setMode(hum,"Run",1,s.now());hum.FloorMaterial="Concrete"
+    s.advance(Config.Rifle.FireInterval+.01);s.fire(p)
+    local grounded=calls[#calls]
+    check(grounded.mode=="Run" and not grounded.airborne and grounded.moving
+        and grounded.spread==Config.Rifle.MoveSpread,"return to grounded run restores the original observed movement spread")
+end
+
+do
+    local s,p=twoHumans();ready(s,p)
     local templates=s.rs.ZO_WeaponAssets.Weapons
     templates.SMG:Destroy()
     local credits=attr(p,"Credits")

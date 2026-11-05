@@ -108,7 +108,7 @@ local function simulation(options)
     local gui={MenuIsOpen=false,MenuOpened=signal(),MenuClosed=signal()}
     local enum={UserInputState={Begin="Begin",End="End",Cancel="Cancel"},ContextActionResult={Pass="Pass",Sink="Sink"},
         UserInputType={Touch="Touch",Keyboard="Keyboard",Gamepad1="Gamepad1"},
-        KeyCode={LeftShift="LeftShift",RightShift="RightShift",LeftControl="LeftControl",RightControl="RightControl",C="C",ButtonL3="ButtonL3",ButtonB="ButtonB"},
+        KeyCode={LeftShift="LeftShift",RightShift="RightShift",LeftAlt="LeftAlt",RightAlt="RightAlt",LeftControl="LeftControl",RightControl="RightControl",C="C",ButtonL3="ButtonL3",ButtonB="ButtonB"},
         RenderPriority={Camera={Value=200}}}
     local cameraSamples={}
     runService:BindToRenderStep("FakeRobloxCamera",200,function()
@@ -154,31 +154,46 @@ end
 do
     local s=simulation()
     check(s.mode()=="Run","initial state uses the ordinary movement mode")
-    check(s.cas.actions.ZO_Walk.priority<2200 and s.cas.actions.ZO_Crouch.priority<2200,"weapon and shop controls retain higher priority")
-    check(table.find(s.cas.actions.ZO_Walk.keys,"LeftShift") and table.find(s.cas.actions.ZO_Crouch.keys,"LeftControl"),"keyboard controls bind tactical walk and crouch")
-    s.key("ZO_Walk","Begin","LeftShift");s.advance(.1)
-    check(s.mode()=="Walk","Shift requests walking, not an invented speed")
+    check(s.cas.actions.ZO_Walk.priority<2200 and s.cas.actions.ZO_Crouch.priority<2200 and s.cas.actions.ZO_Sprint.priority<2200,"weapon and shop controls retain higher priority")
+    check(table.find(s.cas.actions.ZO_Walk.keys,"LeftAlt") and table.find(s.cas.actions.ZO_Crouch.keys,"LeftControl") and table.find(s.cas.actions.ZO_Sprint.keys,"LeftShift"),"keyboard controls bind walk, crouch and sprint separately")
+    s.key("ZO_Walk","Begin","LeftAlt");s.advance(.1)
+    check(s.mode()=="Walk","Alt requests tactical walking")
     s.key("ZO_Crouch","Begin","LeftControl");s.advance(.1)
     check(s.mode()=="Crouch","held crouch takes precedence over walking")
-    local count=#s.requests;s.key("ZO_Walk","End","LeftShift");s.advance(.1)
+    local count=#s.requests;s.key("ZO_Walk","End","LeftAlt");s.advance(.1)
     check(s.mode()=="Crouch" and #s.requests==count,"releasing lower-priority walk does not cancel held crouch or spam requests")
     s.key("ZO_Crouch","End","LeftControl");s.advance(.1)
     check(s.mode()=="Run","releasing Ctrl returns to ordinary movement")
     s.frames(30);check(#s.requests==count+1,"rendering does not send per-frame movement requests")
-    for _,request in s.requests do check(type(request.mode)=="string" and ({Run=true,Walk=true,Crouch=true})[request.mode],"client sends enum intent without a numeric speed") end
+    for _,request in s.requests do check(type(request.mode)=="string" and ({Run=true,Walk=true,Crouch=true,Sprint=true})[request.mode],"client sends enum intent without a numeric speed") end
 end
 
 do
-    local s=simulation();s.key("ZO_Walk","Begin","LeftShift");s.advance(.01)
-    local before=#s.requests;s.key("ZO_Walk","End","LeftShift")
-    check(#s.requests==before and s.mode()=="Walk","quick release is coalesced rather than sent inside the request interval")
+    local s=simulation();s.key("ZO_Sprint","Begin","LeftShift");s.advance(.01)
+    local before=#s.requests;s.key("ZO_Sprint","End","LeftShift")
+    check(#s.requests==before and s.mode()=="Sprint","quick sprint release is coalesced rather than sent inside the request interval")
     s.advance(.1);check(s.mode()=="Run" and #s.requests==before+1,"latest Run release reaches the server after the interval")
+end
+
+do
+    local s=simulation();s.key("ZO_Sprint","Begin","LeftShift");s.advance(.1)
+    check(s.mode()=="Sprint" and s.hum.WalkSpeed==16,"Shift requests server sprint without authoring client speed")
+    s.key("ZO_Walk","Begin","LeftAlt");s.advance(.1)
+    check(s.mode()=="Walk","held Alt suppresses sprint with tactical walking")
+    s.key("ZO_Crouch","Begin","LeftControl");s.advance(.1)
+    check(s.mode()=="Crouch","held crouch takes priority over walking and sprinting")
+    s.key("ZO_Crouch","End","LeftControl");s.key("ZO_Walk","End","LeftAlt");s.advance(.1)
+    check(s.mode()=="Sprint","releasing higher-priority stances reveals the held sprint")
+    local count=#s.requests;s.frames(20)
+    check(#s.requests==count,"sprint frames do not spam intent messages")
+    s.key("ZO_Sprint","End","LeftShift");s.advance(.1)
+    check(s.mode()=="Run","Shift release restores the ordinary movement mode")
 end
 
 do
     local s=simulation();s.key("ZO_Crouch","Begin","C");s.advance(.1);s.key("ZO_Crouch","End","C")
     check(s.mode()=="Crouch","C is a toggle and key release does not stand up")
-    s.key("ZO_Walk","Begin","LeftShift");s.advance(.1);s.key("ZO_Crouch","Begin","C");s.advance(.1)
+    s.key("ZO_Walk","Begin","LeftAlt");s.advance(.1);s.key("ZO_Crouch","Begin","C");s.advance(.1)
     check(s.mode()=="Walk","toggling crouch off reveals the still-held walking state")
     s.uis.JumpRequest:Fire();s.advance(.1)
     check(s.mode()=="Walk","jump requests release crouch without discarding held walk")
@@ -186,18 +201,18 @@ end
 
 do
     local s=simulation({touch=true})
-    check(s.cas.buttons.ZO_Walk.Visible and s.cas.buttons.ZO_Crouch.Visible,"touch actions appear for an active player")
-    check(s.cas.buttons.ZO_Walk.Text=="Andar" and s.cas.buttons.ZO_Crouch.Text=="Agachar","touch buttons identify both actions")
-    s.key("ZO_Walk","Begin",nil,"Touch");s.advance(.1);s.key("ZO_Walk","End",nil,"Touch")
-    check(s.mode()=="Walk","touch walking toggles instead of requiring a held finger")
+    check(s.cas.buttons.ZO_Sprint.Visible and s.cas.buttons.ZO_Crouch.Visible and s.cas.buttons.ZO_Walk==nil,"touch exposes sprint and crouch without another overlapping button")
+    check(s.cas.buttons.ZO_Sprint.Text=="Correr" and s.cas.buttons.ZO_Crouch.Text=="Agachar","touch buttons identify both actions")
+    s.key("ZO_Sprint","Begin",nil,"Touch");s.advance(.1);s.key("ZO_Sprint","End",nil,"Touch")
+    check(s.mode()=="Sprint","touch sprint toggles instead of requiring a held finger")
     s.key("ZO_Crouch","Begin","ButtonB","Gamepad1");s.advance(.1)
     check(s.mode()=="Crouch","gamepad B toggles crouch")
     s.key("ZO_Crouch","Cancel","ButtonB","Gamepad1");s.advance(.1)
-    check(s.mode()=="Walk","cancelled crouch releases only its own input")
-    s.key("ZO_Walk","Begin","ButtonL3","Gamepad1");s.advance(.1)
-    check(s.mode()=="Run","gamepad L3 toggles walking off")
+    check(s.mode()=="Sprint","cancelled crouch releases only its own input")
+    s.key("ZO_Sprint","Begin","ButtonL3","Gamepad1");s.advance(.1)
+    check(s.mode()=="Run","gamepad L3 toggles sprint off")
     s.player:SetAttribute("ZO_ShopOpen",true);s.advance(.1)
-    check(not s.cas.buttons.ZO_Walk.Visible and not s.cas.buttons.ZO_Crouch.Visible,"shop hides movement touch controls")
+    check(not s.cas.buttons.ZO_Sprint.Visible and not s.cas.buttons.ZO_Crouch.Visible,"shop hides movement touch controls")
     check(s.key("ZO_Crouch","Begin","ButtonB","Gamepad1")=="Pass","shop close input is not stolen by movement")
 end
 
@@ -230,8 +245,10 @@ do
         function(s) s.rs:SetAttribute("ZO_RoundState","Results") end,
         function(s) s.hum.Health=0;s.hum.Died:Fire() end,
     } do
-        local s=simulation();s.key("ZO_Crouch","Begin","C");s.advance(.1);cancel(s);s.advance(.1)
-        check(s.mode()=="Run","menu/focus/team/phase/death cancels held and toggled intent")
+        for _,action in {"ZO_Crouch","ZO_Sprint"} do
+            local s=simulation();s.key(action,"Begin",if action=="ZO_Sprint" then "LeftShift" else "C");s.advance(.1);cancel(s);s.advance(.1)
+            check(s.mode()=="Run","menu/focus/team/phase/death cancels held sprint and toggled crouch intent")
+        end
     end
 end
 
@@ -249,7 +266,7 @@ do
     s.script:Destroy();s.advance(.1)
     check(s.hum.CameraOffset==vector(8,9,10),"cleanup does not subtract stale crouch from another controller's offset")
     check(s.run.callbacks.ZO_MovementCamera==nil and s.run.callbacks.FakeRobloxCamera~=nil,"cleanup removes only the owned render binding")
-    check(s.cas.actions.ZO_Walk==nil and s.cas.actions.ZO_Crouch==nil,"cleanup unbinds both movement actions")
+    check(s.cas.actions.ZO_Walk==nil and s.cas.actions.ZO_Sprint==nil and s.cas.actions.ZO_Crouch==nil,"cleanup unbinds all movement actions")
 end
 
 do
@@ -263,23 +280,25 @@ do
     check(old.CameraOffset==baseline and nextHum.CameraOffset==nextBase,"respawn restores the old owned camera and preserves the new rig baseline")
     s.character.Parent=nil;s.advance(0)
     old.Died:Fire();s.player.CharacterRemoving:Fire(s.character);s.advance(.1)
-    s.key("ZO_Walk","Begin","LeftShift");s.advance(.1)
+    s.key("ZO_Walk","Begin","LeftAlt");s.advance(.1)
     check(s.mode()=="Walk","stale old-character callbacks cannot disable the current character")
     s.advance(.4)
     check(s.mode()=="Walk","already-queued old death and ancestry callbacks cannot reset current movement")
     s.player.CharacterAdded:Fire(s.character);s.advance(.1)
-    check(s.key("ZO_Walk","End","LeftShift")=="Sink","a late CharacterAdded for an old model cannot replace the current binding")
+    check(s.key("ZO_Walk","End","LeftAlt")=="Sink","a late CharacterAdded for an old model cannot replace the current binding")
     s.script:Destroy();s.advance(.1)
     check(nextHum.CameraOffset==nextBase,"destroying the current controller preserves its starting camera offset")
 end
 
 do
-    local s=simulation({noRemote=true});s.key("ZO_Walk","Begin","LeftShift");s.key("ZO_Crouch","Begin","LeftControl");s.advance(.1)
+    local s=simulation({noRemote=true});s.key("ZO_Sprint","Begin","LeftShift");s.key("ZO_Crouch","Begin","LeftControl");s.advance(.1)
     check(#s.requests==0,"late server remote does not block controls or invent a local speed")
     s.addRemote();s.advance(.1)
     check(#s.requests==1 and s.mode()=="Crouch","late remote receives only the latest desired mode")
     s.key("ZO_Crouch","End","LeftControl");s.advance(.1)
-    check(s.mode()=="Walk","held walk remains after late-remote crouch release")
+    check(s.mode()=="Sprint","held sprint remains after late-remote crouch release")
+    s.key("ZO_Sprint","End","LeftShift");s.advance(.1)
+    check(s.mode()=="Run","late-remote sprint release reaches the server")
 end
 
 do
@@ -288,6 +307,20 @@ do
     local hum=s.instance("Humanoid","Humanoid",s.character);s.advance(.1)
     s.key("ZO_Crouch","Begin","C");s.advance(.1)
     check(s.mode()=="Crouch" and hum.WalkSpeed==16,"late Humanoid activates input without a client speed write")
+end
+
+do
+    local s=simulation();s.key("ZO_Sprint","Begin","LeftShift");s.advance(.01)
+    s.script:Destroy();s.advance(0)
+    check(s.mode()=="Run","destroying the script releases sprint immediately even inside the request interval")
+    local count=#s.requests;s.advance(.2)
+    check(#s.requests==count,"delayed sprint callbacks cannot send after script disposal")
+end
+
+do
+    local s=simulation();s.key("ZO_Sprint","Begin","LeftShift");s.advance(.1)
+    s.player.CharacterRemoving:Fire(s.character);s.advance(.1)
+    check(s.mode()=="Run" and s.key("ZO_Sprint","Begin","LeftShift")=="Pass","character removal releases sprint and rejects input until a new character arrives")
 end
 
 print(("PASS actual Movement client: %d checks; input/camera/lifecycle API doubles, no Studio rendering or collision simulation"):format(checks))

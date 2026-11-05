@@ -16,6 +16,7 @@ local shared=RS:WaitForChild("K17Gameplay")
 local Config=require(shared.Config)
 local Rules=require(shared.Rules)
 local Presentation=require(shared:WaitForChild("WeaponPresentation"))
+local WeaponMotion=require(shared:WaitForChild("WeaponMotion"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
 local rifle=RS:WaitForChild("ZO_FireRifle") :: RemoteEvent
 local melee=RS:WaitForChild("ZO_Melee") :: RemoteEvent
@@ -78,6 +79,8 @@ end
 local vm=Instance.new("Model");vm.Name="ZO_LocalWeapon";vm.Parent=workspace.CurrentCamera
 local held,aimHeld=false,false
 local aimAlpha=0
+local sprintAlpha=0
+local weaponMotion=WeaponMotion.new()
 local nextAction,hitUntil,swingUntil=0,0,0
 local hitHead=false
 local viewKick,cameraKick,appliedCameraKick,bloom=0,0,0,0
@@ -123,8 +126,12 @@ local function canMelee(): boolean
     local hum=humanoid()
     return Rules.canMelee(role(),phase(),hum~=nil and hum.Health>0)
 end
+local function sprinting(): boolean
+    local hum=humanoid()
+    return hum~=nil and hum:GetAttribute("ZO_MovementMode")=="Sprint"
+end
 local function canAim(): boolean
-    return canShoot() and not UIS:GetFocusedTextBox() and player:GetAttribute("ZO_Reloading")~=true
+    return canShoot() and not sprinting() and not UIS:GetFocusedTextBox() and player:GetAttribute("ZO_Reloading")~=true
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0)
 end
 local function templateFor(id: string): Tool?
@@ -209,6 +216,7 @@ local function clearCameraKick()
 end
 local function stop()
     held=false;aimHeld=false;aimAlpha=0;nextAction=0;swingUntil=0
+    weaponMotion:reset()
     restoreFov();clearCameraKick()
     if currentPresentation then currentPresentation:stop() end
 end
@@ -241,7 +249,7 @@ local function action()
     local camera=workspace.CurrentCamera
     if not camera or UIS:GetFocusedTextBox() or menuOpen() or os.clock()<nextAction then return end
     local equipped=weapon()
-    if canShoot() and player:GetAttribute("ZO_Reloading")~=true and (player:GetAttribute("ZO_Ammo") or 0)>0
+    if canShoot() and not sprinting() and player:GetAttribute("ZO_Reloading")~=true and (player:GetAttribute("ZO_Ammo") or 0)>0
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0) then
         if not templateFor(equipped.Id) then
             notice="Modelo da arma indisponível · veja o carregamento do arsenal";noticeUntil=os.clock()+2
@@ -351,6 +359,9 @@ local function bindCharacter(character: Model)
     disconnectAll(characterConnections);presentationDirty=true;zombieCharacter=nil
     local function bindHumanoid(hum: Humanoid)
         table.insert(characterConnections,hum.Died:Connect(stop))
+        table.insert(characterConnections,hum:GetAttributeChangedSignal("ZO_MovementMode"):Connect(function()
+            if humanoid()==hum and sprinting() then stop() end
+        end))
     end
     local hum=character:FindFirstChildOfClass("Humanoid")
     if hum then bindHumanoid(hum) end
@@ -459,9 +470,20 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     local reloading=player:GetAttribute("ZO_Reloading")==true
     local remaining=math.max(0,(player:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow())
     local equipping=workspace:GetServerTimeNow()<(player:GetAttribute("ZO_EquipReadyAt") or 0)
+    sprintAlpha+=((if gun and sprinting() then 1 else 0)-sprintAlpha)*(1-math.exp(-dt*14))
+    local sprintPose=CFrame.identity:Lerp(CFrame.new(.1,-.32,.12)*CFrame.Angles(-.3,.25,-.18),sprintAlpha)
+    local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local velocity=if root and root:IsA("BasePart") then root.AssemblyLinearVelocity else Vector3.zero
+    local speed=if Rules.finite(velocity.X) and Rules.finite(velocity.Z) then math.sqrt(velocity.X^2+velocity.Z^2) else 0
+    local motionPose=CFrame.identity
+    if gun then
+        local mouse=UIS:GetMouseDelta()
+        motionPose=weaponMotion:update(dt,if hum and hum.FloorMaterial~=Enum.Material.Air then speed else 0,
+            aimAlpha,hum~=nil and hum:GetAttribute("ZO_Crouching")==true,mouse.X,mouse.Y)
+    else weaponMotion:reset() end
     local reloadPose=if reloading then CFrame.new(0,-.3,.2)*CFrame.Angles(-.4,0,-.2) elseif equipping then CFrame.new(0,-.24,.15) else CFrame.identity
     if currentPresentation then
-        currentPresentation:update(camera.CFrame,reloadPose*CFrame.new(0,0,viewKick),gun and presentationId==equipped.Id,aimAlpha)
+        currentPresentation:update(camera.CFrame,sprintPose*motionPose*reloadPose*CFrame.new(0,0,viewKick),gun and presentationId==equipped.Id,aimAlpha)
         currentPresentation:setReloading(gun and reloading,remaining)
     end
     if zombie then ensureZombieArms() end
@@ -487,8 +509,9 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     local hit=os.clock()<hitUntil
     cross.Text=if hit then "×" else ""
     cross.TextColor3=if hitHead then Color3.fromRGB(255,109,91) else Color3.fromRGB(230,222,192)
-    local moving=hum~=nil and hum.MoveDirection.Magnitude>.1
-    local spread=Rules.shotSpread(equipped,moving,targetAim==1)
+    local moving=speed>2
+    local spread=Rules.shotSpread(equipped,moving,targetAim==1,if hum then hum:GetAttribute("ZO_MovementMode") else nil,
+        hum~=nil and hum.FloorMaterial==Enum.Material.Air,Config.Accuracy)
     local pixels=math.tan(math.rad(spread))*camera.ViewportSize.Y/(2*math.tan(math.rad(camera.FieldOfView/2)))
     local gap=if zombie then 7 else math.clamp(4+pixels+bloom,4,48)
     for i,line in crossLines do
@@ -501,6 +524,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     local standBlocked=hum~=nil and hum.Health>0 and hum:GetAttribute("ZO_StandBlocked")==true
     status.Text=if os.clock()<noticeUntil then notice
         elseif standBlocked then "Sem espaço para levantar"
+        elseif gun and sprinting() then "CORRENDO · encerre a corrida para atirar"
         elseif gun and presentationStatus=="Loading" then "Carregando modelo da arma..."
         elseif gun and not currentPresentation then "Modelo da arma indisponível · veja o Output"
         elseif assetFailure then "Assets da arma indisponíveis · veja o Output"
@@ -510,7 +534,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     status.Visible=active or standBlocked
     local triggerButton=CAS:GetButton("ZO_Trigger");if triggerButton then triggerButton.Visible=active end
     local reloadButton=CAS:GetButton("ZO_Reload");if reloadButton then reloadButton.Visible=gun end
-    local aimButton=CAS:GetButton("ZO_Aim");if aimButton then aimButton.Visible=gun and not reloading and not equipping end
+    local aimButton=CAS:GetButton("ZO_Aim");if aimButton then aimButton.Visible=gun and not reloading and not equipping and not sprinting() end
 end)
 connect(script.Destroying,function()
     if disposed then return end

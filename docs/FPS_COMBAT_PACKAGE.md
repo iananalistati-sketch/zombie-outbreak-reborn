@@ -1,5 +1,8 @@
 # Pacote FPS — implementação e pendência de modelos
 
+Evolução atual dos controles/precisão/viewmodel:
+[entrega de jogabilidade FPS de 05/11](FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
+
 **Estado: carabina e pistola preta embutidas; SMG e escopeta ainda pendentes.**
 A pistola oficial foi extraída do arquivo `Pistolas_Oficiais.rbxl` fornecido pelo
 usuário. O pacote é compilável e usa os modelos incluídos sem importação de

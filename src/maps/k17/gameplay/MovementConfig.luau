@@ -1,8 +1,10 @@
 --!strict
 -- Tactical movement uses the existing role speed as the normal/run speed.
+-- Sprint is explicit and capped by MovementState; it composes with hit tags.
 return table.freeze({
     WalkScale=.5,
     CrouchScale=.5,
+    SprintScale=1.25,
     RequestInterval=.05,
     CrouchDrop=1.2,
     CrouchForward=.35,

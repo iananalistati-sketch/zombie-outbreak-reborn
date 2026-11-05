@@ -48,6 +48,9 @@ return table.freeze({
     Containment=table.freeze({
         HorizontalCap=48, UpwardCap=10, TagSeconds=.18, TagWalkScale=.55,
     }),
+    Accuracy=table.freeze({
+        CrouchScale=.75, AirScale=1.8,
+    }),
     Melee = table.freeze({Range = 6, Cooldown = 0.7}),
     Hitgroups = table.freeze({
         Head = table.freeze({Damage=2, Knockback=1.2}),

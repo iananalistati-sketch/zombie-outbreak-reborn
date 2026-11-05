@@ -29,9 +29,37 @@ do
         and h:GetAttribute("ZO_TaggedUntil")==0,"public attributes describe the configured role")
     check(Movement.setMode(h,"Walk",.5,10) and h.WalkSpeed==9.5,"walking composes from the role base")
     check(Movement.setMode(h,"Crouch",.5,10) and h.WalkSpeed==9.5,"crouching does not multiply the prior walking reduction")
-    check(Movement.setMode(h,"Run",1,10) and h.WalkSpeed==19,"run restores the original speed without a sprint boost")
-    check(not Movement.setMode(h,"Sprint",1.5,10) and h.WalkSpeed==19,"unknown modes and boosted scales are rejected")
+    check(Movement.setMode(h,"Run",1,10) and h.WalkSpeed==19,"run restores the original normal speed")
+    check(Movement.setMode(h,"Sprint",1.25,10) and h.WalkSpeed==23.75,"named sprint composes the configured boost from the role base")
+    check(not Movement.setMode(h,"Fly",1,10) and h.WalkSpeed==23.75,"unknown modes cannot change the sprint state")
     check(not Movement.setBase(h,math.huge,10) and not Movement.setMode(h,"Walk",0/0,10),"invalid movement numbers cannot enter the state")
+    for _,mode in {"Run","Walk","Crouch"} do
+        check(not Movement.setMode(h,mode,1.01,10) and h.WalkSpeed==23.75,"ordinary stance modes cannot introduce a speed boost")
+    end
+    for _,scale in {0,.99,1.5001,math.huge,0/0} do
+        check(not Movement.setMode(h,"Sprint",scale,10) and h.WalkSpeed==23.75,"sprint rejects scales outside its finite server cap")
+    end
+    check(Movement.setMode(h,"Sprint",1,10) and h.WalkSpeed==19,"sprint lower safety bound is the ordinary role base")
+    check(Movement.setMode(h,"Sprint",1.5,10) and h.WalkSpeed==28.5,"sprint upper safety bound is explicitly limited")
+end
+
+do
+    local h=humanoid(16);Movement.setBase(h,16,10);Movement.setMode(h,"Sprint",1.25,10)
+    check(h.WalkSpeed==20,"human sprint uses the same configured role multiplier")
+    local deadline=Movement.tag(h,10,.18,.55)
+    check(near(h.WalkSpeed,11),"a sprinting human remains slowed by an active hit")
+    Movement.setMode(h,"Crouch",.5,10.03)
+    check(near(h.WalkSpeed,4.4) and h:GetAttribute("ZO_TaggedUntil")==deadline,"sprint to crouch preserves the active tag rather than its prior speed")
+    Movement.setMode(h,"Sprint",1.25,10.06)
+    check(near(h.WalkSpeed,11),"returning to sprint cannot cancel an unexpired hit")
+    Movement.step(h,10.19)
+    check(h.WalkSpeed==20,"tag expiry recovers the current sprint speed")
+    Movement.setBase(h,19,10.2)
+    check(h.WalkSpeed==19 and h:GetAttribute("ZO_MovementMode")=="Run","infection clears the human sprint stance before the new role starts")
+    Movement.setMode(h,"Sprint",1.25,10.25);Movement.tag(h,10.25,.18,.55)
+    check(near(h.WalkSpeed,23.75*.55),"zombie sprint and containment compose from the new role base")
+    Movement.step(h,10.45)
+    check(h.WalkSpeed==23.75,"zombie tag expiry recovers the new sprint speed")
 end
 
 do

@@ -14,12 +14,17 @@
     "LICENSE": {
       "archived": "LICENSE",
       "sha256": "55512d48e2ac25ef3e70d06f6a5604f1018d619aae5087941bfb09176da7ba07"
+    },
+    "Client/Weapons.lua": {
+      "archived": "source/ClientWeapons.lua",
+      "sha256": "92fba016349391dc37271b5456377fb27202e319bcee5b06bd154a8ed8c26d9d"
     }
   },
   "active_upstream_scripts": false,
   "adapted_components": [
     "Character crouch/walk mode selection and camera offset smoothing",
-    "Server crouch torso/hip offset pattern adapted to existing R6/R15 Motor6D joints"
+    "Server crouch torso/hip offset pattern adapted to existing R6/R15 Motor6D joints",
+    "Weapon viewmodel walking/fast bob speed-band interpolation and mouse sway; bounded presentation-only offset"
   ],
   "excluded_systems": [
     "upstream weapon damage/network",

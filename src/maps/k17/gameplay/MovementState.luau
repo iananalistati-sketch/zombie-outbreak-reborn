@@ -6,7 +6,7 @@ local MovementState={}
 type State={base: number,mode: string,modeScale: number,untilTime: number,
     tagScale: number,applied: number,desired: number?}
 local states: {[Humanoid]: State}=setmetatable({},{__mode="k"}) :: any
-local modes={Run=true,Walk=true,Crouch=true}
+local modes={Run=true,Walk=true,Crouch=true,Sprint=true}
 
 local function finite(value: any): boolean
     return type(value)=="number" and value==value and math.abs(value)<1e6
@@ -56,7 +56,13 @@ function MovementState.setBase(hum: Humanoid,base: number,now: number?): boolean
 end
 
 function MovementState.setMode(hum: Humanoid,mode: string,scale: number,now: number?): boolean
-    if not modes[mode] or not finite(scale) or scale<=0 or scale>1 then return false end
+    if not modes[mode] or not finite(scale) then return false end
+    -- Only the explicitly named sprint mode can exceed the role's normal
+    -- speed. Callers still choose a bounded server configuration, never a
+    -- speed supplied by the remote client.
+    if mode=="Sprint" then
+        if scale<1 or scale>1.5 then return false end
+    elseif scale<=0 or scale>1 then return false end
     local current=state(hum)
     observeExternal(hum,current)
     current.mode=mode;current.modeScale=scale

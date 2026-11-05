@@ -1,5 +1,21 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Missão de jogabilidade FPS — novo pedido de 05/11/2026
+
+- O prompt anexado autoriza decisões técnicas e implementação direta de
+  movimentação/armas na base real, reaproveitando componentes gratuitos com
+  permissão e preservando mapas, defesas, rodadas e integração Rojo.
+- Essa autorização atual substitui a exigência antiga de nova aprovação antes
+  de implementar melhorias FPS compatíveis. Não aguardar acesso local para
+  concluir o trabalho possível na nuvem; não afirmar importações ou testes de
+  Studio inexistentes. Uma migração exige fontes reais auditáveis.
+- O novo requisito de Shift é **corrida**: Shift/Sprint, Alt/Walk, Ctrl/C/Crouch.
+  Não voltar a anunciar Shift como caminhada para a versão atual. Corrida
+  compõe a velocidade e a contenção no mesmo MovementState.
+- Não desbloquear modelos ausentes nem declarar o arsenal completo apenas
+  porque as estatísticas e categorias existem. Não usar assets extraídos de
+  jogos proprietários por estarem num repositório público com licença de código.
+
 ## Continuidade sem Studio — 05/11/2026
 
 - O usuário autorizou continuar editando o projeto agora e deixar as ações que

@@ -141,7 +141,7 @@ local function simulation(options)
         function p:fire() table.insert(logs.localShots,id) end
         function p:stop() logs.stops+=1 end
         function p:destroy() logs.destroyed+=1 end
-        function p:update(camera,pose,visible,alpha) table.insert(logs.updates,{id=id,visible=visible,alpha=alpha}) end
+        function p:update(camera,pose,visible,alpha) table.insert(logs.updates,{id=id,pose=pose,visible=visible,alpha=alpha}) end
         function p:setReloading(value,remaining) self.reloading=value;self.remaining=remaining end
         return p,"Ready"
     end
@@ -153,7 +153,14 @@ local function simulation(options)
     function Presentation.playDistantShot(template,origin,id) table.insert(logs.distantShots,{template=template,origin=origin,id=id}) end
     function Presentation.impact(position,normal) table.insert(logs.impacts,{position=position,normal=normal}) end
     local PresentationConfig={get=function(id) return {AimFov=58,ViewKick=.09,RecoilPitch=.65} end}
-    for name,value in {Config=Config,Rules=Rules,WeaponPresentation=Presentation,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
+    local motion={calls={},resets=0}
+    function motion:update(dt,speed,aim,crouch,mx,my)
+        table.insert(self.calls,{speed=speed,aim=aim,crouch=crouch,mx=mx,my=my});return CFrame.identity
+    end
+    function motion:reset() self.resets+=1 end
+    logs.motion=motion
+    local WeaponMotion={new=function() return motion end}
+    for name,value in {Config=Config,Rules=Rules,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
     local requests={}
     local remotes={}
     for _,name in {"ZO_FireRifle","ZO_Melee","ZO_CombatFX","ZO_LoadoutAction"} do
@@ -170,6 +177,7 @@ local function simulation(options)
     local uis={TouchEnabled=options.touch==true,GamepadEnabled=false,WindowFocusReleased=signal(),TextBoxFocused=signal(),focused=false}
     function uis:GetFocusedTextBox() return if self.focused then {} else nil end
     function uis:GetMouseLocation() return {X=0,Y=0} end
+    function uis:GetMouseDelta() return self.mouseDelta or {X=0,Y=0} end
     local guiService={MenuOpened=signal(),MenuIsOpen=false}
     local cas={actions={},buttons={}}
     function cas:BindActionAtPriority(name,callback,createButton,priority,...)
@@ -200,7 +208,7 @@ local function simulation(options)
         UserInputState={Begin="Begin",End="End",Cancel="Cancel"},ContextActionResult={Pass="Pass",Sink="Sink"},
         UserInputType={MouseButton1="MouseButton1",MouseButton2="MouseButton2",Touch="Touch",Gamepad1="Gamepad1"},
         KeyCode={One="One",Two="Two",Q="Q",R="R",ButtonY="ButtonY",ButtonX="ButtonX",ButtonR2="ButtonR2",ButtonL2="ButtonL2"},
-        RenderPriority={Camera={Value=200}},CameraMode={Classic="Classic",LockFirstPerson="LockFirstPerson"},Material={Neon="Neon"}}
+        RenderPriority={Camera={Value=200}},CameraMode={Classic="Classic",LockFirstPerson="LockFirstPerson"},Material={Neon="Neon",Air="Air"}}
     local services={Players=players,ReplicatedStorage=rs,UserInputService=uis,ContextActionService=cas,GuiService=guiService,RunService=runService,
         Debris={AddItem=function(_,obj,lifetime) tasks.delay(lifetime,function() obj:Destroy() end) end},
         ContentProvider={PreloadAsync=function(_,items,callback) for _,item in items do callback(item.Name,"Success") end end},
@@ -335,6 +343,52 @@ local function beginAim(s,inputType,keyCode)
     s.render(.1);check(s.camera.FieldOfView<80,"aim narrows current camera FOV")
 end
 local function restored(s,label) check(close(s.camera.FieldOfView,80),label) end
+
+do
+    local s=simulation();s.hum.FloorMaterial="Concrete";s.render(.1)
+    local left=s.gui:FindFirstChild("Crosshair"):FindFirstChild("Left")
+    local normal=math.abs(left.Position.X)
+    s.hum.MoveDirection=vector(1,0,0);s.render(.1)
+    check(close(math.abs(left.Position.X),normal),"movement input without observed displacement keeps the server's stationary spread")
+    local root=s.instance("Part","HumanoidRootPart",s.character);root.AssemblyLinearVelocity=vector(8,0,0);s.render(.1)
+    check(math.abs(left.Position.X)>normal,"observed movement widens the crosshair even without trusting input intent")
+    root.AssemblyLinearVelocity=vector()
+    s.hum:SetAttribute("ZO_MovementMode","Crouch");s.render(.1)
+    check(math.abs(left.Position.X)<normal,"crosshair reflects the grounded crouch accuracy bonus")
+    s.hum.FloorMaterial="Air";s.render(.1)
+    check(math.abs(left.Position.X)>normal,"airborne crosshair widens even when the crouch intent is still set")
+end
+
+do
+    local s=simulation()
+    local root=s.instance("Part","HumanoidRootPart",s.character);root.AssemblyLinearVelocity=vector(12,0,0)
+    s.hum.FloorMaterial="Concrete";s.hum:SetAttribute("ZO_Crouching",true);s.uis.mouseDelta={X=3,Y=-2};s.render(.1)
+    local call=s.logs.motion.calls[#s.logs.motion.calls]
+    check(call.speed==12 and call.crouch and call.mx==3 and call.my==-2,"viewmodel motion uses observed horizontal speed, crouch and mouse delta")
+    s.hum.FloorMaterial="Air";s.render(.1)
+    check(s.logs.motion.calls[#s.logs.motion.calls].speed==0,"airborne weapons do not keep a running bob")
+    local resets=s.logs.motion.resets
+    s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0);s.render(.1)
+    check(s.logs.motion.resets>resets,"opening the shop resets motion rather than leaving a stale offset")
+end
+
+do
+    local s=simulation();s.render(.1);beginAim(s)
+    s.hum:SetAttribute("ZO_MovementMode","Sprint");s.advance(0);s.render(.1)
+    restored(s,"authoritative sprint cancels ADS and restores camera FOV")
+    check(s.key("ZO_Aim","Begin","MouseButton2")=="Pass","sprinting human cannot start ADS")
+    local beforeRequests,beforeShots=#s.requests,#s.logs.localShots
+    singleShot(s)
+    check(#s.requests==beforeRequests and #s.logs.localShots==beforeShots,"sprinting cannot predict a gunshot or send a fire request")
+    local pose=s.logs.updates[#s.logs.updates]
+    check(pose.visible and pose.pose.pitch<-.1,"sprint keeps the real weapon visible in a lowered pose")
+    check(s.gui:FindFirstChild("Feedback").Text=="CORRENDO · encerre a corrida para atirar","sprint feedback explains the shooting restriction")
+    s.key("ZO_Reload","Begin")
+    check(s.requests[#s.requests].args[1]=="Reload","sprint does not block the existing reload action")
+    s.hum:SetAttribute("ZO_MovementMode","Run");s.advance(0);s.render(1)
+    singleShot(s)
+    check(#s.logs.localShots==beforeShots+1,"releasing sprint restores predicted fire on the existing weapon")
+end
 
 do
     local s=simulation();s.hum:SetAttribute("ZO_StandBlocked",true);s.render(.1)

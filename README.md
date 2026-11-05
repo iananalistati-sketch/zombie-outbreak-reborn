@@ -2,16 +2,18 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-**Entrega de 05/11:** [movimentação tática e categorias da loja](docs/OFFLINE_FPS_PROGRESS_2026-11-05.md).
-**Shift** para andar devagar; **Ctrl** para agachar enquanto segura ou **C** para
-alternar. O servidor verifica espaço para levantar e combina a postura com a
-lentidão temporária dos tiros. A loja tem filtros por categoria e atalhos para
-as armas visíveis. Os controles também têm ações de controle/toque.
+**Entrega atual — 05/11:** [evolução da jogabilidade FPS](docs/FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
+**Shift corre**, **Alt caminha**, **Ctrl** agacha enquanto segura e **C** alterna
+o agachamento. A arma abaixa ao correr; o servidor bloqueia tiros nessa postura.
+O viewmodel tem balanço de movimento e reação ao mouse adaptados do Extract MIT.
+Agachar melhora a precisão no chão; pular aumenta a dispersão, também mostrada
+na mira. A loja mantém filtros, prévia 3D, saldo e atalhos por categoria.
 
 A [auditoria e comparação de bases FPS](docs/FPS_BASE_AUDIT_2026-10-31.md)
 recomendou qualificar o template oficial FPS System. Essa migração continua
 pendente do arquivo; esta entrega amplia a base atual com componentes de
-movimentação adaptados de Extract (MIT), sem ativar outro sistema completo de FPS.
+movimentação/apresentação adaptados de Extract (MIT), sem ativar outro sistema
+completo de FPS.
 
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
 Carabina e **pistola preta oficial** estão embutidas, com meshes, texturas e sons
@@ -181,17 +183,18 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 215 percursos com 38.374
-amostras de apoio/espaço livre, 27 testes Python, 172 verificações das regras de
+amostras de apoio/espaço livre, 27 testes Python, 196 verificações das regras de
 combate, 162 de inventário/economia e 96 de contenção. O controlador real de
 barricadas passou 7.554 verificações com APIs simuladas; há também 202 da política
 de impulso e 85 das regras preservadas. Fontes ativos conferidos no place.
 Os percursos também foram checados com os 164 objetos presentes.
 
-**Movimentação/loja — 05/11:** 66 verificações da composição de velocidade,
-35 do servidor de postura, 57 do cliente de movimento, 156 do combate real,
-41 da rodada, 39 do ciclo integrado, 73 da loja e 91 do cliente de armas,
+**Movimentação/loja — 05/11:** 85 verificações da composição de velocidade,
+45 do servidor de postura, 74 do cliente de movimento, 15 de movimento do
+viewmodel, 165 do combate real, 41 da rodada, 39 do ciclo integrado, 73 da loja
+e 107 do cliente de armas,
 com APIs simuladas. Fontes atuais conferidos nos places compilados. O cenário
-separado do Studio inclui 21 etapas e ainda não foi executado no motor.
+separado do Studio inclui 24 etapas e ainda não foi executado no motor.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer, equilíbrio e renderização/

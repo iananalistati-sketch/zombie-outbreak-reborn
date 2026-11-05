@@ -301,6 +301,11 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
     if weapon:advance(now) then sync(player) end
     if now<loadout.equipReadyAt then return end
     if action=="Reload" then if weapon:reload(now) then sync(player) end;return end
+    -- Movement mode is published by the server movement authority. Forged
+    -- fire requests during a sprint spend neither rounds nor shot cadence;
+    -- reloading and inventory actions keep their existing rules.
+    local movementMode=hum:GetAttribute("ZO_MovementMode")
+    if movementMode=="Sprint" then return end
     if not directionAllowed(head,direction) or now<(nextFire[player] or -math.huge) then return end
     if not weapon:fire(now) then return end
     nextFire[player]=now+config.FireInterval
@@ -311,7 +316,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
     local motionRoot=char:FindFirstChild("HumanoidRootPart")
     local velocity=if motionRoot and motionRoot:IsA("BasePart") then motionRoot.AssemblyLinearVelocity else Vector3.zero
     local moving=Rules.finite(velocity.X) and Rules.finite(velocity.Z) and velocity.X^2+velocity.Z^2>4
-    local spread=Rules.shotSpread(config,moving,aiming==true)
+    local spread=Rules.shotSpread(config,moving,aiming==true,movementMode,hum.FloorMaterial==Enum.Material.Air,Config.Accuracy)
     local props=workspace:FindFirstChild("ZO_Barricades")
     local propHits: {[Instance]: any}={}
     local zombieHits: {[Model]: any}={}
