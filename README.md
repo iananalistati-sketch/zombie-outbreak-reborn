@@ -2,13 +2,12 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-**Arsenal — situação atual:** [modelos e acesso à loja](docs/ARSENAL_ASSET_STATUS_2026-11-05.md).
-O objetivo é um pacote com várias armas reais. A pesquisa online ainda recebe
-403 do proxy desta sessão, mesmo após o aviso de liberação da rede; o rascunho
-com os domínios foi salvo e exige publicação do ambiente. Não há novos modelos
-online recebidos. As três variantes da pistola oficial já fornecida agora podem
-ser visualizadas/aplicadas em **B → Pistolas → Aparência**; são skins da mesma
-arma, sem diferença de estatísticas. A seleção persiste durante a sessão.
+**Arsenal aplicado:** [quatro armas reais e seis acabamentos adicionais](docs/OFFICIAL_ARSENAL_INTEGRATION.md).
+Carabina, pistola, **SMG e escopeta** estão embutidas. Os dois novos pacotes
+foram baixados da Creator Store, revisados e integrados com seus meshes e sons.
+Abra **B** durante a preparação para comprar SMG/escopeta e pré-visualizar os
+acabamentos. Use **Aplicar aparência** para confirmar uma skin; ela permanece
+durante rodadas/respawns da sessão, sem alterar dano, créditos ou munição.
 
 **Entrega atual — 05/11:** [evolução da jogabilidade FPS](docs/FPS_GAMEPLAY_DELIVERY_2026-11-05.md).
 **Shift corre**, **Alt caminha**, **Ctrl** agacha enquanto segura e **C** alterna
@@ -24,17 +23,16 @@ movimentação/apresentação adaptados de Extract (MIT), sem ativar outro siste
 completo de FPS.
 
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
-Carabina e **pistola oficial com três acabamentos** estão embutidas, com meshes, texturas e sons
-originais. A pistola foi extraída do arquivo `Pistolas_Oficiais.rbxl` enviado pelo
-usuário e revisada antes da integração. SMG e escopeta continuam sem modelos.
+As quatro classes têm modelos reais, texturas e sons originais. A pistola veio
+do arquivo fornecido pelo usuário; SMG e escopeta vieram dos downloads oficiais.
 Use a branch **`feat/fps-combat-package`** e abra `ABRIR_K17.cmd`. Com a loja
-fechada, **2** equipa a pistola, **1** a carabina, **R** recarrega e **B** abre a
+fechada, **2** equipa a pistola, **1** a primária comprada, **R** recarrega e **B** abre a
 loja com prévia 3D. A validação no motor Roblox continua pendente.
 
 O jogo usa os templates incluídos e **não importa prefabs automaticamente ao
-iniciar Play**. Não é necessário executar comandos para obter a carabina ou a
-pistola desta versão. Os comandos de importação/captura permanecem ferramentas
-opcionais de desenvolvimento para os modelos restantes.
+iniciar Play**. Não é necessário executar comandos de importação para obter
+essas quatro armas. Os comandos de importação/captura são ferramentas opcionais
+de edição, com backup e validação de variantes.
 
 **Revisão de 28/10: [auditoria e correções do ciclo Survival](docs/SURVIVAL_AUDIT_2026-10-28.md).**
 Carregamento tardio de personagens, remoção durante combate e acertos em modelos
@@ -77,7 +75,7 @@ Revisão de mecânica: [tiros, golpes e resistência ao empurrão corporal](docs
 troca de equipamento, créditos, munição por arma e contenção do avanço por tiros.**
 **[AR reutilizada do Roblox Weapons Kit](docs/REUSED_WEAPON_KIT.md): a carabina
 inicial usa mesh, sons, flash, ferrolho e animações R15 do kit.** Os modelos de
-blocos anteriores foram removidos no pacote FPS; os prefabs restantes estão pendentes.
+blocos anteriores foram removidos no pacote FPS; as quatro classes atuais estão incluídas.
 Infecção por golpe, primeiros infectados transformados no local, armas automáticas e semiautomáticas,
 recarga temporizada e knockback configurável. A prévia de construção anterior
 está desativada. **34 refúgios detalhados, quatro dutos e 164 objetos de barricada.** Há salas com entrada única, alas protegidas em vários andares, ônibus transitável, salas subterrâneas e recuos sob escadas. **M abre o mapa tático** com filtros por andar e tipo.
@@ -191,7 +189,7 @@ renderizados pelo Roblox Studio.
 ## Estado de validação
 
 **Executado na nuvem:** geração, compilação Luau/Rojo, 215 percursos com 38.374
-amostras de apoio/espaço livre, 28 testes Python, 196 verificações das regras de
+amostras de apoio/espaço livre, 30 testes Python, 196 verificações das regras de
 combate, 162 de inventário/economia e 96 de contenção. O controlador real de
 barricadas passou 7.554 verificações com APIs simuladas; há também 202 da política
 de impulso e 85 das regras preservadas. Fontes ativos conferidos no place.
@@ -199,8 +197,8 @@ Os percursos também foram checados com os 164 objetos presentes.
 
 **Movimentação/loja — 05/11:** 85 verificações da composição de velocidade,
 45 do servidor de postura, 74 do cliente de movimento, 15 de movimento do
-viewmodel, 215 do combate real, 41 da rodada, 39 do ciclo integrado, 114 da loja,
-24 do catálogo de skins, 38 de equipamento e 114 do cliente de armas,
+viewmodel, 233 do combate real, 41 da rodada, 39 do ciclo integrado, 130 da loja,
+26 do catálogo de skins, 38 de equipamento e 122 do cliente de armas,
 com APIs simuladas. Fontes atuais conferidos nos places compilados. O cenário
 separado do Studio inclui 24 etapas e ainda não foi executado no motor.
 

@@ -31,9 +31,9 @@ class ReusedWeaponKit(unittest.TestCase):
         executable={'Script','LocalScript','ModuleScript','RemoteEvent','RemoteFunction','UnreliableRemoteEvent',
                     'BindableEvent','BindableFunction','PackageLink'}
         self.assertFalse(any(i.get('class') in executable for i in self.items))
-        self.assertEqual(set(self.tools),{'Rifle','Pistol','Classic','Gold'})
+        self.assertEqual(set(self.tools),{'Rifle','Pistol','SMG','Shotgun','Classic','Gold','Bronze','White','Sand','Silver'})
         weapons=next(i for i in self.tree.find('Item').findall('Item') if i.findtext('./Properties/string[@name="Name"]')=='Weapons')
-        self.assertEqual({i.findtext('./Properties/string[@name="Name"]') for i in weapons.findall('Item')},{'Rifle','Pistol'})
+        self.assertEqual({i.findtext('./Properties/string[@name="Name"]') for i in weapons.findall('Item')},{'Rifle','Pistol','SMG','Shotgun'})
         for tool in self.tools.values():
             self.assertEqual(tool.findtext('./Properties/bool[@name="CanBeDropped"]'),'false')
             self.assertEqual(tool.findtext('./Properties/bool[@name="Enabled"]'),'false')
@@ -92,7 +92,7 @@ class ReusedWeaponKit(unittest.TestCase):
             'Bolt':('2492923497','3361041283'),
             'Magazine':('2492925447','3361041283'),
         }
-        self.assertEqual(sum(i.get('class')=='MeshPart' for i in self.items),12)
+        self.assertEqual(sum(i.get('class')=='MeshPart' for i in self.items),24)
         for name,(mesh,texture) in expected.items():
             item=self.pistol_named[name]
             self.assertEqual(item.get('class'),'MeshPart')
@@ -166,6 +166,55 @@ class ReusedWeaponKit(unittest.TestCase):
                 for prop in ('Anchored','CanCollide','CanQuery','CanTouch'):
                     self.assertEqual(item.findtext(f'./Properties/bool[@name="{prop}"]'),'false')
                 self.assertEqual(item.findtext('./Properties/bool[@name="Massless"]'),'true')
+
+    def test_official_native_prefabs_are_pinned_and_contain_only_already_reviewed_sources(self):
+        from scripts.inspect_studio_binary import parse
+        folder=ROOT/'third_party/roblox-weapon-kit/official-prefabs'
+        records=json.loads((folder/'SOURCE.json').read_text())
+        reviewed=ET.parse(ROOT/'third_party/roblox-weapon-kit/pistol/OriginalPistol2.rbxmx')
+        source_texts={i.findtext('./Properties/*[@name="Source"]') for i in reviewed.findall('.//Item')
+                      if i.get('class') in ('Script','LocalScript','ModuleScript')}
+        self.assertEqual(set(records),{'SMG','Shotgun'})
+        for weapon,record in records.items():
+            path=folder/record['file']
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),record['sha256'])
+            self.assertEqual(path.stat().st_size,record['bytes'])
+            classes,_,sources=parse(path)
+            self.assertEqual(sum(count for kind,count in classes.values() if kind=='Tool'),3)
+            self.assertEqual(len(sources),48)
+            # XML normalizes CRLF. Compare complete normalized bodies without
+            # dumping thousands of source lines on an audit failure.
+            def digest(source):return hashlib.sha256(source.replace('\r\n','\n').encode()).hexdigest()
+            self.assertEqual({digest(s) for s in sources},{digest(s) for s in source_texts},
+                             'New executable sources require a fresh review')
+            metadata=json.loads((folder/(weapon+'.metadata.json')).read_text())
+            self.assertEqual(metadata['Creator']['Name'],'Roblox Resources')
+            self.assertTrue(metadata['Creator']['HasVerifiedBadge'])
+            self.assertEqual(metadata['AssetTypeId'],10)
+
+    def test_smg_and_shotgun_keep_real_geometry_finishes_audio_and_original_grips(self):
+        expected={
+            'SMG':('SMG','3361646593','2492936134',4812801977,3821793228,1),
+            'Bronze':('SMG','3361510036','2492936134',4812801977,3821793228,1),
+            'White':('SMG','3361512453','2492936134',4812801977,3821793228,1),
+            'Shotgun':('Shotgun','2492974190','2492972199',3821792787,3821792115,-1),
+            'Sand':('Shotgun','3361578179','2492972199',3821792787,3821792115,-1),
+            'Silver':('Shotgun','3361579798','2492972199',3821792787,3821792115,-1),
+        }
+        for label,(body_name,texture,mesh,fired,reload,rotation) in expected.items():
+            tool=self.tools[label]
+            named={i.findtext('./Properties/string[@name="Name"]'):i for i in tool.iter('Item')}
+            self.assertEqual(sum(i.get('class')=='MeshPart' for i in tool.iter('Item')),2)
+            self.assertEqual(named[body_name].findtext('./Properties/Content[@name="MeshContent"]/uri'),'rbxassetid://'+mesh)
+            self.assertEqual(named[body_name].findtext('./Properties/Content[@name="TextureContent"]/uri'),'rbxassetid://'+texture)
+            self.assertEqual(named['Fired'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://'+str(fired))
+            self.assertEqual(named['Reload'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://'+str(reload))
+            self.assertEqual(float(named['HandleAttachment'].findtext('./Properties/CoordinateFrame[@name="CFrame"]/R00')),rotation)
+            self.assertIn('TipAttachment',named)
+            self.assertEqual(named['MuzzleFlash'].get('class'),'Beam')
+            self.assertNotIn('BoltMotor',named,'Do not invent a motor absent from the real source')
+            model=next(i for i in tool.findall('Item') if i.get('class')=='Model')
+            self.assertIn(model.findtext('./Properties/Ref[@name="PrimaryPart"]'),{i.get('referent') for i in model.iter('Item')})
 
     def test_r15_animations_are_retained_without_claiming_r6_compatibility(self):
         self.assertEqual(sum(i.get('class')=='Animation' for i in self.items),3)

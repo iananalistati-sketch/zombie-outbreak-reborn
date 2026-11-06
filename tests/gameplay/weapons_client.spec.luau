@@ -178,8 +178,17 @@ local function simulation(options)
     local function addSkins()
         local assets=addAssets({})
         local skins=instance("Folder","Skins",assets)
-        local pistol=instance("Folder","Pistol",skins)
-        return {Classic=instance("Tool","Classic",pistol),Gold=instance("Tool","Gold",pistol)}
+        local pistol={}
+        for _,weapon in Config.WeaponOrder do
+            local variants=instance("Folder",weapon,skins)
+            for _,option in WeaponSkins.options(weapon) do
+                if option.Id~=WeaponSkins.default(weapon) then
+                    local tool=instance("Tool",option.Id,variants)
+                    if weapon=="Pistol" then pistol[option.Id]=tool end
+                end
+            end
+        end
+        return pistol
     end
     local uis={TouchEnabled=options.touch==true,GamepadEnabled=false,WindowFocusReleased=signal(),TextBoxFocused=signal(),focused=false}
     function uis:GetFocusedTextBox() return if self.focused then {} else nil end
@@ -263,6 +272,23 @@ end
 local function singleShot(s)
     s.key("ZO_Trigger","Begin","MouseButton1")
     s.key("ZO_Trigger","End","MouseButton1")
+end
+
+do
+    for _,entry in {{"SMG","Bronze"},{"Shotgun","Sand"}} do
+        local id,skin=entry[1],entry[2]
+        local s=simulation();s.addSkins()
+        s.player:SetAttribute("ZO_WeaponId",id);s.player:SetAttribute("ZO_WeaponSkin",skin)
+        s.player:SetAttribute("ZO_Ammo",Config.Weapons[id].Magazine);s.advance(0);s.render(.1)
+        check(s.logs.new[#s.logs.new].id==id and s.logs.new[#s.logs.new].template.Name==skin,"new firearm uses its own selected native finish")
+        s.key("ZO_Trigger","Begin","MouseButton1")
+        for _=1,6 do s.advance(.1);s.render(.1) end
+        s.key("ZO_Trigger","End","MouseButton1")
+        check((id=="SMG" and #s.logs.localShots>=3) or (id=="Shotgun" and #s.logs.localShots==1),"held trigger respects automatic SMG and single-trigger shotgun behavior")
+        check(s.player:GetAttribute("ZO_Ammo")==Config.Weapons[id].Magazine,"new firearm prediction leaves ammunition authority on the server")
+        s.key("ZO_Reload","Begin")
+        check(s.requests[#s.requests].args[1]=="Reload","new firearm reload uses the existing server protocol")
+    end
 end
 
 do

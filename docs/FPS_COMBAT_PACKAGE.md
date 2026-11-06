@@ -1,5 +1,13 @@
 # Pacote FPS — implementação e pendência de modelos
 
+**Estado atual:** [SMG/escopeta oficiais integradas](OFFICIAL_ARSENAL_INTEGRATION.md).
+As quatro classes configuradas têm modelos nativos incluídos; há dez templates
+visuais contando os seis acabamentos adicionais. Não exige Command Bar para
+obter as armas. Visual/áudio/multiplayer ainda precisam do Studio.
+
+Os registros de tentativas e pendências abaixo descrevem o histórico anterior
+a essa integração. Consulte o relatório acima para o estoque atual.
+
 Atualização: [skins oficiais recebidas e situação da busca do arsenal](ARSENAL_ASSET_STATUS_2026-11-05.md).
 As variantes Classic/Gold são cosméticas da pistola existente, sem ampliar o
 número de classes de arma. A entrega ainda não é um arsenal completo.

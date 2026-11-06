@@ -8,6 +8,7 @@ import argparse
 import base64
 import copy
 import hashlib
+import json
 from pathlib import Path
 import struct
 import xml.etree.ElementTree as ET
@@ -117,7 +118,44 @@ def merge_shared_strings(root,sources):
         for key in sorted(needed):target.append(copy.deepcopy(strings[key]))
 
 
-def extract(source):
+def official_tools(path):
+    """Extract reviewed native variants, never their embedded controllers."""
+    manifest=json.loads((ROOT/'third_party/roblox-weapon-kit/official-prefabs/SOURCE.json').read_text())
+    source=ET.parse(path).getroot()
+    result={}
+    for weapon,record in manifest.items():
+        archive=ROOT/'third_party/roblox-weapon-kit/official-prefabs'/record['file']
+        assert hashlib.sha256(archive.read_bytes()).hexdigest()==record['sha256'],'Official prefab changed; review before extracting'
+        package=child(child(source,'ServerStorage'),weapon)
+        tools=[item for item in package.iter('Item') if item.get('class')=='Tool']
+        assert {name(item) for item in tools}==set(record['variants'].values())
+        variants={}
+        for skin,original in record['variants'].items():
+            tool=copy.deepcopy(next(item for item in tools if name(item)==original))
+            assert tool.findtext('./Properties/int64[@name="SourceAssetId"]')==str(record['legacy_source_asset_id'])
+            # Remove the whole older framework, including global effects/audio,
+            # before making this Tool available to K-17's combat controller.
+            def clean(item):
+                for node in list(item.findall('Item')):
+                    if node.get('class') in EXECUTABLE or name(node) in ('WeaponsSystem','WeaponType'):
+                        item.remove(node)
+                    else:clean(node)
+            clean(tool)
+            tool.find('./Properties/string[@name="Name"]').text=weapon if skin=='Default' else skin
+            string_attributes(tool,{'ZO_WeaponId':weapon,'ZO_SkinId':skin,
+                'ZO_SourceAssetId':str(record['asset_id']),'ZO_SourceVariant':original,'ZO_AnimationPrefix':'Rifle'})
+            visual_only(tool)
+            mapping={item.get('referent'):weapon+'_'+skin+'_'+item.get('referent') for item in tool.iter('Item')}
+            for item in tool.iter('Item'):
+                item.set('referent',mapping[item.get('referent')])
+                for ref in item.findall('./Properties/Ref'):ref.text=mapping.get(ref.text,'null')
+            assert not any(item.get('class') in EXECUTABLE for item in tool.iter('Item'))
+            variants[skin]=tool
+        result[weapon]=variants
+    return result,source
+
+
+def extract(source,prefabs):
     source=ET.parse(source).getroot()
     upstream=child(child(source,'ServerStorage'),'UpstreamKit')
     assets=child(child(child(upstream,'_PUT_ME_IN_REPLICATED_STORAGE'),'WeaponsSystem'),'Assets')
@@ -140,6 +178,11 @@ def extract(source):
     for variant in ('Classic','Gold'):
         skin_tool,skin_source=pistol(variant)
         pistol_skins.append(skin_tool);skin_sources.append(skin_source)
+    official,official_source=official_tools(prefabs)
+    for weapon,variants in official.items():
+        weapons.append(variants.pop('Default'))
+        finishes=folder(weapon,'ZO_WeaponAssets_Skins_'+weapon);skins.append(finishes)
+        for variant in variants.values():finishes.append(variant)
     package.append(copy.deepcopy(child(assets,'Animations')))
     effects=folder('Effects','ZO_WeaponAssets_Effects');package.append(effects)
     shots=child(child(assets,'Effects'),'Shots')
@@ -152,7 +195,7 @@ def extract(source):
     assert hit_sound.findtext('./Properties/Content[@name="AudioContent"]/uri')=='rbxassetid://1489924400'
     hit_effect.remove(hit_sound)
     effects.append(hit_effect)
-    merge_shared_strings(root,[source,pistol_source,*skin_sources])
+    merge_shared_strings(root,[source,pistol_source,*skin_sources,official_source])
     assert not any(i.get('class') in EXECUTABLE for i in root.iter('Item'))
     ET.indent(root,space='  ')
     return ET.tostring(root,encoding='unicode')+'\n'
@@ -161,11 +204,12 @@ def extract(source):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('xml',type=Path)
+    parser.add_argument('--prefabs',type=Path,required=True,help='XML built from official-prefabs.project.json')
     parser.add_argument('--check',action='store_true')
     args=parser.parse_args()
-    data=extract(args.xml)
+    data=extract(args.xml,args.prefabs)
     if args.check:assert TARGET.read_text(encoding='utf-8')==data,'Extracted kit is stale'
     else:
         TARGET.parent.mkdir(parents=True,exist_ok=True)
         TARGET.write_text(data,encoding='utf-8')
-    print('PASS bundled assets: Rifle and black Pistol, official Classic/Gold pistol skins, shared animations and impact particles; no archived impact sound or executable templates')
+    print('PASS bundled assets: four firearms, six native cosmetic templates, shared animations and impact particles; no archived impact sound or executable templates')

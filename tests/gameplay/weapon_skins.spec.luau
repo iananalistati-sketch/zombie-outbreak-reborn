@@ -13,9 +13,14 @@ local asset=node("Folder",{Weapons=node("Folder",{Pistol=base,Rifle=rifle}),
     Skins=node("Folder",{Pistol=node("Folder",variants)})})
 check(Skins.default("Pistol")=="Black" and Skins.default("Rifle")=="Default","correct defaults")
 check(Skins.default("Exploit")==nil and #Skins.options("Exploit")==0,"unknown weapon has no cosmetics")
-for _,id in {"Rifle","SMG","Shotgun"} do
+for _,id in {"Rifle"} do
     check(#Skins.options(id)==1 and Skins.valid(id,"Default") and not Skins.valid(id,"Gold"),"primary has only original finish")
 end
+for _,id in {"SMG","Shotgun"} do
+    check(#Skins.options(id)==3 and Skins.valid(id,"Default") and not Skins.valid(id,"Gold"),"new weapons advertise their three real finishes only")
+end
+check(Skins.valid("SMG","Bronze") and Skins.valid("SMG","White") and not Skins.valid("SMG","Sand"),"SMG uses its actual bronze/white variants")
+check(Skins.valid("Shotgun","Sand") and Skins.valid("Shotgun","Silver") and not Skins.valid("Shotgun","White"),"shotgun uses its actual sand/silver variants")
 check(Skins.default("LMG")==nil and not Skins.valid("LMG","Default"),"an unimplemented weapon is not advertised by the cosmetic catalog")
 check(#Skins.options("Pistol")==3,"three pistol finishes")
 check(table.isfrozen(Skins) and table.isfrozen(Skins.options("Pistol")) and table.isfrozen(Skins.options("Pistol")[1]),"catalog and nested options are immutable")

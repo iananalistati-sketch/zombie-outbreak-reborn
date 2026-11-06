@@ -18,7 +18,8 @@ def release(binary):
               'R48_UnderStair','R49_UnderStair','Loadout','LoadoutState','Containment','ZO_WeaponAssets',
               'EquipmentVisuals','WeaponPresentation','WeaponAimPose','PresentationConfig','WeaponPreview','WeaponAssets','WeaponAssetImport',
               'RifleAim','RifleReload','RifleAimDownSights','MuzzleFlash','Pistol'}
-    required|={'Movement','MovementState','MovementConfig','MovementPose','WeaponMotion','WeaponSkins','Skins','Classic','Gold'}
+    required|={'Movement','MovementState','MovementConfig','MovementPose','WeaponMotion','WeaponSkins','Skins','Classic','Gold',
+               'SMG','Shotgun','Bronze','White','Sand','Silver'}
     required|={'MonitorClerestoryGlass','MonitorEndCheek','ReceivingCanopyRoof','ExhaustFlue','AirBalanceHeader',
                'ControlCabinFacade','ControlInspectionWalkway'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
@@ -43,8 +44,8 @@ def release(binary):
                  'tests/k17/K17Audit.luau'):
         assert sources.count((ROOT/path).read_text(encoding='utf-8'))==1,'Outdated/missing native source: '+path
     data=binary.read_bytes()
-    assert sum(count for name,count in classes.values() if name=='Tool')==4,'Expected rifle, pistol and two reviewed cosmetic Tools'
-    assert sum(count for name,count in classes.values() if name=='MeshPart')>=12,'Bundled weapon/skin meshes missing'
+    assert sum(count for name,count in classes.values() if name=='Tool')==10,'Expected four firearms and six reviewed cosmetic Tools'
+    assert sum(count for name,count in classes.values() if name=='MeshPart')==24,'Bundled weapon/skin meshes missing'
     assert sum(count for name,count in classes.values() if name=='WedgePart')>=8,'Inclined monitor end cheeks missing'
     return {'file':BINARY.name,'map':'ZO_K17Foundry','sha256':hashlib.sha256(data).hexdigest(),
             'bytes':len(data),'instances':len(names),'barricades':names.count('Hull'),'ducts':4}

@@ -1,5 +1,27 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Estado atual — SMG e escopeta aplicadas
+
+- Após a rede funcionar, os dois modelos oficiais foram baixados comHTTP200,
+  origem Roblox Resources verificada e binários/hash preservados em
+  `third_party/roblox-weapon-kit/official-prefabs`. O erro do proxy registrado
+  abaixo é histórico, não um bloqueio atual confirmado.
+- Quatro classes têm templates nativos: Rifle, Pistol, SMG, Shotgun. Há seis
+  skins adicionais, dez templates visuais no total. Não contar skins como
+  armas distintas nem anunciar faca/sniper ou arsenal CS inteiro concluído.
+- Novos acabamentos reais: SMG Bronze/White; Shotgun Sand/Silver. Não renomear
+  esses materiais para Gold sem corresponder à fonte. Pistol mantémClassic/Gold.
+- Todos os controladores originais dos prefabs ficam arquivados fora do jogo.
+  O runtime usa o único núcleo existente; dano, preço, munição e dispersão
+  continuam emConfig/Combat. Fonte Shotgun5projéteis não substitui oK-17 com7.
+- Para regenerar assets: build do kit upstream, depois
+  `scripts/build_official_weapon_review.py --rojo PATH --output /tmp/prefabs.rbxlx`,
+  e extrator com `--prefabs /tmp/prefabs.rbxlx`. O wrapper temporário resolve
+  três raízes noRBXM para revisão; originais permanecem byte-exact e nenhumLua
+  baixado é executado. CI reproduz esse processo.
+- Visual, áudio e multiplayer continuam pendentes no motor. Não confundir
+  inspeção/compilação/APIs simuladas com execução noStudio.
+
 ## Arsenal completo e acesso à loja — 05/11/2026
 
 - O usuário exige um pacote com várias armas reais da Creator Store. Skins

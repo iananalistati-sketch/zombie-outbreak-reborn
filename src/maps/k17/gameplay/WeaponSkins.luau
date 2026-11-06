@@ -8,6 +8,13 @@ local pistol=table.freeze({
     table.freeze({Id="Classic",Label="Clássica"}),
     table.freeze({Id="Gold",Label="Dourada"}),
 })
+local finishes=table.freeze({
+    Pistol=pistol,
+    SMG=table.freeze({table.freeze({Id="Default",Label="Original"}),
+        table.freeze({Id="Bronze",Label="Bronze"}),table.freeze({Id="White",Label="Branca"})}),
+    Shotgun=table.freeze({table.freeze({Id="Default",Label="Original"}),
+        table.freeze({Id="Sand",Label="Areia"}),table.freeze({Id="Silver",Label="Prata"})}),
+})
 local empty=table.freeze({})
 local known=table.freeze({Rifle=true,SMG=true,Shotgun=true,Pistol=true})
 
@@ -18,7 +25,7 @@ end
 
 function WeaponSkins.options(id: string)
     if not known[id] then return empty end
-    return if id=="Pistol" then pistol else original
+    return finishes[id] or original
 end
 
 function WeaponSkins.valid(id: string,skin: string): boolean

@@ -12,7 +12,9 @@
   "runtime_upstream_scripts": false,
   "bundled_weapons": [
     "Rifle",
-    "Pistol"
+    "Pistol",
+    "SMG",
+    "Shotgun"
   ],
   "pistol": {
     "asset_id": 118912302094201,
@@ -34,7 +36,11 @@
         "archive_sha256": "9a0adb1e26e6fa15f0a46f04e24900b11d3fe9cfdf00e226e766b5e66202a16f",
         "runtime_path": "ZO_WeaponAssets/Skins/Pistol/Classic",
         "weapon_id": "Pistol",
-        "textures": { "Pistol": 2492931263, "Bolt": 2492931686, "Magazine": null }
+        "textures": {
+          "Pistol": 2492931263,
+          "Bolt": 2492931686,
+          "Magazine": null
+        }
       },
       "Gold": {
         "selected_tool": "Workspace/Pistol3",
@@ -42,7 +48,11 @@
         "archive_sha256": "4ed7e278a77756ab82ea0c374f055f12f0cc229cb8b7ed9ff711bc9401c14ad8",
         "runtime_path": "ZO_WeaponAssets/Skins/Pistol/Gold",
         "weapon_id": "Pistol",
-        "textures": { "Pistol": 3361055083, "Bolt": 3361057436, "Magazine": 3361057436 }
+        "textures": {
+          "Pistol": 3361055083,
+          "Bolt": 3361057436,
+          "Magazine": 3361057436
+        }
       }
     }
   },
@@ -58,6 +68,40 @@
   "excluded_runtime_assets": {
     "1489924400": "HitEffect/HitSound: Roblox Studio reported this original impact sound is archived; particles and original firing/reload audio remain"
   },
-  "studio_import_status": "Official pistol obtained by user through Toolbox and supplied as native Studio place; black Pistol2 bundled, original Pistol/Pistol3 reviewed and included as Classic/Gold cosmetic templates",
-  "runtime_prefab_status": "Rifle and Pistol bundled with two official cosmetic pistol variants; skins are not additional weapons. SMG and Shotgun still absent. Optional manual imports require Roblox asset permissions. Play never downloads prefabs automatically."
+  "studio_import_status": "Pistol supplied by user; official public SMG and Shotgun downloaded with HTTP 200, source hashes and verified Roblox Resources metadata preserved",
+  "runtime_prefab_status": "Four firearm classes bundled with six extra native cosmetic templates (ten Tools total). Play never downloads prefabs. Studio rendering/audio/multiplayer validation remains pending.",
+  "official_model_archives": {
+    "SMG": {
+      "file": "SMG.rbxm",
+      "asset_id": 119916677125479,
+      "legacy_source_asset_id": 4842212980,
+      "sha256": "61703285cb11bad6c5a24cbd37d0caea40824f877e7c0cd3e1e161d8bdf974c1",
+      "variants": {
+        "Default": "SMG",
+        "Bronze": "SMG2",
+        "White": "SMG3"
+      },
+      "fired_sound": 4812801977,
+      "reload_sound": 3821793228,
+      "bytes": 252906,
+      "source_url": "https://create.roblox.com/store/asset/119916677125479",
+      "license": "Roblox Limited Use License"
+    },
+    "Shotgun": {
+      "file": "Shotgun.rbxm",
+      "asset_id": 104068096273092,
+      "legacy_source_asset_id": 4842215723,
+      "sha256": "63858a4c5a91e83894fffe2647cb3a43fc57ceff48e91002d1b4e1f122a6bf41",
+      "variants": {
+        "Default": "Shotgun",
+        "Sand": "Shotgun2",
+        "Silver": "Shotgun3"
+      },
+      "fired_sound": 3821792787,
+      "reload_sound": 3821792115,
+      "bytes": 245860,
+      "source_url": "https://create.roblox.com/store/asset/104068096273092",
+      "license": "Roblox Limited Use License"
+    }
+  }
 }

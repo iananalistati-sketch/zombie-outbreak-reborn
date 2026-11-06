@@ -643,4 +643,31 @@ do
     check(attr(p,"Skin_Pistol")=="Gold","waiting with two players cannot use the solo practice exception")
 end
 
+do
+    for _,entry in {{"SMG","Bronze"},{"Shotgun","Silver"}} do
+        local id,skin=entry[1],entry[2]
+        local config=Config.Weapons[id]
+        local s,p=twoHumans();local zombie=s.add("ArsenalTarget","Zombies")
+        s.phase("Active");zombie.Character.Humanoid.Health=450
+        local credits=attr(p,"Credits")
+        s.phase("Preparation");s.loadout(p,"Buy",id);ready(s,p)
+        check(attr(p,"PrimaryWeapon")==id and attr(p,"Credits")==credits-config.Price,"native firearm purchase charges its server price once")
+        check(attr(p,"Ammo")==config.Magazine and attr(p,"SecondaryWeapon")=="Pistol","new primary preserves the secondary slot and configured magazine")
+        credits=attr(p,"Credits");s.loadout(p,"Skin",id,skin)
+        check(attr(p,"WeaponSkin")==skin and attr(p,"Credits")==credits,"owned native finish applies without changing economy")
+        s.phase("Active");s.ray(function() return hit(zombie.Character.UpperTorso) end)
+        local traces=#s.raycasts;s.fire(p)
+        check(attr(p,"Ammo")==config.Magazine-1 and #s.raycasts-traces==config.Pellets,"one trigger spends one cartridge while resolving every configured pellet")
+        check(near(zombie.Character.Humanoid.Health,450-config.Damage*config.Pellets),"server applies the native firearm's K-17 damage once per resolved volley")
+        s.advance(.05);s.reload(p);s.advance(config.ReloadSeconds+.1)
+        check(attr(p,"Ammo")==config.Magazine and attr(p,"Reserve")==config.Reserve-1,"reload restores only spent ammunition from server reserve")
+        s.loadout(p,"Equip","Secondary");ready(s,p)
+        check(attr(p,"WeaponId")=="Pistol","pistol remains available after buying the new primary")
+        s.loadout(p,"Equip","Primary");ready(s,p)
+        check(attr(p,"WeaponId")==id and attr(p,"WeaponSkin")==skin and attr(p,"Ammo")==config.Magazine,"returning to primary preserves its actual magazine and chosen finish")
+        s.role(p,"Zombies");local ammo=attr(p,"Ammo");s.fire(p)
+        check(attr(p,"Ammo")==ammo,"infection/team rules still deny the bundled firearm to zombies")
+    end
+end
+
 print(("PASS actual Combat controller: %d assertions; inventory, skins, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

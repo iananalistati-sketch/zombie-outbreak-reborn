@@ -189,4 +189,15 @@ local beforeCached=downloads;Import.loadAll()
 check(downloads==beforeCached and kit:GetAttribute("CachedCount")==4
     and kit:GetAttribute("ImportedCount")==0 and kit:GetAttribute("AttemptedCount")==0
     and kit:GetAttribute("Status")=="Ready","fully cached arsenal stays ready without claiming a new download")
+for _,id in {"SMG","Shotgun"} do
+    local variants=make("Model","ReviewedOfficialVariants")
+    for _,name in {id,id.."2",id.."3"} do
+        local item=prefab():FindFirstChild("Original");item.Name=name;item.Parent=variants
+    end
+    local result=Import.install(variants,id,ids[id])
+    check(result:GetAttribute("ZO_SourceVariant")==id,"multi-Tool official source selects the reviewed original variant for "..id)
+    result:SetAttribute("ZO_SourceAssetId",tostring(ids[id]))
+end
+local cachedDownloads=downloads;Import.loadAll()
+check(downloads==cachedDownloads and kit:GetAttribute("CachedCount")==4,"native string provenance attributes do not trigger redundant downloads")
 print(("PASS official weapon importer: %d assertions; tree/AssetService doubles, no network or engine execution"):format(passed))

@@ -132,8 +132,12 @@ local function simulation(options)
     local templates=instance("Folder","Weapons",weaponAssets)
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local skins=instance("Folder","Skins",weaponAssets)
-    local pistolSkins=instance("Folder","Pistol",skins)
-    for _,id in {"Classic","Gold"} do instance("Tool",id,pistolSkins) end
+    for _,weapon in Config.WeaponOrder do
+        local variants=instance("Folder",weapon,skins)
+        for _,option in WeaponSkins.options(weapon) do
+            if option.Id~=WeaponSkins.default(weapon) then instance("Tool",option.Id,variants) end
+        end
+    end
     local modules={}
     for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins} do
         local module=instance("ModuleScript",name,shared);modules[module]=result

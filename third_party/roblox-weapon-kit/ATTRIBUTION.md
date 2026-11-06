@@ -1,5 +1,12 @@
 # Roblox Weapons Kit — origem e atribuição
 
+**Estoque atual:** quatro classes e seis skins adicionais. Os binários oficiais
+de SMG/Shotgun, hashes, variantes e respostas de metadados do grupo verificado
+Roblox Resources estão em [official-prefabs/SOURCE.json](official-prefabs/SOURCE.json).
+Os dois downloads são cobertos pela Roblox Limited Use License, sem atribuir
+MIT aos assets originais. Veja a [integração e revisão](../../docs/OFFICIAL_ARSENAL_INTEGRATION.md).
+As notas de ausência de SMG/Shotgun mais abaixo registram etapas anteriores.
+
 **Kit original:** Roblox Corporation,
 [Roblox Weapons Kit](https://create.roblox.com/docs/resources/weapons-kit).
 O material original está sujeito à

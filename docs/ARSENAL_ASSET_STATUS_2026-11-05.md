@@ -1,5 +1,10 @@
 # Arsenal — modelos recebidos e bloqueio de rede
 
+**Registro histórico.** A rede voltou a responder, os dois modelos oficiais
+foram recebidos e a [integração atual](OFFICIAL_ARSENAL_INTEGRATION.md) inclui
+as quatro classes configuradas e seus acabamentos. O bloqueio descrito abaixo
+não é o estado atual da entrega.
+
 O objetivo desta etapa é obter e integrar um **arsenal completo de modelos
 reais da Creator Store**, com várias armas. Esse objetivo permanece pendente.
 As skins descritas abaixo não são contadas como novas classes de arma.

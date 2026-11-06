@@ -15,9 +15,9 @@ local sources={
     SMG=119916677125479,
 }
 local sourceURL="https://create.roblox.com/docs/resources/weapons-kit"
--- The uploaded official Pistol asset contains three cosmetic Tools. Pistol2 is
--- the reviewed black variant; no naming assumption is made for other assets.
-local preferredVariants={Pistol="Pistol2"}
+-- These reviewed prefabs each contain three cosmetic Tools. Pick the exact
+-- source variant corresponding to the shipped default; reject other ambiguity.
+local preferredVariants={Pistol="Pistol2",SMG="SMG",Shotgun="Shotgun"}
 local running=false
 
 local function folder(parent: Instance,name: string): Folder
@@ -121,7 +121,7 @@ function Import.loadAll()
     local cached=0
     for id,assetId in sources do
         local existing=weapons:FindFirstChild(id)
-        if existing and existing:GetAttribute("ZO_SourceAssetId")==assetId then
+        if existing and tonumber(existing:GetAttribute("ZO_SourceAssetId"))==assetId then
             kit:SetAttribute("Status_"..id,"Ready")
             kit:SetAttribute("Error_"..id,nil)
             cached+=1

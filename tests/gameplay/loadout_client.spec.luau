@@ -88,8 +88,12 @@ local function simulation(options)
     local templates=instance("Folder","Weapons",kit)
     for _,id in Config.WeaponOrder do instance("Tool",id,templates) end
     local skins=instance("Folder","Skins",kit)
-    local pistolSkins=instance("Folder","Pistol",skins)
-    for _,name in {"Classic","Gold"} do instance("Tool",name,pistolSkins) end
+    for _,weapon in Config.WeaponOrder do
+        local variants=instance("Folder",weapon,skins)
+        for _,option in WeaponSkins.options(weapon) do
+            if option.Id~=WeaponSkins.default(weapon) then instance("Tool",option.Id,variants) end
+        end
+    end
     for _,id in Config.WeaponOrder do player:SetAttribute("ZO_Skin_"..id,WeaponSkins.default(id)) end
     player:SetAttribute("ZO_WeaponSkin","Default")
     local modules={}
@@ -173,6 +177,32 @@ local function opened(s) return s.player:GetAttribute("ZO_ShopOpen")==true and s
 local function open(s) s.key("ZO_OpenShop") end
 local function choose(s,id) assert(s.click(s.cards[id]),"weapon card must be reachable") end
 local function category(s,id) assert(s.click(s.categories["Category_"..id]),"category must be reachable") end
+
+do
+    for _,entry in {{"SMG","Bronze"},{"Shotgun","Sand"}} do
+        local id,skin=entry[1],entry[2]
+        local s=simulation();open(s);choose(s,id)
+        local before=s.player:GetAttribute("ZO_Credits")
+        check(s.buy.Active and s.click(s.buy),id.." bundled model enables a real purchase request")
+        check(s.requests[#s.requests][1]=="Buy" and s.requests[#s.requests][2]==id,"category purchase names the selected firearm")
+        s.player:SetAttribute("ZO_Credits",before-Config.Weapons[id].Price)
+        s.player:SetAttribute("ZO_PrimaryWeapon",id);s.player:SetAttribute("ZO_WeaponId",id)
+        s.player:SetAttribute("ZO_Ammo",Config.Weapons[id].Magazine);s.result("Result",true,"Compra confirmada")
+        check(s.cards[id].Price.Text=="EM MÃOS" and s.previewWeapons[#s.previewWeapons]==id,"confirmed purchase refreshes selected firearm and preview")
+        check(s.skins.Visible and s.skins.Choices["Skin_"..skin].Active,"new weapon shows only its available source finishes")
+        s.click(s.skins.Choices["Skin_"..skin])
+        check(s.previewSkins[#s.previewSkins]==skin and s.skins.ApplySkin.Active,"native finish can be previewed before application")
+        local credits=s.player:GetAttribute("ZO_Credits")
+        s.click(s.skins.ApplySkin)
+        local request=s.requests[#s.requests]
+        check(request[1]=="Skin" and request[2]==id and request[3]==skin,"apply keeps cosmetic and weapon identities separate")
+        s.player:SetAttribute("ZO_Skin_"..id,skin);s.player:SetAttribute("ZO_WeaponSkin",skin)
+        s.result("Result",true,"Aparência aplicada")
+        check(s.player:GetAttribute("ZO_Credits")==credits and not s.skins.ApplySkin.Active,"confirmed finish never spends gameplay credits")
+        choose(s,"Pistol");choose(s,id)
+        check(s.previewWeapons[#s.previewWeapons]==id and s.previewSkins[#s.previewSkins]==skin,"returning from the pistol restores this firearm's confirmed finish")
+    end
+end
 
 do
     local s=simulation();open(s)

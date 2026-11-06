@@ -53,6 +53,20 @@ def validate(path,studio_test=False):
         assert item.attrib['class']==expected,(instance_path,item.attrib['class'],expected)
         source=item.findtext('./Properties/*[@name="Source"]')
         assert source is not None and source.replace('\r\n','\n')==(ROOT/source_path).read_text(),instance_path
+    # Validate the models actually shipped in this profile, not just configured
+    # weapon names or a mock asset folder used by protocol tests.
+    body_meshes={'Rifle':'2492890820','Pistol':'2492922600','SMG':'2492936134','Shotgun':'2492972199'}
+    package=at(root,'ReplicatedStorage/ZO_WeaponAssets')
+    assert not any(item.attrib['class'] in ('Script','LocalScript','ModuleScript','RemoteEvent','RemoteFunction')
+                   for item in package.iter('Item')),'External controller in weapon templates'
+    skin_ids={'Pistol':('Classic','Gold'),'SMG':('Bronze','White'),'Shotgun':('Sand','Silver')}
+    for weapon,mesh in body_meshes.items():
+        paths=['ReplicatedStorage/ZO_WeaponAssets/Weapons/'+weapon]
+        paths+=['ReplicatedStorage/ZO_WeaponAssets/Skins/'+weapon+'/'+skin for skin in skin_ids.get(weapon,())]
+        for path in paths:
+            tool=at(root,path);assert tool.attrib['class']=='Tool',path
+            contents=[value.text or '' for value in tool.findall('.//Properties/Content/*')]
+            assert any(mesh in value for value in contents),'Wrong or missing native mesh: '+path
     driver_paths={
         'ServerScriptService/ZO_StudioSurvivalScenario':'tests/studio/SurvivalScenario.server.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_StudioSurvivalDriver':'tests/studio/SurvivalDriver.client.luau',
@@ -81,6 +95,7 @@ def validate(path,studio_test=False):
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Combat.server.luau').read_text() for s in sources)==1
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Round.server.luau').read_text() for s in sources)==1
     print(f'PASS classic profile: {len(bindings)} exact source bindings, three private server functions, one round/combat controller, no legacy proximity/rifle controllers')
+    print('PASS bundled assets: four firearm classes and six reviewed cosmetic templates in the built profile')
     print('PASS isolated Studio validation drivers and test config' if studio_test else 'PASS production round config; no automated test drivers')
 
 
