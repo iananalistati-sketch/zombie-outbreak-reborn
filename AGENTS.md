@@ -10,6 +10,10 @@
   Survival/Mod, infecção, posições defensivas, barricadas e ambiente detalhado.
 - Plano ativo: docs/PROJECT_DIRECTION.md. Projeto principal: este repositório,
   main. fps-lab é arquivo de pesquisa, sem desenvolvimento de produto paralelo.
+- O usuário exige entregas grandes e coerentes, reunindo várias melhorias
+  perceptíveis. Agrupar trabalho de gameplay, mapa e apresentação por objetivo
+  jogável; não pedir nova validação a cada objeto ou ajuste mínimo. Correções
+  isoladas cabem quando desbloqueiam uma falha que impede jogar.
 
 ## Arquitetura e entrega
 

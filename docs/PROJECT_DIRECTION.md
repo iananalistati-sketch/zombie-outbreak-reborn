@@ -72,6 +72,13 @@ próprios; não misturar duas direções de jogo na primeira entrega.
 
 ## Regra de entrega
 
+As entregas ao usuário devem reunir várias melhorias perceptíveis em um pacote
+coerente, com objetivo jogável e roteiro curto de validação. As etapas acima
+organizam o trabalho interno; não exigem uma interrupção para teste a cada
+objeto, arma ou ajuste mínimo. Agrupar combate, cenário e apresentação quando
+contribuírem para a mesma experiência. Correções urgentes podem sair isoladas
+para desbloquear uma falha que impede jogar.
+
 Cada entrega inclui o arquivo nativo atualizado, checksum, fontes ativos
 conferidos e instrução curta de teste. Compilar ou usar APIs simuladas não
 equivale a executar Roblox Studio. Backup antes de alterações importantes.
