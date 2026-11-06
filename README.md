@@ -1,7 +1,8 @@
-# Zombie Outbreak Reborn — versão 0.1
+# Zombie Outbreak Reborn — versão 0.2
 
 Zombie Survival com preparação, infecção, defesa por barricadas, armas e
-rodadas multiplayer. [Direção e próximas entregas](docs/PROJECT_DIRECTION.md).
+rodadas multiplayer. [Pacote 0.2 e validação](docs/RELEASE_0_2.md) ·
+[Direção e próximas entregas](docs/PROJECT_DIRECTION.md).
 
 **Projeto principal:** `iananalistati-sketch/zombie-outbreak-reborn`, branch
 **main**. O repositório `zombie-outbreak-fps-lab` permanece como pesquisa
@@ -12,7 +13,7 @@ arquivada. O arquivo CounterBlox_CS não é esta versão do produto.
 1. No GitHub Desktop, selecione **zombie-outbreak-reborn → main**.
 2. Faça **Fetch origin → Pull origin**, salve e feche o place anterior.
 3. Abra **ABRIR_JOGO.cmd** e execute **Play** no Studio. O HUD deve mostrar
-   **ZOMBIE OUTBREAK · v0.1.0**.
+   **ZOMBIE OUTBREAK / v0.2.0** no canto inferior direito.
 
 Não é necessário configurar HTTP, API Services, DataStore ou uma whitelist.
 A primeira sessão usa somente o conteúdo embarcado e serviços normais de
@@ -21,6 +22,13 @@ dependendo de disponibilidade e permissões da plataforma.
 
 ## O que testar nesta versão
 
+- **Interface e combate:** HUD compacto com vida, munição, recarga e localização;
+  avisos de fase, confirmação de abate e registro de abates/infecções. **Tab**
+  abre o placar de sessão; há botão na tela e D-pad esquerdo no controle.
+- **Defesa:** mire em uma barricada próxima para conferir sua resistência.
+  Os infectados do treino tentam golpear objetos que bloqueiam seu caminho.
+  Placas nas entradas identificam refúgios; o térreo da administração recebeu
+  faixas de circulação, sinalização e acabamento de instalações/janelas.
 - **Sozinho:** o treino começa automaticamente. Após cinco segundos entram
   infectados que perseguem e atacam. São três ondas de 3, 4 e 5 inimigos,
   com até três ativos simultaneamente. Vitória ou morte levam a nova tentativa.
@@ -46,8 +54,9 @@ modelos oficiais e componentes reutilizados têm licenças e procedência em
 
 O controlador Source experimental e os motores Counter Blox/Evostrike não
 executam nesta versão. Zombie Escape e progressão persistente ficam para
-entregas posteriores. A validação real de aparência, áudio, navegação, física
-e multiplayer no Studio permanece pendente; compilar não equivale a jogar.
+entregas posteriores. O usuário informou ter realizado a validação da 0.1.
+As alterações da 0.2 ainda precisam de validação real de aparência, navegação,
+física e multiplayer no Studio; compilar não equivale a jogar.
 
 ## Desenvolvimento
 
@@ -56,6 +65,7 @@ Python 3, Rojo 7.7.1 e Luau 0.742 são as ferramentas de desenvolvimento.
 
 ```sh
 python scripts/test_training.py --luau CAMINHO_DO_LUAU
+python scripts/test_tactical_hud.py --luau CAMINHO_DO_LUAU
 rojo build default.project.json --output builds/ZombieOutbreakReborn_K17.rbxl
 python scripts/check_studio_file.py --write
 ```

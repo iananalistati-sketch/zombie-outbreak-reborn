@@ -376,6 +376,7 @@ end
 do
     for _,cancel in {
         function(s) s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0) end,
+        function(s) s.player:SetAttribute("ZO_ScoreboardOpen",true);s.advance(0) end,
         function(s) s.key("ZO_Equip","Begin","Keyboard","Two") end,
         function(s) s.uis.WindowFocusReleased:Fire();s.advance(0) end,
         function(s) s.player.Team={Name="Zombies"};s.advance(0) end,
@@ -506,6 +507,9 @@ do
     s.player:SetAttribute("ZO_ShopOpen",false);s.advance(0);beginAim(s)
     s.player:SetAttribute("ZO_TacticalMapOpen",true);s.advance(0);restored(s,"tactical map restores FOV")
     s.player:SetAttribute("ZO_TacticalMapOpen",false);s.advance(0);beginAim(s)
+    s.player:SetAttribute("ZO_ScoreboardOpen",true);s.advance(0);restored(s,"scoreboard restores FOV")
+    check(s.key("ZO_Trigger","Begin","MouseButton1")=="Pass","scoreboard blocks firing")
+    s.player:SetAttribute("ZO_ScoreboardOpen",false);s.advance(0);beginAim(s)
     s.guiService.MenuIsOpen=true;s.guiService.MenuOpened:Fire();s.advance(0);restored(s,"Roblox menu opening restores FOV")
     s.guiService.MenuIsOpen=false;beginAim(s)
     s.player.Team={Name="Zombies"};s.advance(0);restored(s,"infection team transition restores FOV")

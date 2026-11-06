@@ -48,9 +48,16 @@ ser observados no Studio antes de declarar essa etapa aprovada.
 
 ### 0.2 — Combate e apresentação
 
-Conferir R6/R15, grip, mira, troca, recarga, sons e observadores. Ajustar recuo,
-feedback e contenção com base em testes reais. Corrigir bugs reproduzidos antes
-de incluir outra classe de arma. Melhorar o arsenal visual com assets auditados.
+Pacote implementado: HUD compacto com munição/vida/recarga/localização, placar
+de sessão, confirmação de abate, registro de infecção e alerta de dano. Inclui
+resistência contextual de barricadas, golpes de NPCs em obstáculos e sinalização
+dos refúgios, além do acabamento do térreo da administração. Sem trocar motor,
+repositório ou arquivo de abertura. [Entrega e aceite](RELEASE_0_2.md).
+
+Conferir no motor legibilidade, combate durante a defesa, mira/troca/recarga e
+movimento visto por observadores. Os contadores são de sessão e os abates do
+treino ficam separados dos de jogadores. A revisão visual completa do arsenal
+e a expansão de classes continuam nas próximas entregas.
 
 ### 0.3 — Um setor do mapa em qualidade final
 

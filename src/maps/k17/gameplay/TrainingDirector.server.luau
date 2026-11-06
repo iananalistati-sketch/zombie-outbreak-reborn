@@ -5,6 +5,7 @@ local RS=game:GetService("ReplicatedStorage")
 local Teams=game:GetService("Teams")
 local Pathfinding=game:GetService("PathfindingService")
 local Debris=game:GetService("Debris")
+local SS=game:GetService("ServerStorage")
 local cleanup: (() -> ())?=nil
 local function main()
     local shared=assert(RS:WaitForChild("K17Gameplay",12),"K17Gameplay ausente")
@@ -16,6 +17,7 @@ local function main()
     local map=assert(workspace:WaitForChild("ZO_K17Foundry",12),"Mapa K-17 ausente")
     local spawns=map:WaitForChild("Spawns")
     local marker=spawns:WaitForChild("HumanSpawn") :: BasePart
+    local damageBarricade=SS:WaitForChild("ZO_Gameplay"):WaitForChild("DamageBarricade") :: BindableFunction
     local folder: Folder?=nil
     local owner: Player?=nil
     local character: Model?=nil
@@ -90,7 +92,7 @@ local function main()
         end)
         task.spawn(function()
             local path=Pathfinding:CreatePath({AgentRadius=2,AgentHeight=6,AgentCanJump=true})
-            local lastPath=-math.huge;local nextAttack=0;local waypoints={};local cursor=2
+            local lastPath=-math.huge;local nextAttack=0;local nextBarricade=0;local waypoints={};local cursor=2
             while not actor.stopped and token==generation and bot.Parent and hum.Health>0 do
                 if session~=current or RS:GetAttribute("ZO_RoundState")~="Training" or #Players:GetPlayers()~=1 then break end
                 local target=player.Character
@@ -101,7 +103,8 @@ local function main()
                     if now-lastPath>=Config.PathInterval then
                         lastPath=now
                         local ok=pcall(function() path:ComputeAsync(root.Position,tr.Position) end)
-                        if actor.stopped or token~=generation or not bot.Parent then break end
+                        if actor.stopped or token~=generation or not bot.Parent or #Players:GetPlayers()~=1
+                            or RS:GetAttribute("ZO_RoundState")~="Training" then break end
                         waypoints=if ok and path.Status==Enum.PathStatus.Success then path:GetWaypoints() else {}
                         cursor=2
                     end
@@ -111,6 +114,18 @@ local function main()
                         if point.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end
                         hum:MoveTo(point.Position)
                     else hum:MoveTo(tr.Position) end
+                    if now>=nextBarricade then
+                        local delta=tr.Position-root.Position
+                        if delta.Magnitude>.1 then
+                            local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={bot}
+                            local obstacle=workspace:Raycast(root.Position,delta.Unit*math.min(6,delta.Magnitude),params)
+                            local props=workspace:FindFirstChild("ZO_Barricades")
+                            if obstacle and props and obstacle.Instance:IsDescendantOf(props) then
+                                nextBarricade=now+Config.AttackCooldown
+                                damageBarricade:Invoke(bot,obstacle.Instance)
+                            end
+                        end
+                    end
                     if now>=nextAttack and now>=protectedUntil and (tr.Position-root.Position).Magnitude<=Config.AttackRange then
                         local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={bot}
                         local hit=workspace:Raycast(root.Position,tr.Position-root.Position,params)

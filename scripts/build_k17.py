@@ -20,6 +20,7 @@ from k17_stair_niches import build_stair_niches
 from k17_foundry_architecture import build_foundry_architecture
 from k17_power_architecture import build_power_architecture
 from k17_tower_architecture import build_tower_architecture
+from k17_defense_presentation import build_defense_presentation
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = {
@@ -220,6 +221,7 @@ class Map:
         self.prop(q,'token','Font',19)
         dim=ET.SubElement(q,'UDim2',name='Size')
         for k,v in [('XS',1),('XO',0),('YS',1),('YO',0)]:ET.SubElement(dim,k).text=str(v)
+        return item
 
     def route(self,name,points,kind='circulation'):
         self.routes.append({'name':name,'kind':kind,'points':points})
@@ -656,6 +658,7 @@ def build():
     m.refuges.extend(build_stair_niches(m))
     build_power_architecture(m)
     build_tower_architecture(m)
+    build_defense_presentation(m)
     defenses(m)
     for name,point in [('HumanSpawn',(-68,1,-136)),('ZombieSpawn',(-217,1,136)),('LobbySpawn',(-30,.1,36))]:
         x,y,z=point;m.box('Spawns',name,(x-1,x+1,z-1,z+1),y,y+.1,physical=False,alpha=1)

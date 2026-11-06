@@ -35,6 +35,14 @@ local deathConnections: {[Player]: RBXScriptConnection}={}
 local removingCharacters: {[Player]: Model}={}
 local suppressed: {[Model]: any}={}
 local rng=Random.new()
+local function tally(player: Player,key: string)
+    player:SetAttribute(key,(player:GetAttribute(key) or 0)+1)
+end
+-- Emitted only after server damage/infection confirmation. No client report RPC.
+local function report(player: Player,kind: string,victim: string,weapon: string?,head: boolean?,training: boolean?)
+    effects:FireAllClients("Report",{Kind=kind,Actor=player.DisplayName or player.Name,ActorId=player.UserId,
+        Victim=victim,Weapon=weapon,Head=head==true,Training=training==true})
+end
 
 local function role(player: Player): string?
     return player.Team and player.Team.Name
@@ -141,6 +149,7 @@ local function survivorReward(player: Player)
         and RS:GetAttribute("ZO_RoundState")=="Results" and RS:GetAttribute("ZO_LastWinner")=="Humans"
         and rewardedSurvival[player]~=id then
         rewardedSurvival[player]=id;award(player,Config.Economy.SurvivalReward)
+        tally(player,"ZO_SessionSurvived")
     end
 end
 local function resetWeapons(player: Player)
@@ -159,6 +168,7 @@ local function bindCharacter(player: Player,char: Model)
             or not loadouts[player] then return end
         deathConnections[player]=hum.Died:Connect(function()
             if player.Character~=char then return end
+            tally(player,"ZO_SessionDeaths")
             local loadout=loadouts[player]
             if loadout then loadout:cancelReloads();sync(player) end
             clearSuppression(char,false)
@@ -166,6 +176,9 @@ local function bindCharacter(player: Player,char: Model)
     end)
 end
 local function join(player: Player)
+    for _,key in {"ZO_SessionKills","ZO_SessionInfections","ZO_SessionDeaths","ZO_SessionSurvived","ZO_SessionTrainingKills"} do
+        player:SetAttribute(key,0)
+    end
     skins[player]={}
     loadouts[player]=LoadoutState.new(Config)
     sync(player)
@@ -409,8 +422,16 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
         end
         if health>0 and victim.Health<=0 then
             clearSuppression(model,false)
-            if Players:GetPlayerFromCharacter(model) then award(player,Config.Economy.KillReward)
-            elseif practice() and model:GetAttribute("ZO_TrainingEnemy")==true then award(player,Config.Economy.TrainingKillReward or 0) end
+            local defeated=Players:GetPlayerFromCharacter(model)
+            local training=practice() and model:GetAttribute("ZO_TrainingEnemy")==true
+            if defeated then
+                award(player,Config.Economy.KillReward);tally(player,"ZO_SessionKills")
+                report(player,"Elimination",defeated.DisplayName or defeated.Name,config.Id,entry.head,false)
+            elseif training then
+                award(player,Config.Economy.TrainingKillReward or 0);tally(player,"ZO_SessionTrainingKills")
+                report(player,"Elimination","Infectado de treino",config.Id,entry.head,true)
+            end
+            rifle:FireClient(player,"Kill",entry.damage,if entry.head then "Head" else "Body")
         elseif victim.Health>0 then suppress(model,victim,now) end
     end
 end)
@@ -427,14 +448,24 @@ melee.OnServerEvent:Connect(function(player: Player,direction: any)
     if model and targetRole(model)=="Humans" then
         local realVictim=Players:GetPlayerFromCharacter(model)
         local infected=infection:Invoke(player,model)
-        if infected and realVictim then award(player,Config.Economy.InfectionReward) end
+        if infected and realVictim then
+            award(player,Config.Economy.InfectionReward);tally(player,"ZO_SessionInfections")
+            report(player,"Infection",realVictim.DisplayName or realVictim.Name)
+        end
         melee:FireClient(player,if infected then "Infected" else "Miss")
         return
     end
     local props=workspace:FindFirstChild("ZO_Barricades")
     if props and hit.Instance:IsDescendantOf(props) and RS:GetAttribute("ZO_BarricadesAvailable")==true then
         local remaining=barricadeDamage:Invoke(player,hit.Instance)
-        if typeof(remaining)=="number" then melee:FireClient(player,"Barricade",remaining);return end
+        if typeof(remaining)=="number" then
+            melee:FireClient(player,"Barricade",remaining)
+            if remaining<=0 then
+                local prop=hit.Instance:FindFirstAncestorOfClass("Model")
+                report(player,"Barricade",if prop then prop:GetAttribute("ZO_Label") or prop.Name else "Barricada")
+            end
+            return
+        end
     end
     melee:FireClient(player,"Miss")
 end)

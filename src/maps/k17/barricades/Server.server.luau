@@ -14,7 +14,7 @@ local internal=SS:WaitForChild("ZO_Gameplay")
 type Entry={model: Model,hull: BasePart,kind: any,health: number,template: Model,
     brake: LinearVelocity,supportParams: RaycastParams,probeFrame: CFrame?,probed: boolean}
 local entries: {[Model]: Entry}={}
-local attacks: {[Player]: number}={}
+local attacks: {[Instance]: number}=setmetatable({},{__mode="k"})
 local templates: {[string]: Model}={}
 local failures: {[string]: string}={}
 local playerCount=#Players:GetPlayers()
@@ -133,10 +133,23 @@ bullet.OnInvoke=function(player: Player,part: BasePart,direction: Vector3,weapon
     return true
 end
 local damage=internal:WaitForChild("DamageBarricade") :: BindableFunction
-damage.OnInvoke=function(player: Player,part: BasePart): number?
+damage.OnInvoke=function(player: Player|Model,part: BasePart): number?
     local entry=entryFor(part)
-    local char,head,hum=character(player)
-    if not entry or not char or not head or not Rules.canAttack(role(player),phase(),hum~=nil) then return nil end
+    local char,head,hum
+    if player:IsA("Model") then
+        -- Private server callback only. A rig must belong to the active solo
+        -- director; arbitrary models and the multiplayer handoff are rejected.
+        if RS:GetAttribute("ZO_RoundState")~="Training" or #Players:GetPlayers()~=1
+            or workspace:GetAttribute("ZO_BarricadePractice")~=true
+            or not player.Parent or player.Parent~=workspace:FindFirstChild("ZO_PracticeTargets")
+            or player:GetAttribute("ZO_TrainingEnemy")~=true then return nil end
+        char=player;head=player:FindFirstChild("Head");hum=player:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health<=0 then return nil end
+    else
+        char,head,hum=character(player)
+        if not Rules.canAttack(role(player),phase(),hum~=nil) then return nil end
+    end
+    if not entry or not char or not head or not head:IsA("BasePart") then return nil end
     local now=os.clock()
     if now-(attacks[player] or -math.huge)<Config.MeleeCooldown then return nil end
     local delta=Placement.closest(entry.hull,head.Position)-head.Position

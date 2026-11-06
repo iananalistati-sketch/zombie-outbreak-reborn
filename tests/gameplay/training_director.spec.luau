@@ -8,7 +8,9 @@ local vm={}
 local function vec(x,y,z)return setmetatable({X=x or 0,Y=y or 0,Z=z or 0},vm)end
 vm.__add=function(a,b)return vec(a.X+b.X,a.Y+b.Y,a.Z+b.Z)end
 vm.__sub=function(a,b)return vec(a.X-b.X,a.Y-b.Y,a.Z-b.Z)end
-vm.__index=function(v,k)if k=="Magnitude" then return math.sqrt(v.X*v.X+v.Y*v.Y+v.Z*v.Z)end end
+vm.__mul=function(a,b)return vec(a.X*b,a.Y*b,a.Z*b)end
+vm.__div=function(a,b)return vec(a.X/b,a.Y/b,a.Z/b)end
+vm.__index=function(v,k)if k=="Magnitude" then return math.sqrt(v.X*v.X+v.Y*v.Y+v.Z*v.Z)elseif k=="Unit" then return v/v.Magnitude end end
 local cm={}
 local function cf(x,y,z)return setmetatable({Position=if type(x)=="table" then x else vec(x,y,z)},cm)end
 cm.__mul=function(a,b)return cf(a.Position+b.Position)end
@@ -72,7 +74,12 @@ local function simulation()
         local b,h,r=character();b.Parent=nil;h.Health=health;h.WalkSpeed=speed;r.Position=at.Position
         table.insert(rigs,b);return b
     end}
-    local services={Players=players,ReplicatedStorage=rs,Teams=teams,
+    local ss=object('ServerStorage','ServerStorage')
+    local internal=object('Folder','ZO_Gameplay',ss)
+    local damage=object('BindableFunction','DamageBarricade',internal)
+    local barricadeCalls={}
+    function damage:Invoke(bot,part)table.insert(barricadeCalls,{bot,part,now});return 100 end
+    local services={Players=players,ReplicatedStorage=rs,Teams=teams,ServerStorage=ss,
         Debris={AddItem=function(_,item,t)schedule(function()item:Destroy()end,now+t)end},
         PathfindingService={CreatePath=function()return {Status="Success",ComputeAsync=function()end,GetWaypoints=function()return{}end}end}}
     function world:Raycast()return nil end
@@ -82,7 +89,8 @@ local function simulation()
         Vector3={new=vec},CFrame={new=cf},warn=function(s)table.insert(warnings,s)end,
         RaycastParams={new=function()return{}end},Enum={PathStatus={Success="Success"},PathWaypointAction={Jump="Jump"},RaycastFilterType={Exclude="Exclude"}},
         require=function(m)return assert(modules[moduleNames[m]],"unexpected module")end},{__index=getfenv()})
-    local s={rs=rs,world=world,player=player,hum=hum,model=model,root=root,list=list,rigs=rigs,warnings=warnings,character=character,errors=errors}
+    local s={rs=rs,world=world,player=player,hum=hum,model=model,root=root,list=list,rigs=rigs,warnings=warnings,character=character,errors=errors,
+        object=object,barricadeCalls=barricadeCalls}
     function s.advance(delta)
         local finish=now+delta;local iterations=0
         while true do
@@ -174,5 +182,21 @@ do
     function template:Clone()error('clone failure')end
     local ok=pcall(function()Rig.new(template,at,130,8)end)
     check(not ok and template.Archivable==false,'failed cloning also restores the original archive flag')
+end
+do
+    local s=simulation()
+    local props=s.object('Folder','ZO_Barricades',s.world)
+    local prop=s.object('Model','Crate',props);local hull=s.object('Part','Hull',prop)
+    function s.world:Raycast()return {Instance=hull}end
+    s.advance(6)
+    check(#s.barricadeCalls>0,'agent forwards an obstructing barricade to the private damage authority')
+    s.advance(1)
+    local previous={}
+    for _,call in s.barricadeCalls do
+        if previous[call[1]] then check(call[3]-previous[call[1]]>=Config.AttackCooldown,'agent barricade attacks respect the attack interval') end
+        previous[call[1]]=call[3]
+    end
+    s.list[2]={};s.advance(.4);local after=#s.barricadeCalls;s.advance(2)
+    check(#s.barricadeCalls==after,'handoff stops all bot barricade attacks')
 end
 print('PASS actual training director/rig: '..checks..' checks; rig/path API doubles, no engine simulation')

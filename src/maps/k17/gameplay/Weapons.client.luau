@@ -86,6 +86,7 @@ local weaponMotion=WeaponMotion.new()
 local recoilPattern=TacticalRecoil.new()
 local nextAction,hitUntil,swingUntil=0,0,0
 local hitHead=false
+local killUntil=0
 local cameraKick,cameraYaw,bloom=0,0,0
 local appliedRecoil: CFrame?=nil
 local kickCamera: Camera?=nil
@@ -118,7 +119,8 @@ end
 local function humanoid(): Humanoid? return player.Character and player.Character:FindFirstChildOfClass("Humanoid") end
 local function weapon() return Config.Weapons[player:GetAttribute("ZO_WeaponId")] or Config.Weapons.Rifle end
 local function menuOpen(): boolean
-    return player:GetAttribute("ZO_ShopOpen")==true or player:GetAttribute("ZO_TacticalMapOpen")==true or GuiService.MenuIsOpen
+    return player:GetAttribute("ZO_ShopOpen")==true or player:GetAttribute("ZO_TacticalMapOpen")==true
+        or player:GetAttribute("ZO_ScoreboardOpen")==true or GuiService.MenuIsOpen
 end
 local function canShoot(): boolean
     if menuOpen() then return false end
@@ -333,7 +335,7 @@ CAS:BindActionAtPriority("ZO_Equip",equip,false,2200,Enum.KeyCode.One,Enum.KeyCo
 CAS:SetTitle("ZO_Trigger","Atacar");CAS:SetPosition("ZO_Trigger",UDim2.new(1,-150,1,-170))
 CAS:SetTitle("ZO_Reload","Recarregar");CAS:SetPosition("ZO_Reload",UDim2.new(1,-235,1,-170))
 CAS:SetTitle("ZO_Aim","Mira");CAS:SetPosition("ZO_Aim",UDim2.new(1,-320,1,-170))
-for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_BarricadeSelection"} do
+for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_ScoreboardOpen","ZO_BarricadeSelection"} do
     connect(player:GetAttributeChangedSignal(name),function() if menuOpen() or not canShoot() then stop() end end)
 end
 connect(player:GetAttributeChangedSignal("ZO_WeaponId"),function() stop();presentationDirty=true end)
@@ -382,6 +384,7 @@ connect(player.CharacterAdded,bindCharacter)
 connect(player.CharacterAppearanceLoaded,function() presentationDirty=true;zombieCharacter=nil end)
 connect(rifle.OnClientEvent,function(kind: string,_damage: any,hitgroup: any)
     if kind=="Hit" then hitUntil=os.clock()+.14;hitHead=hitgroup=="Head"
+    elseif kind=="Kill" then killUntil=os.clock()+.45;hitUntil=killUntil;hitHead=hitgroup=="Head";notice="ABATE CONFIRMADO";noticeUntil=killUntil
     elseif kind=="PropHit" then notice="Barricada atingida";noticeUntil=os.clock()+.6 end
 end)
 connect(melee.OnClientEvent,function(kind: string,value: any)
@@ -509,14 +512,16 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
             end
         end
     end
-    ammo.Visible=gun;health.Visible=active;cross.Visible=active;reticle.Visible=active
+    local tacticalHUD=player:GetAttribute("ZO_TacticalHUDReady")==true
+    ammo.Visible=gun and not tacticalHUD;health.Visible=active and not tacticalHUD;cross.Visible=active;reticle.Visible=active
     local clip=player:GetAttribute("ZO_Ammo") or 0
     ammo.Text=if reloading then ("RECARREGANDO  %.1fs"):format(remaining) elseif equipping then "EQUIPANDO..."
         else ("%s  %02d/%d  |  %03d"):format(string.upper(equipped.Label),clip,equipped.Magazine,player:GetAttribute("ZO_Reserve") or 0)
     health.Text=("%s  %d"):format(if zombie then "ZUMBI" else "VIDA",math.ceil(if hum then hum.Health else 0))
     local hit=os.clock()<hitUntil
     cross.Text=if hit then "×" else ""
-    cross.TextColor3=if hitHead then Color3.fromRGB(255,109,91) else Color3.fromRGB(230,222,192)
+    cross.TextColor3=if os.clock()<killUntil then Color3.fromRGB(234,184,93)
+        elseif hitHead then Color3.fromRGB(255,109,91) else Color3.fromRGB(230,222,192)
     local moving=speed>2
     local spread=Rules.shotSpread(equipped,moving,targetAim==1,if hum then hum:GetAttribute("ZO_MovementMode") else nil,
         hum~=nil and hum.FloorMaterial==Enum.Material.Air,Config.Accuracy)

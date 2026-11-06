@@ -144,7 +144,7 @@ local function simulation(options)
     local ok,message=pcall(fn)
     check(ok,"real barricade controller must complete startup: "..tostring(message))
     local function flush() while #deferred>0 do table.remove(deferred,1)() end end
-    return {rs=rs,folder=folder,internal=internal,warnings=warnings,heartbeat=heartbeat,options=options,flush=flush,
+    return {rs=rs,folder=folder,internal=internal,warnings=warnings,heartbeat=heartbeat,options=options,flush=flush,instance=instance,
         advance=function(seconds) now+=seconds end,world=world,raycasts=raycasts,
         remove=function(player)
             local index=table.find(list,player);if index then table.remove(list,index) end
@@ -332,5 +332,30 @@ do
     check(s.folder:FindFirstChild("Stress002")==old,"empty-server pass is not run on every frame")
     s.heartbeat:Fire(.5)
     check(s.folder:FindFirstChild("Stress002")~=old and s.rs:GetAttribute("ZO_BarricadesReady"),"empty server still recovers lost props at one-second cadence")
+end
+do
+    local target
+    local s=simulation({raycast=function()return {Instance=target.Hull,Normal=Vector.yAxis}end})
+    target=s.folder:FindFirstChild(names[1])
+    local player=s.actor('Humans')
+    local folder=s.instance('Folder','ZO_PracticeTargets');folder.Parent=s.world
+    local bot=s.instance('Model','TrainingBot');bot.Parent=folder;bot:SetAttribute('ZO_TrainingEnemy',true)
+    local head=s.instance('Part','Head');head.Parent=bot;head.Position=target.Hull.Position+Vector.new(-3,0,0)
+    local hum=s.instance('Humanoid','Humanoid');hum.Parent=bot;hum.Health=100
+    local damage=s.internal.DamageBarricade
+    check(damage.OnInvoke(bot,target.Hull)==nil,'practice bot cannot attack during multiplayer preparation')
+    s.rs:SetAttribute('ZO_RoundState','Training');s.world:SetAttribute('ZO_BarricadePractice',true)
+    bot:SetAttribute('ZO_TrainingEnemy',false)
+    check(damage.OnInvoke(bot,target.Hull)==nil,'arbitrary model cannot acquire NPC damage capability')
+    bot:SetAttribute('ZO_TrainingEnemy',true)
+    local before=target:GetAttribute('ZO_Health')
+    check(damage.OnInvoke(bot,target.Hull)==before-Config.MeleeDamage,'training bot uses the same real damage authority and prop health')
+    check(damage.OnInvoke(bot,target.Hull)==nil,'private bot melee cooldown cannot be bypassed')
+    s.advance(1);hum.Health=0
+    check(damage.OnInvoke(bot,target.Hull)==nil,'dead training bot cannot damage props')
+    hum.Health=100;s.actor('Humans')
+    check(damage.OnInvoke(bot,target.Hull)==nil,'second connection immediately revokes bot damage authority')
+    s.remove(player);bot.Parent=s.world;s.advance(1)
+    check(damage.OnInvoke(bot,target.Hull)==nil,'bot outside director folder cannot damage props')
 end
 print(("PASS actual barricade controller: %d assertions; startup, isolation, resets, 180-prop safety passes and callbacks; engine physics not executed"):format(checks))

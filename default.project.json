@@ -87,6 +87,9 @@
         "TrainingConfig": {
           "$path": "src/maps/k17/gameplay/TrainingConfig.luau"
         },
+        "TacticalState": {
+          "$path": "src/maps/k17/gameplay/TacticalState.luau"
+        },
         "TrainingState": {
           "$path": "src/maps/k17/gameplay/TrainingState.luau"
         },
