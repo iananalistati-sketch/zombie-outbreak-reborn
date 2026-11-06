@@ -1,0 +1,110 @@
+{
+  "description": "Exact upstream source snapshots for the limited movement, recoil, and scalar spring adaptations used by K-17.",
+  "archived_upstream_scripts_active": false,
+  "components": [
+    {
+      "id": "unity-source-movement",
+      "repository": "https://github.com/Olezen/UnitySourceMovement",
+      "revision": "726e98f5f50ebb28aba2f6444808ec8ff0021532",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2019 Ole Ellefsen Farner",
+      "archived_files": {
+        "Modified fragsurf/Movement/SurfController.cs": {
+          "archived": "unity-source-movement/source/SurfController.cs",
+          "sha256": "fd2960313431956a24ba0652a97f67d2dac1370c06f3b092b607c4a15486db5a",
+          "bytes": 30609
+        },
+        "Modified fragsurf/Movement/SurfPhysics.cs": {
+          "archived": "unity-source-movement/source/SurfPhysics.cs",
+          "sha256": "61a5971f3d48f3d54140c9a1539b2bb5ea9d74b824ea5c71370dbb786357c344",
+          "bytes": 19454
+        },
+        "LICENSE": {
+          "archived": "unity-source-movement/LICENSE",
+          "sha256": "6891e352cd56b46bc4aaea13d2ec20ce7659c20bccc5eb96dbac4cb32e654194",
+          "bytes": 1076
+        }
+      },
+      "adapted_components": [
+        "Horizontal ground friction with stop speed",
+        "Wish-direction acceleration and capped air acceleration",
+        "Ground/air input velocity separation"
+      ],
+      "excluded_components": [
+        "Unity collision solver, capsule/box colliders, raycast tracing and step solver",
+        "Sliding, ladders, swimming, gravity and jump controller",
+        "Unity scenes, models and other assets"
+      ]
+    },
+    {
+      "id": "acs",
+      "repository": "https://github.com/jasonconba/CIA-SAC-ACS",
+      "revision": "678d94f104f06589c652b5b6b62020837b5ea74c",
+      "license": "Apache-2.0",
+      "archived_files": {
+        "src/client/character/ACS_Client/Modules/Functions/Recoil.lua": {
+          "archived": "acs/source/Recoil.lua",
+          "sha256": "b151837b88f8fea5810812d398db15ab80b9460e827770b55d5095695edc5d62",
+          "bytes": 4723
+        },
+        "License.txt": {
+          "archived": "acs/License.txt",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        }
+      },
+      "adapted_components": [
+        "Camera recoil pitch and signed horizontal range arithmetic"
+      ],
+      "excluded_components": [
+        "ACS character, camera, viewmodel, remotes, inventory and damage controllers",
+        "Upstream Spring module and package dependencies",
+        "Gun recoil, roll, bipods and the delayed counter-impulse branch"
+      ],
+      "upstream_notice_file": null,
+      "modification_notice": "TacticalRecoil.luau adapts camera pitch/horizontal arithmetic with deterministic per-weapon tuning and K-17 state; upstream archived Recoil.lua is unmodified."
+    },
+    {
+      "id": "spr",
+      "repository": "https://github.com/beters02/Evostrike",
+      "revision": "221a3a2f67451145b94836b794c0df072c6a28ee",
+      "license": "MIT (explicit file header; separately licensed third-party library)",
+      "container_repository_license": "GPLv2; applies to the surrounding Evostrike project, which is not imported as an engine",
+      "original_library_repository": "https://github.com/Fraktality/spr",
+      "archived_files": {
+        "src/shared/lib/c_spr.lua": {
+          "archived": "spr/source/c_spr.lua",
+          "sha256": "a8f8e917a5b979eccbf5ccc4d2df29558cb6b63631b3d33fc15857d64d1b396b",
+          "bytes": 19206
+        }
+      },
+      "license_file": {
+        "archived": "spr/LICENSE",
+        "sha256": "d879f0beba600a36bf4a3f42a9f7c19b2beeec8f2a66902a2980bf93b01f0fef",
+        "bytes": 1067,
+        "repository": "https://github.com/Fraktality/spr",
+        "upstream_path": "LICENSE",
+        "git_blob_sha1": "80dc9a3e54325ad5fd6d2bad4a3c876b9bed76e3",
+        "blob_api_url": "https://api.github.com/repos/fraktality/spr/git/blobs/80dc9a3e54325ad5fd6d2bad4a3c876b9bed76e3",
+        "copyright": "Copyright (c) 2023 Fractality"
+      },
+      "license_api_evidence": {
+        "archived": "spr/license-api.json",
+        "sha256": "78a97bc5e866171aced9891d205e1f69090c3e6fca83f43564184d6858f97372",
+        "bytes": 2450,
+        "retrieved_url": "https://api.github.com/repos/fraktality/spr/contents/LICENSE?ref=master"
+      },
+      "adapted_components": [
+        "LinearSpring.step critically damped (d == 1) scalar position/velocity update"
+      ],
+      "excluded_components": [
+        "Evostrike GPL-only movement, weapon, camera, inventory and gameplay code",
+        "spr Instance property scheduler, type conversions, rotation springs and other damping branches",
+        "Evostrike models, animations, sounds, maps and other assets"
+      ]
+    }
+  ],
+  "project_relicensed": false,
+  "missing_upstream_assets_imported": false,
+  "validation_scope": "Archive hashes and license blob integrity only; does not establish Roblox Studio gameplay or multiplayer behavior."
+}

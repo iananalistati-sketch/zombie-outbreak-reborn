@@ -3,6 +3,7 @@
 local Config=assert(loadstring(CONFIG_SOURCE))()
 local Rules=assert(loadstring(RULES_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
+local TacticalRecoil=assert(loadstring(TACTICAL_RECOIL_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 local function close(a,b) return math.abs(a-b)<1e-5 end
@@ -18,16 +19,17 @@ vectorMeta.__sub=function(a,b) return vector(a.X-b.X,a.Y-b.Y,a.Z-b.Z) end
 vectorMeta.__mul=function(a,b) if type(a)=="number" then a,b=b,a end;return vector(a.X*b,a.Y*b,a.Z*b) end
 vectorMeta.__div=function(a,b) return vector(a.X/b,a.Y/b,a.Z/b) end
 local cfMeta={}
-local function cf(x,y,z,pitch) return setmetatable({_type="CFrame",Position=vector(x,y,z),pitch=pitch or 0},cfMeta) end
-cfMeta.__mul=function(a,b) return cf(a.Position.X+b.Position.X,a.Position.Y+b.Position.Y,a.Position.Z+b.Position.Z,a.pitch+b.pitch) end
+local function cf(x,y,z,pitch,yaw) return setmetatable({_type="CFrame",Position=vector(x,y,z),pitch=pitch or 0,yaw=yaw or 0},cfMeta) end
+cfMeta.__mul=function(a,b) return cf(a.Position.X+b.Position.X,a.Position.Y+b.Position.Y,a.Position.Z+b.Position.Z,a.pitch+b.pitch,a.yaw+b.yaw) end
 cfMeta.__eq=function(a,b)
-    return a.pitch==b.pitch and a.Position.X==b.Position.X and a.Position.Y==b.Position.Y and a.Position.Z==b.Position.Z
+    return a.pitch==b.pitch and a.yaw==b.yaw and a.Position.X==b.Position.X and a.Position.Y==b.Position.Y and a.Position.Z==b.Position.Z
 end
 cfMeta.__index=function(v,k)
-    if k=="LookVector" then return vector(0,math.sin(v.pitch),-math.cos(v.pitch)) end
+    if k=="LookVector" then return vector(-math.sin(v.yaw)*math.cos(v.pitch),math.sin(v.pitch),-math.cos(v.yaw)*math.cos(v.pitch)) end
+    if k=="Inverse" then return function(a) return cf(-a.Position.X,-a.Position.Y,-a.Position.Z,-a.pitch,-a.yaw) end end
     if k=="Lerp" then return function(a,b,t) return cf(0,0,0,a.pitch+(b.pitch-a.pitch)*t) end end
 end
-local CFrame={new=cf,identity=cf(),Angles=function(p,y,r) return cf(0,0,0,p) end,
+local CFrame={new=cf,identity=cf(),Angles=function(p,y,r) return cf(0,0,0,p,y) end,
     lookAt=function(p,t) return cf(p.X,p.Y,p.Z) end}
 
 local function simulation(options)
@@ -159,9 +161,10 @@ local function simulation(options)
         table.insert(self.calls,{speed=speed,aim=aim,crouch=crouch,mx=mx,my=my});return CFrame.identity
     end
     function motion:reset() self.resets+=1 end
+    function motion:kick(amount) self.lastKick=amount end
     logs.motion=motion
     local WeaponMotion={new=function() return motion end}
-    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
+    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,TacticalRecoil=TacticalRecoil,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
     local requests={}
     local remotes={}
     for _,name in {"ZO_FireRifle","ZO_Melee","ZO_CombatFX","ZO_LoadoutAction"} do
@@ -209,13 +212,14 @@ local function simulation(options)
     function runService:UnbindFromRenderStep(name) self.callbacks[name]=nil end
     local cameraBase=cf()
     local inputPitch=0
-    logs.cameraBases={}
+    logs.cameraBases={};logs.cameraYaws={}
     -- CameraModule writes a frame at priority 200 before the weapon pass. One
     -- mode rebuilds from controller state; another reads the previous camera so
     -- an unremoved overlay would feed back into later frames.
     runService:BindToRenderStep("FakeRobloxCameraModule",200,function()
         local current=world.CurrentCamera
         table.insert(logs.cameraBases,current.CFrame.pitch)
+        table.insert(logs.cameraYaws,current.CFrame.yaw)
         if options.cameraMode=="feedback" then current.CFrame*=CFrame.Angles(inputPitch,0,0)
         else current.CFrame=cameraBase end
         inputPitch=0
@@ -338,6 +342,35 @@ do
         if request.remote=="ZO_FireRifle" and request.args[1]=="Fire" then table.insert(shots,request) end
     end
     check(#shots>=2 and shots[2].args[2].Y>0,"held automatic fire samples the visible recoiled direction after CameraModule updates")
+end
+
+do
+    local s=simulation({cameraMode="feedback"});s.render(1/60)
+    s.key("ZO_Trigger","Begin","MouseButton1")
+    local horizontal=false
+    for _=1,30 do
+        s.advance(1/60);s.render(1/60)
+        horizontal=horizontal or math.abs(s.camera.CFrame.yaw)>1e-5
+    end
+    s.key("ZO_Trigger","End","MouseButton1")
+    check(horizontal,"automatic burst applies the real TacticalRecoil horizontal profile")
+    check(close(s.logs.motion.lastKick,.09),"fire forwards the configured impulse to the gun motion spring")
+    local aimedDirection=false
+    for _,request in s.requests do
+        if request.remote=="ZO_FireRifle" and request.args[1]=="Fire" then
+            aimedDirection=aimedDirection or math.abs(request.args[2].X)>1e-5
+        end
+    end
+    check(aimedDirection,"burst requests follow the visible horizontal recoil")
+    local clean=true
+    for _,yaw in s.logs.cameraYaws do clean=clean and math.abs(yaw)<1e-8 end
+    check(clean,"pre-camera removal prevents horizontal recoil feeding into the camera controller")
+    for _=1,180 do s.advance(1/60);s.render(1/60) end
+    check(close(s.camera.CFrame.pitch,0) and close(s.camera.CFrame.yaw,0),"both recoil axes return to neutral after a burst")
+    singleShot(s);s.render(1/60)
+    check(close(s.camera.CFrame.yaw,0) and close(math.deg(s.camera.CFrame.pitch),.65),"the next burst restarts with the clean first shot")
+    s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0);s.render(1/60)
+    check(close(s.camera.CFrame.pitch,0) and close(s.camera.CFrame.yaw,0),"shop cancellation clears both recoil axes")
 end
 
 do

@@ -38,6 +38,7 @@ def validate(path,studio_test=False):
         'StarterPlayer/StarterPlayerScripts/ZO_Client/TacticalMap':'src/maps/k17/gameplay/TacticalMap.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Loadout':'src/maps/k17/gameplay/Loadout.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Movement':'src/maps/k17/gameplay/Movement.client.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_Client/SourceMotor':'src/maps/k17/gameplay/SourceMotor.client.luau',
         'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
         'ServerStorage/ZO_Validation/BarricadeAudit':'tests/k17/BarricadeAudit.luau',
@@ -45,7 +46,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','WeaponSkins','PresentationConfig','WeaponPreview')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','TacticalSpring','TacticalRecoil','SourceMovement','WeaponSkins','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)

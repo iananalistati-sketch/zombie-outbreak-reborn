@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def run(luau):
     folder=ROOT/'src/maps/k17/gameplay'
-    sources={'CONFIG_SOURCE':'Config.luau','RULES_SOURCE':'Rules.luau','WEAPON_SKINS_SOURCE':'WeaponSkins.luau','WEAPONS_CLIENT_SOURCE':'Weapons.client.luau'}
+    sources={'CONFIG_SOURCE':'Config.luau','RULES_SOURCE':'Rules.luau','WEAPON_SKINS_SOURCE':'WeaponSkins.luau','TACTICAL_RECOIL_SOURCE':'TacticalRecoil.luau','WEAPONS_CLIENT_SOURCE':'Weapons.client.luau'}
     lines=['local '+name+'='+long_string((folder/file).read_text()) for name,file in sources.items()]
     lines.append((ROOT/'tests/gameplay/weapons_client.spec.luau').read_text())
     with tempfile.TemporaryDirectory(prefix='zo-weapons-client-') as temporary:

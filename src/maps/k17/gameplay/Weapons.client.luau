@@ -18,6 +18,7 @@ local Rules=require(shared.Rules)
 local Presentation=require(shared:WaitForChild("WeaponPresentation"))
 local WeaponMotion=require(shared:WaitForChild("WeaponMotion"))
 local WeaponSkins=require(shared:WaitForChild("WeaponSkins"))
+local TacticalRecoil=require(shared:WaitForChild("TacticalRecoil"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
 local rifle=RS:WaitForChild("ZO_FireRifle") :: RemoteEvent
 local melee=RS:WaitForChild("ZO_Melee") :: RemoteEvent
@@ -82,9 +83,11 @@ local held,aimHeld=false,false
 local aimAlpha=0
 local sprintAlpha=0
 local weaponMotion=WeaponMotion.new()
+local recoilPattern=TacticalRecoil.new()
 local nextAction,hitUntil,swingUntil=0,0,0
 local hitHead=false
-local viewKick,cameraKick,appliedCameraKick,bloom=0,0,0,0
+local cameraKick,cameraYaw,bloom=0,0,0
+local appliedRecoil: CFrame?=nil
 local kickCamera: Camera?=nil
 local appliedCameraFrame: CFrame?=nil
 local fovCamera: Camera?=nil
@@ -206,14 +209,14 @@ end
 local function removeCameraKick()
     -- Remove only our last output. A new camera/controller may already have
     -- supplied another frame; subtracting old recoil there would tilt it down.
-    if kickCamera and appliedCameraFrame and kickCamera.CFrame==appliedCameraFrame and appliedCameraKick~=0 then
-        kickCamera.CFrame*=CFrame.Angles(math.rad(-appliedCameraKick),0,0)
+    if kickCamera and appliedCameraFrame and kickCamera.CFrame==appliedCameraFrame and appliedRecoil then
+        kickCamera.CFrame*=appliedRecoil:Inverse()
     end
-    appliedCameraKick=0;appliedCameraFrame=nil;kickCamera=nil
+    appliedRecoil=nil;appliedCameraFrame=nil;kickCamera=nil
 end
 local function clearCameraKick()
     removeCameraKick()
-    cameraKick=0;viewKick=0;bloom=0
+    cameraKick=0;cameraYaw=0;bloom=0;recoilPattern:reset()
 end
 local function stop()
     held=false;aimHeld=false;aimAlpha=0;nextAction=0;swingUntil=0
@@ -261,13 +264,15 @@ local function action()
         rifle:FireServer("Fire",camera.CFrame.LookVector,aiming)
         ensurePresentation(equipped.Id)
         if currentPresentation then
-            currentPresentation:update(camera.CFrame,CFrame.new(0,0,viewKick),true,aimAlpha)
+            currentPresentation:update(camera.CFrame,CFrame.identity,true,aimAlpha)
             currentPresentation:fire()
         end
         local settings=PresentationConfig.get(equipped.Id)
         local scale=equipped.Recoil*(if aiming then .65 else 1)
-        viewKick=math.min(viewKick+settings.ViewKick*scale,.45)
-        cameraKick=math.min(cameraKick+settings.RecoilPitch*scale,5)
+        weaponMotion:kick(settings.ViewKick*scale)
+        local pitch,yaw=recoilPattern:shot(equipped.Id,os.clock(),settings.RecoilPitch,scale)
+        cameraKick=math.min(cameraKick+pitch,5)
+        cameraYaw=math.clamp(cameraYaw+yaw,-4,4)
         bloom=math.min(bloom+4*scale,22)
     elseif canMelee() then
         nextAction=os.clock()+Config.Melee.Cooldown+.02;swingUntil=os.clock()+.24
@@ -454,13 +459,14 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     -- Match the reused kit's ShoulderCamera: build each frame with the complete
     -- remaining recoil, then decay it. Roblox's camera has just supplied a new
     -- base; a delta from last frame would reverse the kick during recovery.
-    if math.abs(cameraKick)>.0001 then
-        camera.CFrame*=CFrame.Angles(math.rad(cameraKick),0,0)
-        appliedCameraKick=cameraKick;kickCamera=camera;appliedCameraFrame=camera.CFrame
+    if math.abs(cameraKick)>.0001 or math.abs(cameraYaw)>.0001 then
+        appliedRecoil=CFrame.Angles(math.rad(cameraKick),math.rad(cameraYaw),0)
+        camera.CFrame*=appliedRecoil
+        kickCamera=camera;appliedCameraFrame=camera.CFrame
     end
     -- Automatic shots use the same direction currently presented to the player.
     if held and (canMelee() or weapon().Automatic) then action() end
-    cameraKick*=math.exp(-dt*9);viewKick*=math.exp(-dt*14);bloom*=math.exp(-dt*8)
+    cameraKick*=math.exp(-dt*9);cameraYaw*=math.exp(-dt*10);bloom*=math.exp(-dt*8)
     local narrow=camera.ViewportSize.X<620
     ammo.TextSize=if narrow then 14 else 19
     ammo.Position=if narrow and UIS.TouchEnabled then UDim2.new(1,-275,1,-198) elseif narrow then UDim2.new(1,-275,1,-82) else UDim2.new(1,-330,1,-82)
@@ -485,7 +491,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     else weaponMotion:reset() end
     local reloadPose=if reloading then CFrame.new(0,-.3,.2)*CFrame.Angles(-.4,0,-.2) elseif equipping then CFrame.new(0,-.24,.15) else CFrame.identity
     if currentPresentation then
-        currentPresentation:update(camera.CFrame,sprintPose*motionPose*reloadPose*CFrame.new(0,0,viewKick),gun and presentationId==equipped.Id,aimAlpha)
+        currentPresentation:update(camera.CFrame,sprintPose*motionPose*reloadPose,gun and presentationId==equipped.Id,aimAlpha)
         currentPresentation:setReloading(gun and reloading,remaining)
     end
     if zombie then ensureZombieArms() end

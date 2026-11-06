@@ -4,3 +4,5 @@ third_party/roblox-weapon-kit/pistol/OriginalPistol.rbxmx -whitespace
 third_party/roblox-weapon-kit/pistol/OriginalPistol3.rbxmx -whitespace
 # Preserve the pinned MIT upstream movement sources without whitespace cleanup.
 third_party/extract-movement/source/*.lua -whitespace
+# Byte-exact snapshots for licensed FPS components.
+third_party/tactical-fps-sources/**/source/* -whitespace

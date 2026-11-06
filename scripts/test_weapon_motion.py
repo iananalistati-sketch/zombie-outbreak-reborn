@@ -18,7 +18,8 @@ def run(luau):
     spec = (ROOT / 'tests/gameplay/weapon_motion.spec.luau').read_text()
     with tempfile.TemporaryDirectory(prefix='zo-weapon-motion-') as temporary:
         path = Path(temporary) / 'weapon_motion.spec.luau'
-        path.write_text('local WEAPON_MOTION_SOURCE=' + long_string(source) + '\n' + spec)
+        spring=(ROOT/'src/maps/k17/gameplay/TacticalSpring.luau').read_text()
+        path.write_text('local TACTICAL_SPRING_SOURCE='+long_string(spring)+'\nlocal WEAPON_MOTION_SOURCE=' + long_string(source) + '\n' + spec)
         subprocess.run([luau, str(path)], cwd=ROOT, check=True)
 
 

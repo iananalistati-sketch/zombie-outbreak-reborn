@@ -19,7 +19,7 @@ def release(binary):
               'EquipmentVisuals','WeaponPresentation','WeaponAimPose','PresentationConfig','WeaponPreview','WeaponAssets','WeaponAssetImport',
               'RifleAim','RifleReload','RifleAimDownSights','MuzzleFlash','Pistol'}
     required|={'Movement','MovementState','MovementConfig','MovementPose','WeaponMotion','WeaponSkins','Skins','Classic','Gold',
-               'SMG','Shotgun','Bronze','White','Sand','Silver'}
+               'SMG','Shotgun','Bronze','White','Sand','Silver','SourceMotor','SourceMovement','TacticalSpring','TacticalRecoil'}
     required|={'MonitorClerestoryGlass','MonitorEndCheek','ReceivingCanopyRoof','ExhaustFlue','AirBalanceHeader',
                'ControlCabinFacade','ControlInspectionWalkway'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
@@ -37,6 +37,8 @@ def release(binary):
                  'src/maps/k17/gameplay/MovementState.luau','src/maps/k17/gameplay/MovementConfig.luau','src/maps/k17/gameplay/MovementPose.luau',
                  'src/maps/k17/gameplay/Movement.server.luau','src/maps/k17/gameplay/Movement.client.luau',
                  'src/maps/k17/gameplay/WeaponMotion.luau',
+                 'src/maps/k17/gameplay/TacticalSpring.luau','src/maps/k17/gameplay/TacticalRecoil.luau',
+                 'src/maps/k17/gameplay/SourceMovement.luau','src/maps/k17/gameplay/SourceMotor.client.luau',
                  'src/maps/k17/gameplay/WeaponSkins.luau',
                  'src/maps/k17/gameplay/EquipmentVisuals.server.luau','src/maps/k17/gameplay/WeaponPresentation.luau',
                  'src/maps/k17/gameplay/PresentationConfig.luau','src/maps/k17/gameplay/WeaponPreview.luau',

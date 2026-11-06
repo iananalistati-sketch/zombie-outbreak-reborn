@@ -5,6 +5,7 @@
 -- This local viewmodel offset never changes the camera or a firing direction.
 local Motion={}
 Motion.__index=Motion
+local Spring=require(script.Parent:WaitForChild("TacticalSpring"))
 
 local function capped(value: number,low: number,high: number): number
     if type(value)~="number" or value~=value or math.abs(value)==math.huge then return 0 end
@@ -12,12 +13,17 @@ local function capped(value: number,low: number,high: number): number
 end
 
 function Motion.new()
-    return setmetatable({phase=0,bob=CFrame.identity,sway=CFrame.identity,current=CFrame.identity},Motion)
+    return setmetatable({phase=0,bob=CFrame.identity,sway=CFrame.identity,current=CFrame.identity,
+        amplitude=Spring.new(7),mouseX=Spring.new(8),mouseY=Spring.new(8),punch=Spring.new(8)},Motion)
 end
 
 function Motion:reset()
     self.phase=0
     self.bob=CFrame.identity;self.sway=CFrame.identity;self.current=CFrame.identity
+    self.amplitude:reset();self.mouseX:reset();self.mouseY:reset();self.punch:reset()
+end
+function Motion:kick(amount: number)
+    self.punch:kick(math.clamp(amount,0,.45))
 end
 
 function Motion:update(dt: number,speed: number,aimAlpha: number,crouching: boolean,mouseX: number,mouseY: number): CFrame
@@ -26,7 +32,7 @@ function Motion:update(dt: number,speed: number,aimAlpha: number,crouching: bool
     local velocity=capped(speed,0,40)
     local aim=capped(aimAlpha,0,1)
     local strength=(1-.85*aim)*(if crouching==true then .55 else 1)
-    local movement=math.clamp(velocity/8,0,1)*strength
+    local movement=self.amplitude:step(step,math.clamp(velocity/8,0,1)*strength)
     self.phase=(self.phase+step*velocity/16)%(math.pi*200)
     local t=self.phase
 
@@ -45,8 +51,9 @@ function Motion:update(dt: number,speed: number,aimAlpha: number,crouching: bool
     local divisor=math.max(step,1/240)*60
     local dx=capped(capped(mouseX,-1000,1000)/divisor,-20,20)
     local dy=capped(capped(mouseY,-1000,1000)/divisor,-20,20)
-    local swayTarget=CFrame.Angles(math.rad(dy*.075*strength),math.rad(dx*.075*strength),0)
-    self.sway=self.sway:Lerp(swayTarget,1-math.exp(-10*step))
+    local sx=self.mouseX:step(step,dx*strength)
+    local sy=self.mouseY:step(step,dy*strength)
+    self.sway=CFrame.Angles(math.rad(sy*.075),math.rad(sx*.075),0)
     if movement==0 and dx==0 and dy==0 then
         -- Snap only imperceptible residuals, so standing still is neutral and
         -- switching tools cannot accumulate a persistent presentation offset.
@@ -55,7 +62,8 @@ function Motion:update(dt: number,speed: number,aimAlpha: number,crouching: bool
         local _,angle=self.sway:ToAxisAngle()
         if math.abs(angle)<1e-5 then self.sway=CFrame.identity end
     end
-    self.current=self.sway*self.bob
+    local punch=self.punch:step(step,0)*(1-.6*aim)
+    self.current=self.sway*self.bob*CFrame.new(0,0,punch)*CFrame.Angles(punch*.65,0,-punch*.25)
     return self.current
 end
 

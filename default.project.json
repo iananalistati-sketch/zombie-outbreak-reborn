@@ -69,6 +69,15 @@
         "WeaponMotion": {
           "$path": "src/maps/k17/gameplay/WeaponMotion.luau"
         },
+        "TacticalSpring": {
+          "$path": "src/maps/k17/gameplay/TacticalSpring.luau"
+        },
+        "TacticalRecoil": {
+          "$path": "src/maps/k17/gameplay/TacticalRecoil.luau"
+        },
+        "SourceMovement": {
+          "$path": "src/maps/k17/gameplay/SourceMovement.luau"
+        },
         "WeaponSkins": {
           "$path": "src/maps/k17/gameplay/WeaponSkins.luau"
         },
@@ -145,6 +154,9 @@
           },
           "Movement": {
             "$path": "src/maps/k17/gameplay/Movement.client.luau"
+          },
+          "SourceMotor": {
+            "$path": "src/maps/k17/gameplay/SourceMotor.client.luau"
           }
         },
         "K17_Barricades": {

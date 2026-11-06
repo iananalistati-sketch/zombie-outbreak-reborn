@@ -1,5 +1,26 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Integração aplicada — 06/11/2026
+
+- O usuário pediu aplicação imediata dos fontes já pesquisados. O pacote ativo
+  adapta fricção/aceleração do UnitySourceMovement (MIT), recuo da câmera do
+  CIA-SAC-ACS (Apache-2.0) e a mola explicitamente MIT vendorizada no Evostrike.
+  Fontes exatos/licenças/hashes: `third_party/tactical-fps-sources`.
+- `SourceMotor` usa entrada analógica `Humanoid:Move` para humanos no PC,
+  consumindo o WalkSpeed final de MovementState. Não escreve velocidade física,
+  pose, colisão ou WalkSpeed; o controlador nativo mantém salto e contatos.
+  Zumbis, toque e gamepad mantêm o controle nativo. Chat/menu/falta de foco
+  interrompem o drive. Não anunciar um motor Source completo ou migração ACS.
+- `Weapons` consome TacticalRecoil e WeaponMotion consome TacticalSpring de
+  fato no perfil Rojo e nos places entregues. Os padrões por arma são ajustes
+  próprios do K-17; nenhum padrão GPL-only do Evostrike foi copiado.
+- A licença global não mudou. Evostrike completo continua apenas referência;
+  o uso MIT se baseia no aviso explícito do arquivo de terceiro. Não importar
+  o motor GPL inteiro sobre os componentes Limited Use do Roblox sem análise.
+- Backup anterior: `backup/before-fps-adoption-aeb098a`. Detalhes e validação:
+  `docs/TACTICAL_FPS_ADOPTION_2026-11-06.md`. Código compilado e testes simulados
+  não comprovam sensação do Humanoid, câmera ou multiplayer no Studio.
+
 ## Referência CS encontrada com web funcional
 
 - Fonte principal para comportamento e código tático: `beters02/Evostrike`,

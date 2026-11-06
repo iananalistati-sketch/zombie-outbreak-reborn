@@ -2,10 +2,13 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
-**Base CS localizada:** [Evostrike e comparação dos fontes recebidos](docs/CS_FPS_BASES_VERIFIED.md).
-Código tático de movimento, spray, controle de armas e compra foi baixado e
-inspecionado. O projeto compila para revisão; os assets ausentes e a GPLv2
-exigem adaptação. A pesquisa não substituiu a versão jogável atual.
+**Componentes FPS aplicados — 06/11:** [integração e roteiro de validação](docs/TACTICAL_FPS_ADOPTION_2026-11-06.md).
+O movimento humano no PC usa fricção/aceleração portadas de UnitySourceMovement
+(MIT), integradas pela entrada analógica do Humanoid. O recuo adapta a aritmética
+do ACS (Apache 2.0), com sequências determinísticas próprias do K-17; a arma usa
+uma mola da biblioteca spr explicitamente MIT, arquivada no Evostrike.
+As fontes e licenças estão [preservadas para revisão](third_party/tactical-fps-sources/ATTRIBUTION.md).
+São componentes integrados à base atual; a validação no Studio continua pendente.
 
 **Arsenal aplicado:** [quatro armas reais e seis acabamentos adicionais](docs/OFFICIAL_ARSENAL_INTEGRATION.md).
 Carabina, pistola, **SMG e escopeta** estão embutidas. Os dois novos pacotes
@@ -24,8 +27,10 @@ na mira. A loja mantém filtros, prévia 3D, saldo e atalhos por categoria.
 A [auditoria e comparação de bases FPS](docs/FPS_BASE_AUDIT_2026-10-31.md)
 recomendou qualificar o template oficial FPS System. Essa migração continua
 pendente do arquivo; esta entrega amplia a base atual com componentes de
-movimentação/apresentação adaptados de Extract (MIT), sem ativar outro sistema
-completo de FPS.
+movimentação/apresentação adaptados de Extract, UnitySourceMovement, ACS e spr,
+sem ativar outro sistema completo de FPS. A
+[pesquisa de bases CS](docs/CS_FPS_BASES_VERIFIED.md) documenta os candidatos e
+as limitações da referência completa Evostrike, licenciada GPLv2.
 
 **Pacote FPS em desenvolvimento:** [implementação e modelos incluídos](docs/FPS_COMBAT_PACKAGE.md).
 As quatro classes têm modelos reais, texturas e sons originais. A pistola veio
@@ -151,6 +156,7 @@ src/maps/k17/gameplay/TacticalMap.client.luau mapa tático com filtros, aberto p
 src/third_party/roblox-weapon-kit/   AR e apresentação extraídas, sem scripts externos
 third_party/roblox-weapon-kit/       kit original arquivado, origem e licenças
 third_party/extract-movement/       fontes MIT de movimentação, revisão e atribuição
+third_party/tactical-fps-sources/   fontes exatas de movimento/recuo/mola e licenças
 src/server/                       bootstrap compartilhado e protótipos desativados
 src/client/                       cliente anterior e bootstrap compartilhado
 scripts/validate_k17.py            checagem de colisão e circulação
@@ -200,17 +206,25 @@ barricadas passou 7.554 verificações com APIs simuladas; há também 202 da po
 de impulso e 85 das regras preservadas. Fontes ativos conferidos no place.
 Os percursos também foram checados com os 164 objetos presentes.
 
-**Movimentação/loja — 05/11:** 85 verificações da composição de velocidade,
-45 do servidor de postura, 74 do cliente de movimento, 15 de movimento do
+**Movimentação/loja — verificações atuais:** 85 da composição de velocidade,
+45 do servidor de postura, 74 do cliente de movimento, 19 de movimento do
 viewmodel, 233 do combate real, 41 da rodada, 39 do ciclo integrado, 130 da loja,
-26 do catálogo de skins, 38 de equipamento e 122 do cliente de armas,
-com APIs simuladas. Fontes atuais conferidos nos places compilados. O cenário
+26 do catálogo de skins, 38 de equipamento e 129 do cliente de armas.
+Os componentes novos passaram 42 verificações do núcleo de movimento, 89 do
+adaptador e 29 de mola/recuo. Controladores usam APIs simuladas; os módulos puros
+executam seus cálculos reais. Fontes atuais conferidos nos places compilados. O cenário
 separado do Studio inclui 24 etapas e ainda não foi executado no motor.
 
 **Pendente no Studio:** Humanoid, navegação real, aparência, FPS/streaming,
 controles/colisões das barricadas, multiplayer, equilíbrio e renderização/
 permissões dos meshes, sons e animações da AR importada. Ainda não se afirma qualidade visual equivalente ao
 Counter-Strike ou desempenho aprovado.
+
+Para os componentes FPS de 06/11, confira **Shift** (corrida), **Alt** (caminhada),
+**Ctrl/C** (agachamento) e **B** (loja); teste rampas, parada e inversão lateral,
+rajadas, mira com botão direito e limpeza do recuo ao trocar de arma/respawn.
+O [roteiro desta integração](docs/TACTICAL_FPS_ADOPTION_2026-11-06.md) detalha
+o que precisa ser observado no motor.
 
 Durante Play, na Command Bar em contexto **Server**:
 

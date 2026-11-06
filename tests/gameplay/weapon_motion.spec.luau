@@ -41,7 +41,13 @@ function CFrame.Angles(x,y,z)
         quat(math.cos(y/2),0,math.sin(y/2),0)),quat(math.cos(z/2),0,0,math.sin(z/2))))
 end
 local fn=assert(loadstring(WEAPON_MOTION_SOURCE))
-setfenv(fn,setmetatable({CFrame=CFrame},{__index=getfenv()}))
+local spring=assert(loadstring(TACTICAL_SPRING_SOURCE))()
+local dependency={}
+setfenv(fn,setmetatable({CFrame=CFrame,script={Parent={WaitForChild=function(_,name)
+    assert(name=="TacticalSpring");return dependency
+end}},require=function(value)
+    assert(value==dependency);return spring
+end},{__index=getfenv()}))
 local Motion=fn()
 local function angle(value) local _,a=value:ToAxisAngle();return a end
 local function neutral(value) return value.Position.Magnitude==0 and angle(value)==0 end
@@ -117,6 +123,19 @@ do
     check(bounded,"extreme finite inputs remain capped through long and short frames")
     local held=motion:update(0,16,0,false,1,1)
     check(motion:update(-1,0,0,false,0,0)==held,"nonpositive frame time preserves the prior transform")
+end
+
+do
+    local hip,aim=Motion.new(),Motion.new()
+    hip:kick(.2);aim:kick(.2)
+    local h=hip:update(1/60,0,0,false,0,0)
+    local a=aim:update(1/60,0,1,false,0,0)
+    check(h.Position.Z>.1 and angle(h)>math.rad(3),"a shot drives the actual spring-backed gun transform")
+    check(a.Position.Magnitude<h.Position.Magnitude*.5 and angle(a)<angle(h)*.5,"ADS steadies shot displacement and rotation")
+    for _=1,120 do h=hip:update(1/60,0,0,false,0,0) end
+    check(neutral(h),"gun recoil settles completely after firing stops")
+    hip:kick(.3);hip:update(1/60,0,0,false,0,0);hip:reset()
+    check(neutral(hip:update(1/60,0,0,false,0,0)),"tool reset also clears shot spring velocity")
 end
 
 print("PASS actual WeaponMotion module: "..checks.." checks; rigid-transform API doubles, no Roblox rendering")
