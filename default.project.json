@@ -1,5 +1,5 @@
 {
-  "name": "Zombie Outbreak Reborn — K-17",
+  "name": "Zombie Outbreak Reborn \u2014 K-17",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -75,9 +75,6 @@
         "TacticalRecoil": {
           "$path": "src/maps/k17/gameplay/TacticalRecoil.luau"
         },
-        "SourceMovement": {
-          "$path": "src/maps/k17/gameplay/SourceMovement.luau"
-        },
         "WeaponSkins": {
           "$path": "src/maps/k17/gameplay/WeaponSkins.luau"
         },
@@ -86,6 +83,15 @@
         },
         "WeaponPreview": {
           "$path": "src/maps/k17/gameplay/WeaponPreview.luau"
+        },
+        "TrainingConfig": {
+          "$path": "src/maps/k17/gameplay/TrainingConfig.luau"
+        },
+        "TrainingState": {
+          "$path": "src/maps/k17/gameplay/TrainingState.luau"
+        },
+        "TrainingRig": {
+          "$path": "src/maps/k17/gameplay/TrainingRig.luau"
         }
       },
       "K17Refuges": {
@@ -128,6 +134,9 @@
         },
         "WeaponAssetImport": {
           "$path": "src/maps/k17/gameplay/WeaponAssetImport.luau"
+        },
+        "TrainingDirector": {
+          "$path": "src/maps/k17/gameplay/TrainingDirector.server.luau"
         }
       }
     },
@@ -155,8 +164,8 @@
           "Movement": {
             "$path": "src/maps/k17/gameplay/Movement.client.luau"
           },
-          "SourceMotor": {
-            "$path": "src/maps/k17/gameplay/SourceMotor.client.luau"
+          "TrainingAnimation": {
+            "$path": "src/maps/k17/gameplay/TrainingAnimation.client.luau"
           }
         },
         "K17_Barricades": {

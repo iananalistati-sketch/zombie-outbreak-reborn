@@ -163,7 +163,9 @@ local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
 end
 local function soloPractice(): boolean
-    return RunService:IsStudio() and #Players:GetPlayers()==1 and workspace:GetAttribute("ZO_BarricadePractice")==true and RS:GetAttribute("ZO_RoundState")=="Waiting"
+    local state=RS:GetAttribute("ZO_RoundState")
+    return #Players:GetPlayers()==1 and workspace:GetAttribute("ZO_BarricadePractice")==true
+        and (state=="Training" or (RunService:IsStudio() and state=="Waiting"))
 end
 local function canBuy(): boolean return role()=="Humans" and alive() and (phase()=="Preparation" or soloPractice()) end
 local function canEquip(): boolean return role()=="Humans" and alive() and (phase()=="Preparation" or phase()=="Active") end

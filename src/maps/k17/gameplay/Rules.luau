@@ -15,6 +15,7 @@ function Rules.facing(x: number,z: number,forwardX: number,forwardZ: number): bo
     return length<.1 or forward<.1 or (x*forwardX+z*forwardZ)/(length*forward)>=.25
 end
 function Rules.phase(state: string?,studio: boolean,practice: boolean,players: number): string?
+    if state=="Training" then return if practice and players==1 then "Active" else "Waiting" end
     if studio and practice and players==1 and state=="Waiting" then return "Active" end
     return state
 end

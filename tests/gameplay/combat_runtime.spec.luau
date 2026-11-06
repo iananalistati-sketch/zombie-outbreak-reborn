@@ -32,6 +32,29 @@ end
 local function hit(part) return {Instance=part,Position=part.Position,Normal=Vector.yAxis} end
 
 do
+    local s=simulation();local p=s.add("SoloPlayer","Humans")
+    s.world:SetAttribute("ZO_BarricadePractice",true);s.phase("Training")
+    local folder=s.instance("Folder","ZO_PracticeTargets",s.world)
+    local npc=s.instance("Model","Infected",folder);npc:SetAttribute("ZO_PracticeRole","Zombies");npc:SetAttribute("ZO_TrainingEnemy",true)
+    local head=s.instance("Part","Head",npc);head.Position=Vector.new(0,5,-12)
+    local root=s.instance("Part","HumanoidRootPart",npc);root.Anchored=true
+    local hum=s.instance("Humanoid","Humanoid",npc);hum.Health=1000;hum.WalkSpeed=8
+    s.ray(function()return hit(head)end)
+    ready(s,p);s.fire(p)
+    check(hum.Health<1000 and near(hum.WalkSpeed,8*Config.Containment.TagWalkScale),"public solo phase damages and temporarily contains server-created NPC")
+    s.advance(.11);s.fire(p)
+    check(near(hum.WalkSpeed,8*Config.Containment.TagWalkScale),"repeated NPC hits never compound the speed penalty")
+    s.advance(.3);check(near(hum.WalkSpeed,8),"NPC recovers its initial speed after the shot tag expires")
+    local credits=attr(p,"Credits");hum.Health=1;s.fire(p)
+    check(attr(p,"Credits")==credits+Config.Economy.TrainingKillReward,"training kill grants bounded server-owned ammunition budget")
+    s.advance(.2);s.fire(p)
+    check(attr(p,"Credits")==credits+Config.Economy.TrainingKillReward,"dead NPC cannot award twice")
+    s.add("SecondConnection","Humans");s.advance(.2)
+    local ammo=attr(p,"Ammo");s.fire(p)
+    check(attr(p,"Ammo")==ammo,"arrival of second player revokes training fire before any round transition")
+end
+
+do
     local s,p=twoHumans()
     check(s.rs:GetAttribute("ZO_GameplayCombatReady")==true,"controller publishes Ready after installing its callbacks")
     check(attr(p,"WeaponId")=="Rifle" and attr(p,"PrimaryWeapon")=="Rifle" and attr(p,"SecondaryWeapon")=="Pistol","joining human receives primary and secondary")

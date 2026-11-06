@@ -38,7 +38,8 @@ def validate(path,studio_test=False):
         'StarterPlayer/StarterPlayerScripts/ZO_Client/TacticalMap':'src/maps/k17/gameplay/TacticalMap.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Loadout':'src/maps/k17/gameplay/Loadout.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Movement':'src/maps/k17/gameplay/Movement.client.luau',
-        'StarterPlayer/StarterPlayerScripts/ZO_Client/SourceMotor':'src/maps/k17/gameplay/SourceMotor.client.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_Client/TrainingAnimation':'src/maps/k17/gameplay/TrainingAnimation.client.luau',
+        'ServerScriptService/ZO_Server/TrainingDirector':'src/maps/k17/gameplay/TrainingDirector.server.luau',
         'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
         'ServerStorage/ZO_Validation/BarricadeAudit':'tests/k17/BarricadeAudit.luau',
@@ -46,7 +47,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','TacticalSpring','TacticalRecoil','SourceMovement','WeaponSkins','PresentationConfig','WeaponPreview')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','TacticalSpring','TacticalRecoil','TrainingConfig','TrainingState','TrainingRig','WeaponSkins','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)
@@ -92,6 +93,10 @@ def validate(path,studio_test=False):
         'eb7bc279b165d9a4c6a702914d74c6059322e426bd7aa3a1d28e686b292538bb',
     }
     sources=[p.text or '' for p in root.findall('.//Properties/*[@name="Source"]')]
+    names={item.findtext('./Properties/string[@name="Name"]') for item in root.iter('Item')}
+    assert 'SourceMotor' not in names, 'Experimental locomotion controller in playable profile'
+    for forbidden in ('DataStoreService','MessagingService','BanPlayer','IsAllowed'):
+        assert not any(forbidden in source for source in sources), 'Legacy startup dependency: '+forbidden
     assert not any(hashlib.sha256(s.encode()).hexdigest() in legacy for s in sources),'A legacy controller is still loaded in K-17'
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Combat.server.luau').read_text() for s in sources)==1
     assert sum(s==(ROOT/'src/maps/k17/gameplay/Round.server.luau').read_text() for s in sources)==1

@@ -47,6 +47,19 @@ local function refresh()
         panel.Text="INICIANDO SOBREVIVÊNCIA\n"..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando sinal do servidor…")
         return
     end
+    if state=="Training" then
+        local errorMessage=RS:GetAttribute("ZO_TrainingError")
+        if errorMessage then panel.Text="FALHA NO TREINO\n"..tostring(errorMessage);return end
+        local stage=RS:GetAttribute("ZO_TrainingStage") or "Loading"
+        local titles={Loading="Preparando personagem",Intro="Prepare-se",Fighting="Elimine os infectados",
+            Between="Onda concluída",Won="Treino concluído!",Lost="Nova tentativa em instantes"}
+        local seconds=RS:GetAttribute("ZO_TrainingRemaining") or 0
+        panel.Text=("ZOMBIE OUTBREAK · v%s\nTREINO SOLO · ONDA %d/3 · %02d:%02d\n%s · ABATES %d · CRÉDITOS %d\n%s"):format(
+            RS:GetAttribute("ZO_Version") or "0.1.0",
+            RS:GetAttribute("ZO_TrainingWave") or 1,math.floor(seconds/60),seconds%60,titles[stage] or stage,
+            RS:GetAttribute("ZO_TrainingKills") or 0,credits(),controls(false))
+        return
+    end
     if RunService:IsStudio() and #Players:GetPlayers()==1 and state=="Waiting" and workspace:GetAttribute("ZO_BarricadePractice")==true then
         local zombie=player.Team and player.Team.Name=="Zombies"
         panel.Text="TREINO SOLO\n"..(if zombie then "Ataque o alvo humano para infectar" else "Teste as armas e a recarga no alvo zumbi").."\n"..controls(zombie==true)
@@ -78,7 +91,8 @@ local function refresh()
     panel.Size=UDim2.new(.9,0,0,if warning~="" then 120 else 108)
     panel.Text=("%s   %02d:%02d\nHUMANOS %d   |   ZUMBIS %d\n%s%s%s"):format(title,math.floor(seconds/60),seconds%60,RS:GetAttribute("ZO_Humans") or 0,RS:GetAttribute("ZO_Zombies") or 0,instruction,hint,warning)
 end
-for _,name in {"ZO_RoundState","ZO_Remaining","ZO_Humans","ZO_Zombies","ZO_LastWinner","ZO_GameplayStatus","ZO_GameplayError","ZO_StartupStep","ZO_ReadyPlayers","ZO_MinimumPlayers"} do RS:GetAttributeChangedSignal(name):Connect(refresh) end
+for _,name in {"ZO_RoundState","ZO_Remaining","ZO_Humans","ZO_Zombies","ZO_LastWinner","ZO_GameplayStatus","ZO_GameplayError","ZO_StartupStep","ZO_ReadyPlayers","ZO_MinimumPlayers",
+    "ZO_TrainingStage","ZO_TrainingWave","ZO_TrainingKills","ZO_TrainingRemaining","ZO_TrainingError","ZO_Version"} do RS:GetAttributeChangedSignal(name):Connect(refresh) end
 workspace:GetAttributeChangedSignal("ZO_BarricadePractice"):Connect(refresh)
 player:GetPropertyChangedSignal("Team"):Connect(refresh)
 player:GetAttributeChangedSignal("ZO_Credits"):Connect(refresh)

@@ -43,7 +43,7 @@ return table.freeze({
     EquipSeconds=.25,
     Economy=table.freeze({
         StartingCredits=3500, MaxCredits=12000, RoundIncome=500,
-        KillReward=350, InfectionReward=200, SurvivalReward=800, AmmoPrice=180,
+        KillReward=350, InfectionReward=200, SurvivalReward=800, AmmoPrice=180, TrainingKillReward=100,
     }),
     Containment=table.freeze({
         HorizontalCap=48, UpwardCap=10, TagSeconds=.18, TagWalkScale=.55,

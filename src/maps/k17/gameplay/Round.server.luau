@@ -257,7 +257,8 @@ while true do
     while readyCount()<Config.MinimumPlayers do
         health()
         RS:SetAttribute("ZO_WaitingReason",if #Players:GetPlayers()<Config.MinimumPlayers then "Players" else "Characters")
-        setState("Waiting",0);task.wait(.5)
+        setState(if Config.SoloTraining==true and #Players:GetPlayers()==1
+            then "Training" else "Waiting",0);task.wait(.5)
     end
     RS:SetAttribute("ZO_WaitingReason","")
     if not countdown("Intermission",Config.Intermission) then continue end

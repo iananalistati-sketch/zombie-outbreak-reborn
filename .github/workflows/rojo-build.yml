@@ -44,7 +44,7 @@ jobs:
           python scripts/test_loadout_client.py --luau /tmp/luau_release/luau
           python scripts/test_weapons_client.py --luau /tmp/luau_release/luau
           python scripts/test_weapon_motion.py --luau /tmp/luau_release/luau
-          python scripts/test_source_movement.py --luau /tmp/luau_release/luau
+          python scripts/test_training.py --luau /tmp/luau_release/luau
           python scripts/test_weapon_aim_pose.py --luau /tmp/luau_release/luau
           python scripts/test_equipment_visuals.py --luau /tmp/luau_release/luau
           python scripts/test_weapon_import.py --luau /tmp/luau_release/luau

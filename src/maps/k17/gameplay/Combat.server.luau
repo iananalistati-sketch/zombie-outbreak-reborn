@@ -48,8 +48,9 @@ local function character(player: Player): (Model?,BasePart?,Humanoid?)
     return char,head,hum
 end
 local function practice(): boolean
-    return RunService:IsStudio() and workspace:GetAttribute("ZO_BarricadePractice")==true
-        and #Players:GetPlayers()==1 and RS:GetAttribute("ZO_RoundState")=="Waiting"
+    local state=RS:GetAttribute("ZO_RoundState")
+    return workspace:GetAttribute("ZO_BarricadePractice")==true and #Players:GetPlayers()==1
+        and (state=="Training" or (RunService:IsStudio() and state=="Waiting"))
 end
 local function phase(): string?
     return Rules.phase(RS:GetAttribute("ZO_RoundState"),RunService:IsStudio(),workspace:GetAttribute("ZO_BarricadePractice")==true,#Players:GetPlayers())
@@ -408,7 +409,8 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
         end
         if health>0 and victim.Health<=0 then
             clearSuppression(model,false)
-            if Players:GetPlayerFromCharacter(model) then award(player,Config.Economy.KillReward) end
+            if Players:GetPlayerFromCharacter(model) then award(player,Config.Economy.KillReward)
+            elseif practice() and model:GetAttribute("ZO_TrainingEnemy")==true then award(player,Config.Economy.TrainingKillReward or 0) end
         elseif victim.Health>0 then suppress(model,victim,now) end
     end
 end)

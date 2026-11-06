@@ -3,6 +3,7 @@
 local Rules = {}
 
 function Rules.phase(state: string?, studio: boolean, practice: boolean, players: number): string?
+    if state=="Training" then return if practice and players==1 then "Active" else "Waiting" end
     if studio and practice and players==1 and state=="Waiting" then return "Active" end
     return state
 end

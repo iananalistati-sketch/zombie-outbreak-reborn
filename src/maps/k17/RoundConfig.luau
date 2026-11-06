@@ -2,6 +2,7 @@
 -- Initial K-17 survival settings; multiplayer balance still requires Studio tests.
 return table.freeze({
     MinimumPlayers = 2,
+    SoloTraining = true,
     Intermission = 5,
     Preparation = 15,
     Duration = 240,

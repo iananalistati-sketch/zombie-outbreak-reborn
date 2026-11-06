@@ -20,12 +20,15 @@ function Pose.new(character: Model,config: any)
             elseif item.Part0==torso and (item.Name=="Left Hip" or item.Name=="Right Hip"
                 or item.Name=="LeftHip" or item.Name=="RightHip") then
                 table.insert(hips,{joint=item,base=item.C0})
+                item:SetAttribute("ZO_StandingC0",item.C0)
             elseif item.Name=="LeftKnee" or item.Name=="RightKnee" then
                 table.insert(knees,{joint=item,base=item.C0})
+                item:SetAttribute("ZO_StandingC0",item.C0)
             end
         end
     end
     if not rootMotor or #hips~=2 then return nil end
+    rootMotor:SetAttribute("ZO_StandingC0",rootMotor.C0)
     local params=OverlapParams.new()
     params.FilterType=Enum.RaycastFilterType.Exclude
     params.FilterDescendantsInstances={character}

@@ -177,7 +177,7 @@ end
 
 do
     local s=simulation();s.add("A",true);launch(s);s.advance(60)
-    check(s.rs:GetAttribute("ZO_RoundState")=="Waiting" and not stateSeen(s,"Preparation"),"one player cannot start a live-style round")
+    check(s.rs:GetAttribute("ZO_RoundState")=="Training" and not stateSeen(s,"Preparation"),"one player enters training without starting a multiplayer round")
     check(#s.errors==0,"one-player waiting has no errors")
 end
 
