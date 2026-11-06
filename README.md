@@ -2,6 +2,11 @@
 
 Zombie Survival / Zombie Mod em Luau para Roblox Studio. **Mapa ativo: K-17.**
 
+**Base CS localizada:** [Evostrike e comparação dos fontes recebidos](docs/CS_FPS_BASES_VERIFIED.md).
+Código tático de movimento, spray, controle de armas e compra foi baixado e
+inspecionado. O projeto compila para revisão; os assets ausentes e a GPLv2
+exigem adaptação. A pesquisa não substituiu a versão jogável atual.
+
 **Arsenal aplicado:** [quatro armas reais e seis acabamentos adicionais](docs/OFFICIAL_ARSENAL_INTEGRATION.md).
 Carabina, pistola, **SMG e escopeta** estão embutidas. Os dois novos pacotes
 foram baixados da Creator Store, revisados e integrados com seus meshes e sons.

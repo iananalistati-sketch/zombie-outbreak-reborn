@@ -1,5 +1,24 @@
 # Diretrizes permanentes — Zombie Outbreak Reborn
 
+## Referência CS encontrada com web funcional
+
+- Fonte principal para comportamento e código tático: `beters02/Evostrike`,
+  commit221a3a2f67451145b94836b794c0df072c6a28ee, GPLv2. Já foi clonado em
+  `/workspace/reference-study/beters02--Evostrike`; buildRojo de revisão passou.
+  Não repetir a conclusão antiga de que nenhuma base CS foi localizada.
+- Há309arquivosLua, mas zeroModels/MeshParts/Tools/Animations/Sounds no build.
+  Reutilização exige adaptar nossos assets; compilar não comprova startup/play.
+- `beters02/source-rbx` é o release de movimento do mesmo autor comRBXL nativo;
+  repo semLICENSE identificado. Não inferir autorização irrestrita para seus
+  assets só pelo título open-source. Os arquivos correspondentes licenciados
+  podem ser estudados no EvostrikeGPL.
+- Ler `docs/CS_FPS_BASES_VERIFIED.md` antes de propor outra base. Preservar
+  servidor autoritativo: a entrada AddWeapon da referência tem middleware
+  pendente; não copiar esse acesso direto sobre nossa economia/infecção.
+- Preservar GPL/notices e considerar compatibilidade do conjunto ao integrar
+  código derivado. A pesquisa não incorporou fontes GPL ao runtime nem alterou
+  a licença do projeto. Não afirmar que uma pasta separada evita copyleft.
+
 ## Estado atual — SMG e escopeta aplicadas
 
 - Após a rede funcionar, os dois modelos oficiais foram baixados comHTTP200,
