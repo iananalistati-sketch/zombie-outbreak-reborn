@@ -274,7 +274,7 @@ connect(Run.RenderStepped,function(dt)
     if errorMessage then instruction="FALHA: "..tostring(errorMessage);objective.TextColor3=C.red
     elseif phase=="Starting" then instruction="Iniciando · "..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando servidor");objective.TextColor3=C.muted
     else objective.TextColor3=C.text end
-    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.7.0")
+    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.8.0")
     local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role..":"..tostring(RS:GetAttribute("ZO_InfectionCheckpoint"))
     if key~=announcementKey then announcementKey=key;bannerUntil=os.clock()+3;bannerTitle.Text=string.upper(title);bannerDetail.Text=instruction end
     local checkpoint=RS:GetAttribute("ZO_InfectionCheckpoint") or 0
@@ -317,7 +317,7 @@ connect(Run.RenderStepped,function(dt)
     healthFill.Size=UDim2.fromScale(ratio,1);healthFill.BackgroundColor3=if ratio<.25 then C.red elseif zombie then C.gold else C.green
     wallet.Text=("$ %d"):format(player:GetAttribute("ZO_Credits") or 0)
     local weapon=Config.Weapons[player:GetAttribute("ZO_WeaponId")] or Config.Weapons.Rifle
-    local clip=player:GetAttribute("ZO_Ammo") or 0;local reload=player:GetAttribute("ZO_Reloading")==true
+    local clip=player:GetAttribute("ZO_PredictedAmmo") or player:GetAttribute("ZO_Ammo") or 0;local reload=player:GetAttribute("ZO_Reloading")==true
     local remaining=math.max(0,(player:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow())
     local equip=workspace:GetServerTimeNow()<(player:GetAttribute("ZO_EquipReadyAt") or 0)
     weaponText.Text=if zombie then "INFECÇÃO / COMBATE PRÓXIMO" else string.upper(weapon.Label).." / "..(if weapon.Slot=="Primary" then "PRIMÁRIA" else "SECUNDÁRIA")

@@ -119,6 +119,9 @@
         },
         "RoundStats": {
           "$path": "src/maps/k17/gameplay/RoundStats.luau"
+        },
+        "ShotPrediction": {
+          "$path": "src/maps/k17/gameplay/ShotPrediction.luau"
         }
       },
       "K17Refuges": {

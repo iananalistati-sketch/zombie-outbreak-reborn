@@ -21,6 +21,8 @@ local Handling=require(shared:WaitForChild("WeaponHandling"))
 local WeaponSkins=require(shared:WaitForChild("WeaponSkins"))
 local TacticalRecoil=require(shared:WaitForChild("TacticalRecoil"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
+local ShotPrediction=require(shared:WaitForChild("ShotPrediction"))
+local prediction=ShotPrediction.new()
 local rifle=RS:WaitForChild("ZO_FireRifle") :: RemoteEvent
 local melee=RS:WaitForChild("ZO_Melee") :: RemoteEvent
 local effects=RS:WaitForChild("ZO_CombatFX") :: RemoteEvent
@@ -81,6 +83,7 @@ for _,name in {"Left","Right","Top","Bottom","Dot"} do
 end
 local vm=Instance.new("Model");vm.Name="ZO_LocalWeapon";vm.Parent=workspace.CurrentCamera
 local held,aimHeld=false,false
+local bufferedUntil=0
 local aimAlpha=0
 local sprintAlpha=0
 local weaponMotion=WeaponMotion.new()
@@ -95,6 +98,9 @@ local appliedCameraFrame: CFrame?=nil
 local fovCamera: Camera?=nil
 local normalFov=70
 local controlsFov=false
+local sensitivityBase: number?=nil
+local sensitivityLast: number?=nil
+local sensitivityReleased=false
 local originalCameraMode=player.CameraMode
 local notice,noticeUntil="",0
 local practiceOrigin: Vector3?=nil
@@ -208,6 +214,8 @@ end)
 local function restoreFov()
     if fovCamera and controlsFov then fovCamera.FieldOfView=normalFov end
     controlsFov=false
+    if sensitivityBase and sensitivityLast and UIS.MouseDeltaSensitivity==sensitivityLast then UIS.MouseDeltaSensitivity=sensitivityBase end
+    sensitivityBase=nil;sensitivityLast=nil;sensitivityReleased=false
 end
 local function removeCameraKick()
     -- Remove only our last output. A new camera/controller may already have
@@ -222,7 +230,7 @@ local function clearCameraKick()
     cameraKick=0;cameraYaw=0;bloom=0;recoilPattern:reset()
 end
 local function stop()
-    held=false;aimHeld=false;aimAlpha=0;nextAction=0;swingUntil=0
+    held=false;bufferedUntil=0;aimHeld=false;aimAlpha=0;nextAction=0;swingUntil=0
     weaponMotion:reset()
     restoreFov();clearCameraKick()
     if currentPresentation then currentPresentation:stop() end
@@ -256,15 +264,19 @@ local function action()
     local camera=workspace.CurrentCamera
     if not camera or UIS:GetFocusedTextBox() or menuOpen() or os.clock()<nextAction then return end
     local equipped=weapon()
+    prediction:sync(equipped.Id,player:GetAttribute("ZO_Ammo") or 0)
     if canShoot() and not sprinting() and player:GetAttribute("ZO_Reloading")~=true and (player:GetAttribute("ZO_Ammo") or 0)>0
         and workspace:GetServerTimeNow()>=(player:GetAttribute("ZO_EquipReadyAt") or 0) then
         if not templateFor(equipped.Id,player:GetAttribute("ZO_WeaponSkin")) then
             notice="Modelo da arma indisponível · veja o carregamento do arsenal";noticeUntil=os.clock()+2
             return
         end
-        nextAction=os.clock()+equipped.FireInterval+.005
         local aiming=aimHeld and canAim()
-        rifle:FireServer("Fire",camera.CFrame.LookVector,aiming)
+        local attempt=prediction:fire(os.clock())
+        if not attempt then return end
+        nextAction=os.clock()+equipped.FireInterval+.005
+        player:SetAttribute("ZO_PredictedAmmo",prediction:ammo())
+        rifle:FireServer("Fire",camera.CFrame.LookVector,aiming,attempt)
         ensurePresentation(equipped.Id)
         if currentPresentation then
             currentPresentation:update(camera.CFrame,CFrame.identity,true,aimAlpha)
@@ -277,6 +289,7 @@ local function action()
         cameraKick=math.min(cameraKick+pitch,5)
         cameraYaw=math.clamp(cameraYaw+yaw,-4,4)
         bloom=math.min(bloom+4*scale,22)
+        return true
     elseif canMelee() then
         nextAction=os.clock()+Config.Melee.Cooldown+.02;swingUntil=os.clock()+.24
         melee:FireServer(camera.CFrame.LookVector)
@@ -294,11 +307,16 @@ local function overButton(): boolean
     return false
 end
 local function trigger(_,state: Enum.UserInputState,input: InputObject): Enum.ContextActionResult
-    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then held=false;return Enum.ContextActionResult.Pass end
+    if state==Enum.UserInputState.End or state==Enum.UserInputState.Cancel then
+        held=false;if state==Enum.UserInputState.Cancel then bufferedUntil=0 end
+        return Enum.ContextActionResult.Pass
+    end
     if UIS:GetFocusedTextBox() or (not canShoot() and not canMelee()) then return Enum.ContextActionResult.Pass end
     if state==Enum.UserInputState.Begin then
         if input.UserInputType==Enum.UserInputType.MouseButton1 and overButton() then return Enum.ContextActionResult.Pass end
-        held=true;action()
+        held=true
+        local fired=action()
+        if not fired and canShoot() and not weapon().Automatic and os.clock()<nextAction then bufferedUntil=os.clock()+.12 end
     end
     return Enum.ContextActionResult.Sink
 end
@@ -341,14 +359,19 @@ for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_ScoreboardOpen","ZO_Specta
 end
 connect(player:GetAttributeChangedSignal("ZO_WeaponId"),function() stop();presentationDirty=true end)
 connect(player:GetAttributeChangedSignal("ZO_WeaponSkin"),function() stop();presentationDirty=true end)
-connect(player:GetAttributeChangedSignal("ZO_Reloading"),function() if player:GetAttribute("ZO_Reloading")==true then stop() end end)
+connect(player:GetAttributeChangedSignal("ZO_Reloading"),function()
+    if player:GetAttribute("ZO_Reloading")==true then prediction:reset(weapon().Id,player:GetAttribute("ZO_Ammo") or 0);stop() end
+end)
 connect(player:GetAttributeChangedSignal("ZO_EquipReadyAt"),function() if not canAim() then stop() end end)
 connect(UIS.WindowFocusReleased,stop);connect(UIS.TextBoxFocused,stop);connect(GuiService.MenuOpened,stop)
 connect(player.CharacterRemoving,function()
+    prediction:reset("",0);player:SetAttribute("ZO_PredictedAmmo",nil)
     stop();destroyPresentation();presentationDirty=true;zombieCharacter=nil
     if zombieArms then Presentation.destroyArms(zombieArms);zombieArms=nil end
 end)
 connect(player:GetPropertyChangedSignal("Team"),stop)
+connect(RS:GetAttributeChangedSignal("ZO_RoundId"),function()prediction:reset("",0)end)
+connect(workspace:GetAttributeChangedSignal("ZO_PracticeRevision"),function()prediction:reset("",0)end)
 connect(RS:GetAttributeChangedSignal("ZO_RoundState"),function() if phase()~="Active" and phase()~="Preparation" then stop() end end)
 local function observeWorldCharacter(owner: Player,character: Model)
     local function observe(item: Instance)
@@ -383,7 +406,14 @@ end
 if player.Character then bindCharacter(player.Character) end
 connect(player.CharacterAdded,bindCharacter)
 connect(player.CharacterAppearanceLoaded,function() presentationDirty=true;zombieCharacter=nil end)
-connect(rifle.OnClientEvent,function(kind: string,_damage: any,hitgroup: any)
+connect(rifle.OnClientEvent,function(kind: string,_damage: any,hitgroup: any,ammoValue: any)
+    if kind=="FireAck" then
+        if type(_damage)=="string" and type(hitgroup)=="number" and type(ammoValue)=="number" then
+            prediction:ack(_damage,hitgroup,ammoValue)
+            player:SetAttribute("ZO_PredictedAmmo",prediction:ammo())
+        end
+        return
+    end
     if kind=="Hit" then hitUntil=os.clock()+.14;hitHead=hitgroup=="Head"
     elseif kind=="Kill" then killUntil=os.clock()+.45;hitUntil=killUntil;hitHead=hitgroup=="Head";notice="ABATE CONFIRMADO";noticeUntil=killUntil
     elseif kind=="PropHit" then notice="Barricada atingida";noticeUntil=os.clock()+.6 end
@@ -413,14 +443,15 @@ connect(effects.OnClientEvent,function(kind: string,origin: any,destination: any
     end
     if typeof(hitNormal)=="Vector3" and hitNormal.Magnitude>.001 then Presentation.impact(destination,hitNormal.Unit,material) end
     local distance=(destination-origin).Magnitude
-    if distance<.1 then return end
-    -- Query-free trace uses only the server result; it cannot register hits.
-    local color=shotWeapon.Color
+    if distance<.1 or firstRay==false then return end
+    -- Short neutral streak at the authoritative ray's end, not a full-length
+    -- colored beam or one laser for every pellet. Never registers a hit.
+    local length=math.min(distance,16)
     local trace=Instance.new("Part");trace.Name="ZO_ShotTrace"
-    trace.Size=Vector3.new(.035,.035,distance);trace.CFrame=CFrame.lookAt((origin+destination)/2,destination)
+    trace.Size=Vector3.new(.025,.025,length);trace.CFrame=CFrame.lookAt(destination-(destination-origin).Unit*(length/2),destination)
     trace.Anchored=true;trace.CanCollide=false;trace.CanQuery=false;trace.CanTouch=false;trace.CastShadow=false
-    trace.Material=Enum.Material.Neon;trace.Color=Color3.fromRGB(color[1],color[2],color[3]);trace.Transparency=.4
-    trace.Parent=workspace;Debris:AddItem(trace,.045)
+    trace.Material=Enum.Material.Neon;trace.Color=Color3.fromRGB(242,228,190);trace.Transparency=.75
+    trace.Parent=workspace;Debris:AddItem(trace,.035)
 end)
 local renderName="ZO_WeaponPresentation"
 local preCameraName="ZO_WeaponRecoilBeforeCamera"
@@ -454,11 +485,24 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     end
     local equipped=weapon()
     if gun then ensurePresentation(equipped.Id) end
+    prediction:sync(equipped.Id,player:GetAttribute("ZO_Ammo") or 0)
+    player:SetAttribute("ZO_PredictedAmmo",prediction:ammo())
     local targetAim=if aimHeld and canAim() then 1 else 0
     aimAlpha+=(targetAim-aimAlpha)*(1-math.exp(-dt*14))
     if aimAlpha>.001 or targetAim==1 then
         if not controlsFov then normalFov=camera.FieldOfView;controlsFov=true end
         camera.FieldOfView=normalFov+(PresentationConfig.get(equipped.Id).AimFov-normalFov)*aimAlpha
+        local current=UIS.MouseDeltaSensitivity
+        if type(current)=="number" and not sensitivityReleased then
+            if sensitivityLast and current~=sensitivityLast then
+                sensitivityReleased=true;sensitivityBase=nil;sensitivityLast=nil
+            else
+                sensitivityBase=sensitivityBase or current
+                local ratio=math.tan(math.rad(camera.FieldOfView/2))/math.tan(math.rad(normalFov/2))
+                UIS.MouseDeltaSensitivity=sensitivityBase*(1+(ratio*.82-1)*aimAlpha)
+                sensitivityLast=UIS.MouseDeltaSensitivity -- retain actual property precision
+            end
+        end
     elseif controlsFov then restoreFov() else normalFov=camera.FieldOfView end
     -- Match the reused kit's ShoulderCamera: build each frame with the complete
     -- remaining recoil, then decay it. Roblox's camera has just supplied a new
@@ -467,6 +511,10 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         appliedRecoil=CFrame.Angles(math.rad(cameraKick),math.rad(cameraYaw),0)
         camera.CFrame*=appliedRecoil
         kickCamera=camera;appliedCameraFrame=camera.CFrame
+    end
+    if bufferedUntil>0 then
+        if os.clock()>bufferedUntil or not canShoot() or sprinting() or player:GetAttribute("ZO_Reloading")==true then bufferedUntil=0
+        elseif os.clock()>=nextAction and action() then bufferedUntil=0 end
     end
     -- Automatic shots use the same direction currently presented to the player.
     if held and (canMelee() or weapon().Automatic) then action() end
@@ -517,7 +565,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
     end
     local tacticalHUD=player:GetAttribute("ZO_TacticalHUDReady")==true
     ammo.Visible=gun and not tacticalHUD;health.Visible=active and not tacticalHUD;cross.Visible=active;reticle.Visible=active
-    local clip=player:GetAttribute("ZO_Ammo") or 0
+    local clip=prediction:ammo()
     ammo.Text=if reloading then ("RECARREGANDO  %.1fs"):format(remaining) elseif equipping then "EQUIPANDO..."
         else ("%s  %02d/%d  |  %03d"):format(string.upper(equipped.Label),clip,equipped.Magazine,player:GetAttribute("ZO_Reserve") or 0)
     health.Text=("%s  %d"):format(if zombie then "ZUMBI" else "VIDA",math.ceil(if hum then hum.Health else 0))
@@ -545,6 +593,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         elseif gun and not currentPresentation then "Modelo da arma indisponível · veja o Output"
         elseif assetFailure then "Assets da arma indisponíveis · veja o Output"
         elseif (gun and presentationStatus~="Ready") or (zombie and not zombieArms) then "Braços do personagem indisponíveis · veja o Output"
+        elseif gun and prediction:stalled(os.clock()) then "Aguardando confirmação dos disparos…"
         elseif gun and clip==0 then "Recarregar · 1 / 2: trocar arma"
         elseif zombie then "Segure atacar para golpear e infectar" else ""
     status.Visible=active or standBlocked
@@ -559,4 +608,5 @@ connect(script.Destroying,function()
     disconnectAll(connections);disconnectAll(assetConnections);disconnectAll(characterConnections)
     destroyPresentation();if zombieArms then Presentation.destroyArms(zombieArms) end
     player.CameraMode=originalCameraMode;vm:Destroy();gui:Destroy()
+    player:SetAttribute("ZO_PredictedAmmo",nil)
 end)

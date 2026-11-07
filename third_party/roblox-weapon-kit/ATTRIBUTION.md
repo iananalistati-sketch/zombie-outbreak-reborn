@@ -73,10 +73,17 @@ As variantes nativas `Workspace/Pistol` e `Workspace/Pistol3` do mesmo anexo
 oficial foram preservadas completas em [pistol/OriginalPistol.rbxmx](pistol/OriginalPistol.rbxmx)
 e [pistol/OriginalPistol3.rbxmx](pistol/OriginalPistol3.rbxmx). Suas apresentações
 limpas fornecem as skins Clássica e Dourada em `ZO_WeaponAssets/Skins/Pistol`.
-Usam os meshes, texturas, áudio e grip originais, sob a mesma **Roblox Limited
+Usam os meshes, texturas e grip originais, sob a mesma **Roblox Limited
 Use License**. As skins mantêm a identidade `Pistol` e não adicionam armas,
 estatísticas ou controladores. Origem, hashes e IDs de textura estão no manifesto
 e a revisão está em [pistol/REVIEW.md](pistol/REVIEW.md).
 
-SMG e Shotgun ainda não estão embutidas. `WeaponAssetImport` é uma ferramenta
-manual opcional; Play não baixa prefabs nem substitui os modelos incluídos.
+SMG e Shotgun e seus acabamentos revisados estão embutidos no Arsenal.rbxmx.
+`WeaponAssetImport` é uma ferramenta manual opcional; Play não baixa prefabs
+nem substitui os modelos incluídos.
+
+Na versão 0.8, os oito áudios do derivado foram substituídos por referências
+publicadas e gratuitas da Creator Store, incluindo todos os acabamentos.
+Autores, IDs, metadados e limites da verificação estão em
+[creator-store-audio](../creator-store-audio/ATTRIBUTION.md).
+Os arquivos originais e seus hashes permanecem preservados.

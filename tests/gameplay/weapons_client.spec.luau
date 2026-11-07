@@ -5,6 +5,7 @@ local Rules=assert(loadstring(RULES_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
 local TacticalRecoil=assert(loadstring(TACTICAL_RECOIL_SOURCE))()
 local Handling=assert(loadstring(HANDLING_SOURCE))()
+local ShotPrediction=assert(loadstring(PREDICTION_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 local function close(a,b) return math.abs(a-b)<1e-5 end
@@ -165,12 +166,19 @@ local function simulation(options)
     function motion:kick(amount) self.lastKick=amount end
     logs.motion=motion
     local WeaponMotion={new=function() return motion end}
-    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,TacticalRecoil=TacticalRecoil,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig,WeaponHandling=Handling} do modules[instance("ModuleScript",name,shared)]=value end
+    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,TacticalRecoil=TacticalRecoil,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig,WeaponHandling=Handling,ShotPrediction=ShotPrediction} do modules[instance("ModuleScript",name,shared)]=value end
     local requests={}
     local remotes={}
     for _,name in {"ZO_FireRifle","ZO_Melee","ZO_CombatFX","ZO_LoadoutAction"} do
         local remote=instance("RemoteEvent",name,rs);remote.OnClientEvent=signal();remotes[name]=remote
-        function remote:FireServer(...) table.insert(requests,{remote=self.Name,args={...}}) end
+        function remote:FireServer(...)
+            local args={...};table.insert(requests,{remote=self.Name,args=args})
+            -- Default fixture supplies transport acknowledgement only; the real
+            -- Combat integration tests own inventory. Delay is explicit below.
+            if not options.noFireAck and self.Name=='ZO_FireRifle'and args[1]=='Fire'and args[4]then
+                self.OnClientEvent:Fire('FireAck',player:GetAttribute('ZO_WeaponId'),args[4],math.max(0,(player:GetAttribute('ZO_Ammo')or 0)-1),true)
+            end
+        end
     end
     local function addAssets(ids)
         local assets=rs:FindFirstChild("ZO_WeaponAssets") or instance("Folder","ZO_WeaponAssets",rs)
@@ -194,7 +202,13 @@ local function simulation(options)
         end
         return pistol
     end
-    local uis={TouchEnabled=options.touch==true,GamepadEnabled=false,WindowFocusReleased=signal(),TextBoxFocused=signal(),focused=false}
+    local uis={MouseDeltaSensitivity=.9,TouchEnabled=options.touch==true,GamepadEnabled=false,WindowFocusReleased=signal(),TextBoxFocused=signal(),focused=false}
+    if options.floatSensitivity then
+        local function float(n)local b=buffer.create(4);buffer.writef32(b,0,n);return buffer.readf32(b,0)end
+        local sensitivity=float(uis.MouseDeltaSensitivity);uis.MouseDeltaSensitivity=nil
+        setmetatable(uis,{__index=function(_,k)if k=='MouseDeltaSensitivity'then return sensitivity end end,
+            __newindex=function(t,k,v)if k=='MouseDeltaSensitivity'then sensitivity=float(v)else rawset(t,k,v)end end})
+    end
     function uis:GetFocusedTextBox() return if self.focused then {} else nil end
     function uis:GetMouseLocation() return {X=0,Y=0} end
     function uis:GetMouseDelta() return self.mouseDelta or {X=0,Y=0} end
@@ -555,6 +569,8 @@ do
     s.event("ZO_CombatFX","Shot",origin,destination,456,"SMG",normal)
     check(#s.logs.distantShots==1 and s.logs.distantShots[1].id=="SMG","other player without replicated tool uses matching template positional shot audio")
     check(#s.logs.impacts==1 and close(s.logs.impacts[1].normal.Magnitude,1),"authoritative hit normal dispatches real impact API")
+    local trace=s.world:FindFirstChild('ZO_ShotTrace')
+    check(trace and trace.Size.Z==16 and trace.Transparency==.75 and not trace.CanQuery,'ray feedback uses a short neutral streak instead of a full colored beam')
     local tool=s.instance("Tool","ZO_EquippedWeapon",s.other.Character);tool:SetAttribute("ZO_WeaponId","SMG");s.advance(0)
     check(s.logs.observed[#s.logs.observed]==tool,"other player's late generic world tool subscribes to reload observer")
     s.event("ZO_CombatFX","Shot",origin,destination,456,"SMG",nil)
@@ -574,5 +590,43 @@ do
     s.player:SetAttribute('ZO_SpawnPending',nil);s.advance(0);s.render(.1)
     s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End')
     check(#s.requests==before+1,'releasing pending guard restores zombie attack input')
+end
+do
+    local s=simulation({noFireAck=true});s.player:SetAttribute('ZO_Ammo',1);s.advance(0);s.render(.1)
+    s.key('ZO_Trigger','Begin');local attempt=s.requests[#s.requests].args[4]
+    check(type(attempt)=='number'and s.player:GetAttribute('ZO_PredictedAmmo')==0 and s.player:GetAttribute('ZO_Ammo')==1,'last bullet is immediate in HUD but remains server-owned')
+    local shots=#s.logs.localShots;s.advance(.3);s.render(.1);s.key('ZO_Trigger','End')
+    check(#s.logs.localShots==shots,'delayed authority cannot produce repeated ghost audio from the last round')
+    s.event('ZO_FireRifle','FireAck','Rifle',attempt,1,false)
+    check(s.player:GetAttribute('ZO_PredictedAmmo')==1,'rejection restores only cosmetic ammunition')
+    s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End');local accepted=s.requests[#s.requests].args[4]
+    s.event('ZO_FireRifle','FireAck','Rifle',accepted,0,true);s.render(.1)
+    check(s.player:GetAttribute('ZO_PredictedAmmo')==0,'stale replicated clip cannot overwrite a newer empty acknowledgement')
+    s.player:SetAttribute('ZO_Reloading',true);s.advance(0);s.player:SetAttribute('ZO_Ammo',30)
+    s.player:SetAttribute('ZO_Reloading',false);s.advance(0);s.render(.1)
+    s.event('ZO_FireRifle','FireAck','Rifle',accepted,0,true)
+    check(s.player:GetAttribute('ZO_PredictedAmmo')==30,'reload rejects acknowledgement from old firing window')
+end
+do
+    local s=simulation({floatSensitivity=true});local baseline=s.uis.MouseDeltaSensitivity
+    beginAim(s);s.render(.1);local aimed=s.uis.MouseDeltaSensitivity;s.render(.1)
+    check(aimed<baseline and s.uis.MouseDeltaSensitivity<baseline,'ADS scales actual float32 mouse sensitivity across multiple frames')
+    s.uis.WindowFocusReleased:Fire();s.advance(0)
+    check(close(s.uis.MouseDeltaSensitivity,baseline),'focus loss restores the owned sensitivity exactly')
+    beginAim(s);s.uis.MouseDeltaSensitivity=1.3;s.render(.1)
+    check(close(s.uis.MouseDeltaSensitivity,1.3),'external sensitivity change relinquishes ownership')
+    s.key('ZO_Aim','End');s.render(1)
+    check(close(s.uis.MouseDeltaSensitivity,1.3),'ending ADS preserves external sensitivity')
+end
+do
+    local s=simulation();s.player:SetAttribute('ZO_WeaponId','Pistol');s.player:SetAttribute('ZO_Ammo',12);s.advance(0);s.render(.1)
+    s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End');local before=#s.requests
+    s.advance(.17);s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End')
+    s.advance(.08);s.render(.05)
+    check(#s.requests==before+1,'semi-auto click slightly before cooldown is buffered once')
+    s.advance(.17);s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End')
+    s.uis.WindowFocusReleased:Fire();s.advance(.1);s.render(.1);local after=#s.requests
+    s.advance(.3);s.render(.1)
+    check(#s.requests==after,'focus cancellation cannot fire an old buffered click')
 end
 print(("PASS actual Weapons client: %d assertions; ADS/control cancellation, generic tool imports, audio/impact dispatch and server-owned ammo (Roblox API doubles; presentation stubbed)"):format(checks))

@@ -19,6 +19,9 @@
   perceptíveis. Agrupar trabalho de gameplay, mapa e apresentação por objetivo
   jogável; não pedir nova validação a cada objeto ou ajuste mínimo. Correções
   isoladas cabem quando desbloqueiam uma falha que impede jogar.
+- Na resposta de 07/11/2026, identificou "Combate, armas e sensação de FPS"
+  como principal problema. Priorizar essa experiência, com resultado percebido
+  ao atirar e mirar, antes de novas expansões periféricas do mapa.
 
 ## Arquitetura e entrega
 
@@ -33,6 +36,12 @@
 - Resumos contam disparos aceitos e dano efetivo do servidor, por rodada;
   treino não entra nas estatísticas multiplayer. Impactos e recarga visual
   são cosméticos, com orçamento/expiração e sem alterar física do personagem.
+- ShotPrediction só mantém contador visual local. Nunca escrever ZO_Ammo ou
+  ZO_Reserve no cliente; FireAck confirma o snapshot real. IDs antigos, troca,
+  recarga e reset precisam limpar/rejeitar predições de outra janela.
+- Preservar arquivos originais de armas. Áudio público usado no derivado é
+  documentado em third_party/creator-store-audio/SOURCE.json; metadados públicos
+  não comprovam reprodução na experiência. Manter limites de vozes/clarão.
 - Round é a única autoridade de modo multiplayer e da fase Training. EscapeSession
   é subordinada ao controlador da fase, sem loop próprio: limpa prompts/portão na saída e confirma
   extração por posição, vida, equipe e participação no servidor.

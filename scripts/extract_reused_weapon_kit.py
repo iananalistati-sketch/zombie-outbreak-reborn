@@ -2,7 +2,8 @@
 """Extract real script-free presentation assets from the pinned Roblox kit.
 
 Pass the XML place produced by Rojo from the archived upstream RBXM. The gameplay
-uses the original meshes, joints, sounds and animations; no gun mesh is generated.
+uses the original meshes, joints and animations; reviewed public Store audio
+references replace the old unpublished sounds. No gun mesh is generated.
 """
 import argparse
 import base64
@@ -27,6 +28,22 @@ PARTS={'Part','MeshPart','UnionOperation','WedgePart','CornerWedgePart'}
 
 def name(item):
     return item.findtext('./Properties/string[@name="Name"]')
+
+
+def public_audio(weapons,skins):
+    """Apply reviewed public Store references, never rewrite pinned originals."""
+    manifest=json.loads((ROOT/'third_party/creator-store-audio/SOURCE.json').read_text())
+    records={row['asset']['id']:row for row in manifest['records']}
+    for weapon,profile in manifest['weapons'].items():
+        tools=[child(weapons,weapon)]
+        finishes=next((node for node in skins.findall('Item') if name(node)==weapon),None)
+        if finishes is not None:tools+=finishes.findall('Item')
+        for tool in tools:
+            for sound in tool.iter('Item'):
+                if sound.get('class')!='Sound' or name(sound) not in profile:continue
+                asset_id=profile[name(sound)];record=records[asset_id]
+                assert record['asset']['typeId']==3 and record['fiatProduct']['published'] and record['fiatProduct']['isFree']
+                sound.find('./Properties/Content[@name="AudioContent"]/uri').text='rbxassetid://'+str(asset_id)
 
 
 def child(parent,label):
@@ -183,13 +200,14 @@ def extract(source,prefabs):
         weapons.append(variants.pop('Default'))
         finishes=folder(weapon,'ZO_WeaponAssets_Skins_'+weapon);skins.append(finishes)
         for variant in variants.values():finishes.append(variant)
+    public_audio(weapons,skins)
     package.append(copy.deepcopy(child(assets,'Animations')))
     effects=folder('Effects','ZO_WeaponAssets_Effects');package.append(effects)
     shots=child(child(assets,'Effects'),'Shots')
     hit_effect=copy.deepcopy(child(child(shots,'Bullet'),'HitEffect'))
     # Studio confirmed this archived sound cannot load (even at volume zero).
-    # Keep the original particle effect and working gun audio; do not substitute
-    # an unverified ID or mutate the preserved upstream archive.
+    # Keep the original particles. Firearm audio uses the public catalog review
+    # above; never mutate the preserved upstream archive.
     hit_sound=child(hit_effect,'HitSound')
     assert hit_sound.get('class')=='Sound'
     assert hit_sound.findtext('./Properties/Content[@name="AudioContent"]/uri')=='rbxassetid://1489924400'

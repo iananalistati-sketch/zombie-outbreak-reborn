@@ -369,30 +369,39 @@ local function propRoot(part: Instance,folder: Instance): Instance
     while root.Parent and root.Parent~=folder do root=root.Parent end
     return root
 end
-rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,aiming: any)
+rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,aiming: any,attempt: any)
     if action~="Reload" and action~="Fire" then return end
     if aiming~=nil and typeof(aiming)~="boolean" then return end
-    if not admit(player,action) or not allowed(player) then return end
+    if attempt~=nil and (typeof(attempt)~="number" or attempt%1~=0 or attempt<=0 or attempt>2147483647) then return end
+    local function acknowledge(accepted: boolean)
+        if action~="Fire" or not attempt or not admit(player,"FireAck") then return end
+        local inventory=loadouts[player]
+        if not inventory then return end
+        local config,state=inventory:current()
+        rifle:FireClient(player,"FireAck",config.Id,attempt,state.ammo,accepted)
+    end
+    if not admit(player,action) or not allowed(player) then acknowledge(false);return end
     local loadout=loadouts[player]
     local char,head,hum=character(player)
-    if not loadout or not char or not head or not hum then return end
+    if not loadout or not char or not head or not hum then acknowledge(false);return end
     local config,weapon=loadout:current()
     local now=os.clock()
     if weapon:advance(now) then sync(player) end
-    if now<loadout.equipReadyAt then return end
+    if now<loadout.equipReadyAt then acknowledge(false);return end
     if action=="Reload" then if weapon:reload(now) then sync(player) end;return end
     -- Movement mode is published by the server movement authority. Forged
     -- fire requests during a sprint spend neither rounds nor shot cadence;
     -- reloading and inventory actions keep their existing rules.
     local movementMode=hum:GetAttribute("ZO_MovementMode")
-    if movementMode=="Sprint" then return end
-    if not directionAllowed(head,direction) or now<(nextFire[player] or -math.huge) then return end
-    if not weapon:fire(now) then return end
+    if movementMode=="Sprint" then acknowledge(false);return end
+    if not directionAllowed(head,direction) or now<(nextFire[player] or -math.huge) then acknowledge(false);return end
+    if not weapon:fire(now) then acknowledge(false);return end
     local record=activeStats(player)
     if record then Stats.shot(record) end
     local confirmedHit=false
     nextFire[player]=now+config.FireInterval
     sync(player)
+    acknowledge(true)
     local pellets=math.clamp(math.floor(config.Pellets),1,12)
     -- Player MoveDirection is not replicated. Use observed assembly movement
     -- so a client cannot select the stationary spread merely by omitting input.

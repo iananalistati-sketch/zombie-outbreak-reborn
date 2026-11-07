@@ -131,6 +131,19 @@ Priorizar agora a experiência perceptível no primeiro minuto e em uma sessão
 completa. Contagem de arquivos, assertions ou objetos não comprova qualidade
 percebida, nem aprovação do usuário.
 
+### 0.8 — Resposta e sensação de FPS
+
+O usuário identificou combate, armas e sensação de FPS como o principal
+problema. Esta entrega concentra trabalho nesse conjunto: sons públicos da
+Creator Store no lugar das referências antigas não publicadas, sobreposição
+limitada dos tiros, enquadramento/recuo por classe, mira com sensibilidade
+proporcional e restauração do controle, clique antecipado curto nas armas
+semiautomáticas e clarão na boca da arma. Corrige o sentido da bomba da escopeta.
+
+Predição do contador visual é conciliada com FireAck; nunca escreve munição
+autoritativa nem confirma dano. Respostas atrasadas não podem desfazer recarga
+ou troca. [Entrega e aceite](RELEASE_0_8.md).
+
 ### Próximas entregas — Conteúdo e desempenho
 
 Evoluir o arsenal revisado, simplificar loja, melhorar navegação e áudio ambiental, medir física e

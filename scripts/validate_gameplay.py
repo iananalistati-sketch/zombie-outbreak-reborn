@@ -45,6 +45,7 @@ def validate(path,studio_test=False):
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Flashlight':'src/maps/k17/gameplay/Flashlight.client.luau',
         'ServerScriptService/ZO_Server/TrainingDirector':'src/maps/k17/gameplay/TrainingDirector.server.luau',
         'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
+        'ReplicatedStorage/K17Gameplay/ShotPrediction':'src/maps/k17/gameplay/ShotPrediction.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',
         'ServerStorage/ZO_Validation/BarricadeAudit':'tests/k17/BarricadeAudit.luau',
         'ServerStorage/ZO_Validation/RefugeAudit':'tests/k17/RefugeAudit.luau',

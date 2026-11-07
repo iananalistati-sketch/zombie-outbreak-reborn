@@ -32,7 +32,7 @@ local function findSound(instance,name)
 end
 
 local function bind(instance,id)
-    local self=setmetatable({instance=instance,sounds={},configValues={},flashSequence=0,shotSequence=0,destroyed=false},Presentation)
+    local self=setmetatable({instance=instance,sounds={},configValues={},flashSequence=0,shotSequence=0,destroyed=false,fireVoices={}},Presentation)
     self.id=id or instance:GetAttribute("ZO_WeaponId") or instance.Name
     self.settings=PresentationConfig.get(self.id)
     self.connections={}
@@ -49,6 +49,11 @@ local function bind(instance,id)
     } do self[key]=instance:FindFirstChild(name,true) end
     if self.muzzleFlashBeam and not self.muzzleFlashBeam:IsA("Beam") then self.muzzleFlashBeam=nil end
     if self.muzzleFlashBeam then self.muzzleFlashBeam.Enabled=false end
+    if self.tipAttach then
+        self.muzzleLight=Instance.new("PointLight");self.muzzleLight.Name="ZO_MuzzleLight"
+        self.muzzleLight.Brightness=2.5;self.muzzleLight.Range=8;self.muzzleLight.Shadows=false
+        self.muzzleLight.Color=Color3.fromRGB(255,207,142);self.muzzleLight.Enabled=false;self.muzzleLight.Parent=self.tipAttach
+    end
     return self
 end
 
@@ -93,11 +98,20 @@ end
 
 function Presentation:fire()
     if self.destroyed or not self.instance.Parent then return end
-    if self.lastFireSound then self.lastFireSound:Stop() end
     self.lastFireSound=self:tryPlaySound("Fired",self:getConfigValue("FiredPlaybackSpeedRange",.1))
+    if self.lastFireSound then
+        table.insert(self.fireVoices,self.lastFireSound)
+        if #self.fireVoices>6 then local old=table.remove(self.fireVoices,1);if old.Parent then old:Stop();old:Destroy() end end
+    end
     self.shotSequence+=1
     self.lastShotAt=os.clock()
     local sequence=self.shotSequence
+    self.flashSequence+=1
+    local flashSequence=self.flashSequence
+    if self.muzzleLight then
+        self.muzzleLight.Enabled=true
+        task.delay(.035,function()if not self.destroyed and self.flashSequence==flashSequence then self.muzzleLight.Enabled=false end end)
+    end
     if self.boltMotor then
         task.spawn(function()
             self:animateBoltAction(true)
@@ -115,8 +129,6 @@ function Presentation:fire()
         self.muzzleFlashBeam.Enabled=true
         self.muzzleFlashBeam.Width0=flashSize
         self.muzzleFlashBeam.Width1=flashSize
-        self.flashSequence+=1
-        local flashSequence=self.flashSequence
         task.delay(self:getConfigValue("MuzzleFlashTime",.03),function()
             if not self.destroyed and flashSequence==self.flashSequence then self.muzzleFlashBeam.Enabled=false end
         end)
@@ -127,7 +139,9 @@ local function alignReload(self,remaining)
     if not remaining or remaining<=0 then return end
     self.reloadDeadline=os.clock()+remaining
     if self.reloadSound and self.reloadSound.TimeLength>0 then
-        self.reloadSound.TimePosition=math.max(0,self.reloadSound.TimeLength-remaining)
+        local duration=self.reloadDuration or remaining
+        self.reloadSound.PlaybackSpeed=math.clamp(self.reloadSound.TimeLength/duration,.5,2)
+        self.reloadSound.TimePosition=math.max(0,self.reloadSound.TimeLength-remaining*self.reloadSound.PlaybackSpeed)
     end
     local track=self.tracks and self.tracks.Reload
     if track and track.Length>0 then track:AdjustSpeed(math.clamp(track.Length/remaining,.2,5)) end
@@ -152,7 +166,7 @@ function Presentation:setReloading(reloading,remaining,duration)
             local sound=self.reloadSound
             sound.Loaded:Once(function()
                 if self.reloading and self.reloadSound==sound and self.reloadDeadline then
-                    sound.TimePosition=math.max(0,sound.TimeLength-math.max(0,self.reloadDeadline-os.clock()))
+                    alignReload(self,math.max(0,self.reloadDeadline-os.clock()))
                 end
             end)
         end
@@ -176,9 +190,11 @@ end
 function Presentation:stop()
     self.shotSequence+=1;self.flashSequence+=1
     self:setReloading(false)
-    if self.lastFireSound then self.lastFireSound:Stop() end
+    for _,sound in self.fireVoices do if sound.Parent then sound:Stop();sound:Destroy() end end
+    table.clear(self.fireVoices);self.lastFireSound=nil
     if self.boltTween then self.boltTween:Cancel() end
     if self.muzzleFlashBeam then self.muzzleFlashBeam.Enabled=false end
+    if self.muzzleLight then self.muzzleLight.Enabled=false end
     if self.boltMotor and self.boltMotorStart then self.boltMotor.C0=self.boltMotorStart.CFrame end
     if self.tracks then for _,track in self.tracks do if track then track:Stop(.1) end end end
     self.idleStarted=false
@@ -340,7 +356,9 @@ function Presentation:update(cameraCFrame,pose,visible,aimAlpha)
             part.CFrame*=CFrame.new(0,-handling.Magazine,0)
         elseif part.Name=="Pump" then
             local pump=if self.reloading then handling.Pump else Handling.pump(os.clock()-(self.lastShotAt or -math.huge))
-            part.CFrame*=CFrame.new(0,0,pump)
+            -- Imported pump mesh has reversed local Z. Rack toward the grip's
+            -- rear (+Z), independent of the mesh's authored orientation.
+            part.CFrame=target*CFrame.new(0,0,pump)*target:Inverse()*part.CFrame
         end
     end
     if self.visible~=visible then

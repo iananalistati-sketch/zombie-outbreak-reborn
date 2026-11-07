@@ -750,4 +750,15 @@ do
     for _,call in s.rs.ZO_CombatFX._calls do if call[2]=='Shot'and call[9]=='DiamondPlate'then found=true end end
     check(found,'server derives impact material from the first validated trace')
 end
+do
+    local s,p=twoHumans();ready(s,p)
+    local function attempt(id)s.request('ZO_FireRifle',p,'Fire',-Vector.zAxis,false,id)end
+    attempt(1)
+    local calls=s.rs.ZO_FireRifle._calls;local accepted=calls[#calls]
+    check(accepted[2]=='FireAck'and accepted[3]=='Rifle'and accepted[4]==1 and accepted[5]==29 and accepted[6]==true,'accepted request carries authoritative magazine snapshot')
+    s.advance(.04);attempt(2);local rejected=calls[#calls]
+    check(rejected[2]=='FireAck'and rejected[4]==2 and rejected[5]==29 and rejected[6]==false,'cooldown rejection confirms unchanged real ammunition')
+    local count=#calls;s.advance(.2);attempt(0/0);attempt('bad')
+    check(#calls==count and attr(p,'Ammo')==29,'invalid attempt IDs cannot reflect events or consume ammunition')
+end
 print(("PASS actual Combat controller: %d assertions; inventory, skins, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

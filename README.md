@@ -1,8 +1,8 @@
-# Zombie Outbreak Reborn — versão 0.7
+# Zombie Outbreak Reborn — versão 0.8
 
 Zombie Escape e Zombie Survival/Mod baseados no Counter-Strike: preparação,
 infecção por ataque, contenção por tiros, barricadas físicas e rodadas multiplayer.
-[Pacote 0.7 e validação](docs/RELEASE_0_7.md) ·
+[Pacote 0.8 e validação](docs/RELEASE_0_8.md) ·
 [Direção e próximas entregas](docs/PROJECT_DIRECTION.md).
 
 **Projeto principal:** `iananalistati-sketch/zombie-outbreak-reborn`, branch
@@ -14,7 +14,7 @@ arquivada. O arquivo CounterBlox_CS não é esta versão do produto.
 1. No GitHub Desktop, selecione **zombie-outbreak-reborn → main**.
 2. Faça **Fetch origin → Pull origin**, salve e feche o place anterior.
 3. Abra **ABRIR_JOGO.cmd** e execute **Play** no Studio. O HUD deve mostrar
-   **ZOMBIE OUTBREAK / v0.7.0** no canto inferior direito.
+   **ZOMBIE OUTBREAK / v0.8.0** no canto inferior direito.
 
 Não é necessário configurar HTTP, API Services, DataStore ou uma whitelist.
 A primeira sessão usa somente o conteúdo embarcado e serviços normais de
@@ -23,6 +23,17 @@ dependendo de disponibilidade e permissões da plataforma.
 
 ## O que testar nesta versão
 
+- **Combate/FPS:** enquadramento por arma, recuo revisto e sensibilidade de mouse
+  acompanhando a mira. Ao soltar a mira, abrir menu ou perder foco, o controle
+  anterior é restaurado. Pistola e escopeta aceitam um clique até 120ms antes
+  do fim do intervalo entre disparos; cancelar o controle descarta esse clique.
+- **Resposta e munição:** contador visual responde ao tiro e se reconcilia com
+  confirmações do servidor. A última bala não repete som/recuo indefinidamente
+  enquanto a munição ainda está replicando. Dano e munição reais continuam no servidor.
+- **Áudio e clarão:** oito referências públicas da Creator Store substituem
+  os sons antigos nas quatro classes e acabamentos. Tiros sobrepõem até seis
+  vozes; recarga acompanha a duração autorizada. Há um clarão curto no cano.
+  A reprodução/permissão dos novos áudios ainda precisa do teste no Studio.
 - **Play sozinho agora mostra Escape:** você começa perto do gerador. Após
   cinco segundos, siga o marcador, segure **E** junto ao painel e defenda.
   Atravesse até as bombas, depois até o terminal. Só entrar na área e concluir
@@ -111,7 +122,7 @@ modelos oficiais e componentes reutilizados têm licenças e procedência em
 O controlador Source experimental e os motores Counter Blox/Evostrike não
 executam nesta versão. A progressão persistente fica para entregas posteriores.
 O usuário informou ter realizado as validações da 0.1 e 0.2. As alterações da
-0.3–0.7 precisam de validação real de câmera, navegação, física, áudio e multiplayer no
+0.3–0.8 precisam de validação real de câmera, navegação, física, áudio e multiplayer no
 Studio; compilar não equivale a jogar. O mapa K-17 é original e foi adaptado
 para a primeira rota de evacuação. Equivalência completa à física Source
 depende de ajustes no motor e testes, não é uma funcionalidade comprovada.

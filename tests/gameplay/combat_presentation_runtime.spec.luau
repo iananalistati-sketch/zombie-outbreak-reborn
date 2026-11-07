@@ -90,18 +90,19 @@ function methods:Clone()
 end
 function methods:Emit(n)self.Emitted=n end
 function methods:Play()self.Played=true end
+function methods:Stop()self.Stopped=true end
 local world=object('Workspace','Workspace');local rs=object('ReplicatedStorage','ReplicatedStorage')
 local kit=object('Folder','ZO_WeaponAssets',rs);local effects=object('Folder','Effects',kit)
 local hit=object('Attachment','HitEffect',effects);object('ParticleEmitter','Particles',hit)
-local now=0;local debris={}
-local settings={HipPose=C.new(.6,-.8,-1.2),EyeRelief=.65,FireVolume=1.4,ReloadVolume=1.1,SoundDistance=160}
+local now=0;local debris={};local delayed={}
+local settings={HipPose=C.new(.6,-.8,-1.2),SightOffset=C.new(0,.18,2.2),EyeRelief=.65,FireVolume=1.4,ReloadVolume=1.1,SoundDistance=160}
 local modules={PresentationConfig={get=function()return settings end},WeaponAimPose={}}
 local env=setmetatable({workspace=world,CFrame=C,Vector3=V,Instance={new=function(c)return object(c)end},
     Enum={HumanoidRigType={R6='R6',R15='R15'},NormalId={Front='Front'}},
     Color3={fromRGB=function(r,g,b)return{R=r,G=g,B=b}end},Vector2={new=function(x,y)return{X=x,Y=y}end},
     ColorSequence={new=function(v)return{Value=v}end},NumberRange={new=function(a,b)return{Min=a,Max=b}end},NumberSequence={new=function(v)return{Value=v}end},
     os={clock=function()return now end},Random={new=function()return{NextNumber=function()return 0 end}end},
-    task={spawn=function()end,wait=function()end},
+    task={spawn=function()end,wait=function()end,delay=function(_,f)table.insert(delayed,f)end},
     game={GetService=function(_,n)if n=='ReplicatedStorage'then return rs elseif n=='Debris'then return {AddItem=function(_,o,t)table.insert(debris,{o,t})end}else return{}end end},
     require=function(token)return assert(modules[token])end,script={Parent={PresentationConfig='PresentationConfig',WeaponAimPose='WeaponAimPose',ViewRig='ViewRig',WeaponHandling='Handling',ImpactProfiles='Impacts'}}},{__index=getfenv()})
 local function load(source)local f=assert(loadstring(source));setfenv(f,env);return f()end
@@ -144,12 +145,18 @@ local function weapon(id)
     local t=object('Tool',id);local handle=object('Part','Handle',t)
     local model=object('Model','Model',t);local body=object('MeshPart',id,model);model.PrimaryPart=body
     object('Attachment','HandleAttachment',body)
+    object('Attachment','TipAttachment',body)
+    local sound=object('Sound','Fired',body);sound.PlaybackSpeed=1;sound.Volume=.6;sound.TimeLength=1
+    local reload=object('Sound','Reload',body);reload.PlaybackSpeed=1;reload.Volume=.6;reload.TimeLength=3;reload.IsLoaded=true
     local mag=object('MeshPart',if id=='Shotgun'then'Pump'else'Magazine',model);mag.CFrame=C.new(0,-.1,0)
+    if id=='Shotgun'then mag.CFrame*=C.Angles(0,math.pi,0)end
     return t
 end
 local template=weapon('Rifle');local gun=assert(Presenter.new(template,world,'Rifle',r6))
 gun:update(C.identity,C.identity,true,0);local mag=gun.instance:FindFirstChild('Magazine',true);local baseline=mag.CFrame.Position
-gun:setReloading(true,2.4,2.4);now=1.08;gun:update(C.identity,C.identity,true,0)
+gun:setReloading(true,2.4,2.4)
+check(gun.reloadSound.PlaybackSpeed==1.25 and gun.reloadSound.TimePosition==0,'public reload audio plays its beginning and fits authoritative duration')
+now=1.08;gun:update(C.identity,C.identity,true,0)
 check(mag.LocalTransparencyModifier==1 and (mag.CFrame.Position-baseline).Magnitude>.5,'actual imported magazine moves and hides during reload')
 gun:setReloading(false);gun:update(C.identity,C.identity,true,0)
 check(mag.LocalTransparencyModifier==0 and (mag.CFrame.Position-baseline).Magnitude<1e-5,'cancelling reload restores actual magazine mesh')
@@ -158,8 +165,15 @@ check(clawStatus=='Ready'and claws.arms.hand.LocalTransparencyModifier==0,'R6 in
 Presenter.destroyArms(claws)
 local sg=assert(Presenter.new(weapon('Shotgun'),world,'Shotgun',r6));sg:update(C.identity,C.identity,true,0)
 local pump=sg.instance:FindFirstChild('Pump',true);local rest=pump.CFrame.Position
-sg:fire();now+=.16;sg:update(C.identity,C.identity,true,0);check((pump.CFrame.Position-rest).Magnitude>.2,'shotgun cycles its real pump mesh')
+sg:fire();now+=.16;sg:update(C.identity,C.identity,true,0);check((pump.CFrame.Position-rest).Z>.2,'shotgun racks toward grip rear even when actual mesh axes are reversed')
 now+=1;sg:update(C.identity,C.identity,true,0);check((pump.CFrame.Position-rest).Magnitude<1e-5,'pump returns without persistent offset')
+gun:fire();local firstVoice=gun.lastFireSound;gun:fire()
+check(firstVoice~=gun.lastFireSound and not firstVoice.Stopped,'automatic fire preserves the preceding sound tail')
+for _=1,8 do gun:fire()end
+check(#gun.fireVoices==6 and firstVoice.Destroyed,'audio voice budget evicts only the oldest of six shots')
+check(gun.muzzleLight.Enabled and gun.muzzleLight.Range==8 and not gun.muzzleLight.Shadows,'real muzzle attachment receives a short bounded non-shadow light')
+gun:stop();for _,f in delayed do f()end
+check(not gun.muzzleLight.Enabled and #gun.fireVoices==0,'control cancellation clears flashes and all owned voices')
 local count=#debris;Presenter.impact(vec(),V.yAxis,'Metal')
 check(#debris==count+1,'actual impact function creates reviewed kit effect')
 local fx=debris[#debris][1];local emitter=fx:FindFirstChild('Particles',true)

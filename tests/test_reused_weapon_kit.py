@@ -49,8 +49,8 @@ class ReusedWeaponKit(unittest.TestCase):
             item=self.rifle_named[name]
             self.assertEqual(item.get('class'),'MeshPart')
             self.assertIn(asset,item.findtext('./Properties/Content[@name="MeshContent"]/uri'))
-        self.assertEqual(self.rifle_named['Fired'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://3806349898')
-        self.assertEqual(self.rifle_named['Reload'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://3821787597')
+        self.assertEqual(self.rifle_named['Fired'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://18835647605')
+        self.assertEqual(self.rifle_named['Reload'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://139048584127232')
         for name in ('HandleAttachment','TipAttachment','CasingEjectPoint','MuzzleFlash','BoltMotor','BoltMotorStart','BoltMotorTarget'):
             self.assertIn(name,self.rifle_named)
         self.assertEqual(self.rifle_named['MuzzleFlash'].get('class'),'Beam')
@@ -98,8 +98,8 @@ class ReusedWeaponKit(unittest.TestCase):
             self.assertEqual(item.get('class'),'MeshPart')
             self.assertEqual(item.findtext('./Properties/Content[@name="MeshContent"]/uri'),'rbxassetid://'+mesh)
             self.assertEqual(item.findtext('./Properties/Content[@name="TextureContent"]/uri'),'rbxassetid://'+texture)
-        self.assertEqual(self.pistol_named['Fired'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://3806566911')
-        self.assertEqual(self.pistol_named['Reload'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://3821789416')
+        self.assertEqual(self.pistol_named['Fired'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://92967624763578')
+        self.assertEqual(self.pistol_named['Reload'].findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://119970005937974')
         self.assertEqual(self.tools['Pistol'].findtext('./Properties/int64[@name="SourceAssetId"]'),'118912302094201')
         grip=self.pistol_named['HandleAttachment']
         self.assertEqual(grip.findtext('./Properties/CoordinateFrame[@name="CFrame"]/Y'),'-0.2')
@@ -194,12 +194,12 @@ class ReusedWeaponKit(unittest.TestCase):
 
     def test_smg_and_shotgun_keep_real_geometry_finishes_audio_and_original_grips(self):
         expected={
-            'SMG':('SMG','3361646593','2492936134',4812801977,3821793228,1),
-            'Bronze':('SMG','3361510036','2492936134',4812801977,3821793228,1),
-            'White':('SMG','3361512453','2492936134',4812801977,3821793228,1),
-            'Shotgun':('Shotgun','2492974190','2492972199',3821792787,3821792115,-1),
-            'Sand':('Shotgun','3361578179','2492972199',3821792787,3821792115,-1),
-            'Silver':('Shotgun','3361579798','2492972199',3821792787,3821792115,-1),
+            'SMG':('SMG','3361646593','2492936134',18835775932,139644400203673,1),
+            'Bronze':('SMG','3361510036','2492936134',18835775932,139644400203673,1),
+            'White':('SMG','3361512453','2492936134',18835775932,139644400203673,1),
+            'Shotgun':('Shotgun','2492974190','2492972199',71816202649396,145081845,-1),
+            'Sand':('Shotgun','3361578179','2492972199',71816202649396,145081845,-1),
+            'Silver':('Shotgun','3361579798','2492972199',71816202649396,145081845,-1),
         }
         for label,(body_name,texture,mesh,fired,reload,rotation) in expected.items():
             tool=self.tools[label]
@@ -233,6 +233,21 @@ class ReusedWeaponKit(unittest.TestCase):
         references=[node.text or '' for node in self.tree.findall('.//Properties/Content/uri')]
         self.assertFalse(any('1489924400' in reference for reference in references),
                          'Archived impact audio must not return to the runtime package')
+
+    def test_all_bundled_finishes_use_reviewed_public_audio(self):
+        manifest=json.loads((ROOT/'third_party/creator-store-audio/SOURCE.json').read_text())
+        records={row['asset']['id']:row for row in manifest['records']}
+        classes={'Rifle':'Rifle','SMG':'SMG','Bronze':'SMG','White':'SMG','Shotgun':'Shotgun',
+                 'Sand':'Shotgun','Silver':'Shotgun','Pistol':'Pistol','Classic':'Pistol','Gold':'Pistol'}
+        for label,weapon in classes.items():
+            tool=self.tools[label]
+            for event,asset_id in manifest['weapons'][weapon].items():
+                sound=next(n for n in tool.iter('Item') if n.get('class')=='Sound'and n.findtext('./Properties/string[@name="Name"]')==event)
+                self.assertEqual(sound.findtext('./Properties/Content[@name="AudioContent"]/uri'),'rbxassetid://'+str(asset_id))
+                self.assertTrue(records[asset_id]['fiatProduct']['published'])
+                self.assertTrue(records[asset_id]['fiatProduct']['isFree'])
+        refs={node.text for node in self.tree.findall('.//Properties/Content/uri')}
+        self.assertFalse({'rbxassetid://'+str(i) for i in manifest['replaced_ids']}&refs)
 
 
 if __name__=='__main__':unittest.main()

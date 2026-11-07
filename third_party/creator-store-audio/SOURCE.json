@@ -1,0 +1,1059 @@
+{
+  "checked_at_utc": "2026-11-07T19:14:09.732964+00:00",
+  "metadata_url": "https://apis.roblox.com/toolbox-service/v1/items/details?assetIds=145081845,3806349898,3806566911,3821787597,3821789416,3821792115,3821792787,3821793228,4812801977,18835647605,18835775932,71816202649396,92967624763578,119970005937974,139048584127232,139644400203673",
+  "license": "Roblox Creator Store terms; use inside Roblox",
+  "weapons": {
+    "Rifle": {
+      "Fired": 18835647605,
+      "Reload": 139048584127232
+    },
+    "SMG": {
+      "Fired": 18835775932,
+      "Reload": 139644400203673
+    },
+    "Shotgun": {
+      "Fired": 71816202649396,
+      "Reload": 145081845
+    },
+    "Pistol": {
+      "Fired": 92967624763578,
+      "Reload": 119970005937974
+    }
+  },
+  "replaced_ids": [
+    3806349898,
+    3821787597,
+    3806566911,
+    3821789416,
+    4812801977,
+    3821793228,
+    3821792787,
+    3821792115
+  ],
+  "records": [
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "nettimato",
+          "title": "shotgun reload",
+          "musicAlbum": "",
+          "tags": [
+            "Rattle",
+            "Rattle_(instrument)",
+            "Scissors",
+            "Typewriter",
+            "Computer_keyboard",
+            "Tick",
+            "Camera",
+            "Single-lens_reflex_camera",
+            "Clatter",
+            "Sound_effect"
+          ]
+        },
+        "id": 145081845,
+        "name": "shotgun reload",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "i was asked to make reload sounds for darkness 2 in that way they are a single file. okay.",
+        "duration": 3,
+        "hasScripts": false,
+        "createdUtc": "2014-02-05T18:37:16.57Z",
+        "updatedUtc": "2022-05-02T21:46:26.84Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 2495296,
+        "name": "nettimato",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 100
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_AR_Firing",
+          "musicAlbum": "",
+          "tags": [
+            "Door",
+            "Slam",
+            "Knock",
+            "Thump_thud",
+            "Thunk",
+            "Bang",
+            "Smash_crash",
+            "Silence",
+            "Sound_effect"
+          ]
+        },
+        "id": 3806349898,
+        "name": "weapon_AR_Firing",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-04T18:40:34.28Z",
+        "updatedUtc": "2022-05-02T20:41:14.433Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_Pistol_Firing",
+          "musicAlbum": "",
+          "tags": [
+            "Gunshot_gunfire",
+            "Artillery_fire",
+            "Cap_gun",
+            "Firecracker",
+            "Bang",
+            "Silence"
+          ]
+        },
+        "id": 3806566911,
+        "name": "weapon_Pistol_Firing",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-04T19:21:39.68Z",
+        "updatedUtc": "2022-05-02T21:45:44.04Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_AR_Charging_0.2",
+          "musicAlbum": "",
+          "tags": [
+            "Coin_(dropping)",
+            "Scissors",
+            "Camera",
+            "Single-lens_reflex_camera",
+            "Chink_clink",
+            "Scrape",
+            "Ding",
+            "Clang",
+            "Silence",
+            "Sound_effect"
+          ]
+        },
+        "id": 3821787597,
+        "name": "weapon_AR_Charging_0.2",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-06T19:10:10.587Z",
+        "updatedUtc": "2022-05-03T07:46:14.947Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_Pistol_Charging_0.2",
+          "musicAlbum": "",
+          "tags": [
+            "Scissors",
+            "Camera",
+            "Single-lens_reflex_camera",
+            "Silence",
+            "Sound_effect"
+          ]
+        },
+        "id": 3821789416,
+        "name": "weapon_Pistol_Charging_0.2",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-06T19:10:29.673Z",
+        "updatedUtc": "2022-05-03T04:33:24.92Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_Shotgun_Charging",
+          "musicAlbum": "",
+          "tags": [
+            "Coin_(dropping)",
+            "Camera",
+            "Single-lens_reflex_camera",
+            "Crack",
+            "Breaking",
+            "Crunch",
+            "Silence"
+          ]
+        },
+        "id": 3821792115,
+        "name": "weapon_Shotgun_Charging",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-06T19:10:57.013Z",
+        "updatedUtc": "2022-05-03T06:07:24.58Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_Shotgun_Firing",
+          "musicAlbum": "",
+          "tags": [
+            "Gunshot_gunfire",
+            "Cap_gun",
+            "Firecracker",
+            "Burst_pop",
+            "Bang",
+            "Silence",
+            "Sound_effect"
+          ]
+        },
+        "id": 3821792787,
+        "name": "weapon_Shotgun_Firing",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 2,
+        "hasScripts": false,
+        "createdUtc": "2019-09-06T19:11:02.983Z",
+        "updatedUtc": "2022-05-03T07:51:23.013Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_SMG_Charging",
+          "musicAlbum": "",
+          "tags": [
+            "Biting",
+            "Scissors",
+            "Camera",
+            "Single-lens_reflex_camera",
+            "Crack",
+            "Crunch",
+            "Silence",
+            "Sound_effect"
+          ]
+        },
+        "id": 3821793228,
+        "name": "weapon_SMG_Charging",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2019-09-06T19:11:07.423Z",
+        "updatedUtc": "2022-05-03T03:29:57.477Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "DarthfuzzyX",
+          "title": "weapon_SMG_Firing_GunTail_Mix2",
+          "musicAlbum": "",
+          "tags": [
+            "Explosion",
+            "Gunshot_gunfire",
+            "Artillery_fire",
+            "Fireworks",
+            "Firecracker",
+            "Burst_pop",
+            "Bang",
+            "Silence"
+          ]
+        },
+        "id": 4812801977,
+        "name": "weapon_SMG_Firing_GunTail_Mix2",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 2,
+        "hasScripts": false,
+        "createdUtc": "2020-03-24T00:46:11.733Z",
+        "updatedUtc": "2022-05-03T11:11:51.84Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 613016484,
+        "name": "DarthfuzzyX",
+        "type": 1,
+        "isVerifiedCreator": false
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": false,
+        "purchasable": false,
+        "isFree": false
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "CBE_Simon",
+          "title": "Rifle Single Shot 3",
+          "musicAlbum": "",
+          "tags": [
+            "Gunshot_gunfire",
+            "Crack",
+            "Bang",
+            "Slap_smack",
+            "Smash_crash",
+            "Scrape",
+            "Sound_effect"
+          ]
+        },
+        "id": 18835647605,
+        "name": "Rifle Single Shot 3",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2024-08-06T19:01:12.03Z",
+        "updatedUtc": "2024-08-06T19:01:12.037Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 208378751,
+        "name": "CBE_Simon",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "CBE_Simon",
+          "title": "SMG Single Shot 2",
+          "musicAlbum": "",
+          "tags": [
+            "Crack",
+            "Chink_clink",
+            "Bang",
+            "Smash_crash",
+            "Scrape",
+            "Ding",
+            "Clang",
+            "Sound_effect"
+          ]
+        },
+        "id": 18835775932,
+        "name": "SMG Single Shot 2",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 2,
+        "hasScripts": false,
+        "createdUtc": "2024-08-06T19:10:03.537Z",
+        "updatedUtc": "2024-08-06T19:10:03.54Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 208378751,
+        "name": "CBE_Simon",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "CBE_Simon",
+          "title": "Shotgun Single Shot",
+          "musicAlbum": "",
+          "tags": []
+        },
+        "id": 71816202649396,
+        "name": "Shotgun Single Shot",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2025-04-23T18:31:50.17Z",
+        "updatedUtc": "2025-04-23T18:31:50.177Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 208378751,
+        "name": "CBE_Simon",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "Dodfoz",
+          "title": "Pistol Shot 1",
+          "musicAlbum": "",
+          "tags": []
+        },
+        "id": 92967624763578,
+        "name": "Pistol Shot 1",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 1,
+        "hasScripts": false,
+        "createdUtc": "2024-12-31T17:55:27.453Z",
+        "updatedUtc": "2024-12-31T17:58:32.373Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 3398296972,
+        "name": "Dodfoz",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 100
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "abirr3935",
+          "title": "Pistol reload",
+          "musicAlbum": "",
+          "tags": []
+        },
+        "id": 119970005937974,
+        "name": "Pistol reload",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Its decent, use it whenever idc",
+        "duration": 2,
+        "hasScripts": false,
+        "createdUtc": "2024-10-03T22:49:07.93Z",
+        "updatedUtc": "2024-10-03T22:49:07.937Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 595354622,
+        "name": "abirr3935",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "kaizz93",
+          "title": "gun-reload_1",
+          "musicAlbum": "",
+          "tags": []
+        },
+        "id": 139048584127232,
+        "name": "gun-reload_1",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 3,
+        "hasScripts": false,
+        "createdUtc": "2026-03-02T19:20:13.976Z",
+        "updatedUtc": "2026-03-02T19:20:14.061Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 3429173111,
+        "name": "kaizz93",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    },
+    {
+      "asset": {
+        "audioDetails": {
+          "audioType": "SoundEffect",
+          "artist": "jiggy519",
+          "title": "reload_smg",
+          "musicAlbum": "",
+          "tags": []
+        },
+        "id": 139644400203673,
+        "name": "reload_smg",
+        "typeId": 3,
+        "assetSubTypes": [],
+        "assetGenres": [
+          "All"
+        ],
+        "isEndorsed": false,
+        "description": "Audio",
+        "duration": 2,
+        "hasScripts": false,
+        "createdUtc": "2026-08-21T16:22:45.839Z",
+        "updatedUtc": "2026-08-21T16:22:45.904Z",
+        "isAssetHashApproved": true,
+        "visibilityStatus": 0,
+        "socialLinks": [],
+        "previewAssets": {
+          "imagePreviewAssets": [],
+          "videoPreviewAssets": []
+        }
+      },
+      "creator": {
+        "id": 477994878,
+        "name": "jiggy519",
+        "type": 1,
+        "isVerifiedCreator": true
+      },
+      "voting": {
+        "showVotes": true,
+        "upVotes": 0,
+        "downVotes": 0,
+        "canVote": false,
+        "hasVoted": false,
+        "voteCount": 0,
+        "upVotePercent": 0
+      },
+      "fiatProduct": {
+        "purchasePrice": {
+          "currencyCode": "USD",
+          "quantity": {
+            "significand": 0,
+            "exponent": 0
+          }
+        },
+        "published": true,
+        "purchasable": true,
+        "isFree": true
+      }
+    }
+  ]
+}

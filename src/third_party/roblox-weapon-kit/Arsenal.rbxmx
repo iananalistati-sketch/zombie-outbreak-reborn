@@ -648,7 +648,7 @@
                 <string name="Name">Fired</string>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3806349898</uri>
+                  <uri>rbxassetid://18835647605</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -674,7 +674,7 @@
                 <string name="Name">Reload</string>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3821787597</uri>
+                  <uri>rbxassetid://139048584127232</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <NumberRange name="LoopRegion">0 60000 </NumberRange>
@@ -1843,7 +1843,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3806566911</uri>
+                  <uri>rbxassetid://92967624763578</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -1874,7 +1874,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3821789416</uri>
+                  <uri>rbxassetid://119970005937974</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -2973,7 +2973,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://4812801977</uri>
+                  <uri>rbxassetid://18835775932</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c000007ee</UniqueId>
@@ -3002,7 +3002,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3821793228</uri>
+                  <uri>rbxassetid://139644400203673</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c000007ef</UniqueId>
@@ -4054,7 +4054,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3821792787</uri>
+                  <uri>rbxassetid://71816202649396</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">6064e6a03e5499730a5d9a63000007ee</UniqueId>
@@ -4083,7 +4083,7 @@
                 <bool name="AcousticSimulationEnabled">true</bool>
                 <BinaryString name="AttributesSerialize" />
                 <Content name="AudioContent">
-                  <uri>rbxassetid://3821792115</uri>
+                  <uri>rbxassetid://145081845</uri>
                 </Content>
                 <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                 <UniqueId name="HistoryId">6064e6a03e5499730a5d9a63000007ef</UniqueId>
@@ -5078,7 +5078,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3806566911</uri>
+                    <uri>rbxassetid://92967624763578</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -5109,7 +5109,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821789416</uri>
+                    <uri>rbxassetid://119970005937974</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -6545,7 +6545,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3806566911</uri>
+                    <uri>rbxassetid://92967624763578</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -6576,7 +6576,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821789416</uri>
+                    <uri>rbxassetid://119970005937974</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
@@ -7680,7 +7680,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821793228</uri>
+                    <uri>rbxassetid://139644400203673</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c000008b5</UniqueId>
@@ -7709,7 +7709,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://4812801977</uri>
+                    <uri>rbxassetid://18835775932</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c000008b6</UniqueId>
@@ -8646,7 +8646,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821793228</uri>
+                    <uri>rbxassetid://139644400203673</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c0000097b</UniqueId>
@@ -8675,7 +8675,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://4812801977</uri>
+                    <uri>rbxassetid://18835775932</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">00c8b585d8c66e370a5d9c8c0000097c</UniqueId>
@@ -9732,7 +9732,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821792787</uri>
+                    <uri>rbxassetid://71816202649396</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">6064e6a03e5499730a5d9a63000008b9</UniqueId>
@@ -9761,7 +9761,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821792115</uri>
+                    <uri>rbxassetid://145081845</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">6064e6a03e5499730a5d9a63000008ba</UniqueId>
@@ -10735,7 +10735,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821792787</uri>
+                    <uri>rbxassetid://71816202649396</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">6064e6a03e5499730a5d9a6300000983</UniqueId>
@@ -10764,7 +10764,7 @@
                   <bool name="AcousticSimulationEnabled">true</bool>
                   <BinaryString name="AttributesSerialize" />
                   <Content name="AudioContent">
-                    <uri>rbxassetid://3821792115</uri>
+                    <uri>rbxassetid://145081845</uri>
                   </Content>
                   <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
                   <UniqueId name="HistoryId">6064e6a03e5499730a5d9a6300000984</UniqueId>

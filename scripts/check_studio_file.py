@@ -27,6 +27,7 @@ def release(binary):
     required|={'ViewRig','WeaponHandling','ImpactProfiles','RoundStats'}
     required|={'R52_RingWorkshop','R53_ValveRoom','EvacuationStatus','WorkshopBlastReturn','ValveRoomBlastReturn'}
     required|={'TrainingSpawn','Flashlight'}
+    required|={'ShotPrediction'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
     assert names.count('Hull')==187,'Expected current Survival and Escape defense barricades'
@@ -41,7 +42,7 @@ def release(binary):
                  'src/maps/k17/gameplay/Containment.luau','src/maps/k17/gameplay/WeaponAimPose.luau','src/maps/k17/gameplay/Loadout.client.luau','src/maps/k17/gameplay/Weapons.client.luau',
                  'src/maps/k17/gameplay/MovementState.luau','src/maps/k17/gameplay/MovementConfig.luau','src/maps/k17/gameplay/MovementPose.luau',
                  'src/maps/k17/gameplay/Movement.server.luau','src/maps/k17/gameplay/Movement.client.luau',
-                 'src/maps/k17/gameplay/WeaponMotion.luau',
+                 'src/maps/k17/gameplay/WeaponMotion.luau','src/maps/k17/gameplay/ShotPrediction.luau',
                  'src/maps/k17/gameplay/TacticalSpring.luau','src/maps/k17/gameplay/TacticalRecoil.luau',
                  'src/maps/k17/gameplay/TacticalState.luau',
                  'src/maps/k17/gameplay/EscapeConfig.luau','src/maps/k17/gameplay/EscapeState.luau','src/maps/k17/gameplay/EscapeSession.luau',
