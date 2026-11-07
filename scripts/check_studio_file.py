@@ -23,9 +23,10 @@ def release(binary):
     required|={'MonitorClerestoryGlass','MonitorEndCheek','ReceivingCanopyRoof','ExhaustFlue','AirBalanceHeader',
                'ControlCabinFacade','ControlInspectionWalkway'}
     required|={'EscapeSession','EscapeState','EscapeConfig','EscapeObjectives','Control1','Control2','Control3','R50_EvacuationBay','EvacuationGate'}
+    required|={'HoldGates','EscapeHoldGates','GeneratorExit','MaintenanceExit','R51_GeneratorHold','EscapeRouteSigns','Spectator','SpectatorState','RouteGuide'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
-    assert names.count('Hull')==170,'Expected current Survival and evacuation barricades'
+    assert names.count('Hull')==175,'Expected current Survival and Escape defense barricades'
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
     assert not {'ZO_StudioSurvivalScenario','ZO_StudioSurvivalDriver'}&set(names),'Automated Studio drivers in playable release'
     assert not {'ZO_ReusedWeaponKit','ReusedRiflePresentation','RifleCasing','Bullet'}&set(names),'Unused former weapon templates in release'
@@ -41,6 +42,7 @@ def release(binary):
                  'src/maps/k17/gameplay/TacticalSpring.luau','src/maps/k17/gameplay/TacticalRecoil.luau',
                  'src/maps/k17/gameplay/TacticalState.luau',
                  'src/maps/k17/gameplay/EscapeConfig.luau','src/maps/k17/gameplay/EscapeState.luau','src/maps/k17/gameplay/EscapeSession.luau',
+                 'src/maps/k17/gameplay/HoldGates.luau','src/maps/k17/gameplay/RouteGuide.luau','src/maps/k17/gameplay/SpectatorState.luau','src/maps/k17/gameplay/Spectator.client.luau',
                  'src/maps/k17/gameplay/TrainingDirector.server.luau','src/maps/k17/gameplay/TrainingAnimation.client.luau',
                  'src/maps/k17/gameplay/TrainingConfig.luau','src/maps/k17/gameplay/TrainingState.luau','src/maps/k17/gameplay/TrainingRig.luau',
                  'src/maps/k17/gameplay/WeaponSkins.luau',

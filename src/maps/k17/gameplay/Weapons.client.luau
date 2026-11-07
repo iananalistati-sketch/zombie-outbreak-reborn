@@ -120,7 +120,7 @@ local function humanoid(): Humanoid? return player.Character and player.Characte
 local function weapon() return Config.Weapons[player:GetAttribute("ZO_WeaponId")] or Config.Weapons.Rifle end
 local function menuOpen(): boolean
     return player:GetAttribute("ZO_ShopOpen")==true or player:GetAttribute("ZO_TacticalMapOpen")==true
-        or player:GetAttribute("ZO_ScoreboardOpen")==true or GuiService.MenuIsOpen
+        or player:GetAttribute("ZO_ScoreboardOpen")==true or player:GetAttribute("ZO_Spectating")==true or GuiService.MenuIsOpen
 end
 local function canShoot(): boolean
     if menuOpen() then return false end
@@ -335,7 +335,7 @@ CAS:BindActionAtPriority("ZO_Equip",equip,false,2200,Enum.KeyCode.One,Enum.KeyCo
 CAS:SetTitle("ZO_Trigger","Atacar");CAS:SetPosition("ZO_Trigger",UDim2.new(1,-150,1,-170))
 CAS:SetTitle("ZO_Reload","Recarregar");CAS:SetPosition("ZO_Reload",UDim2.new(1,-235,1,-170))
 CAS:SetTitle("ZO_Aim","Mira");CAS:SetPosition("ZO_Aim",UDim2.new(1,-320,1,-170))
-for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_ScoreboardOpen","ZO_BarricadeSelection"} do
+for _,name in {"ZO_TacticalMapOpen","ZO_ShopOpen","ZO_ScoreboardOpen","ZO_Spectating","ZO_BarricadeSelection"} do
     connect(player:GetAttributeChangedSignal(name),function() if menuOpen() or not canShoot() then stop() end end)
 end
 connect(player:GetAttributeChangedSignal("ZO_WeaponId"),function() stop();presentationDirty=true end)

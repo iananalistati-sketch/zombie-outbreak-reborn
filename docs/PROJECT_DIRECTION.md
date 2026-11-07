@@ -38,7 +38,7 @@ usar novos placeholders de armas para preencher um catálogo.
 - **Modos:** rotação Escape → Survival. Round controla todo o ciclo e possui
   EscapeSession como sessão subordinada; não há segundo controlador de rodada.
 - **Conteúdo atual:** K-17, quatro classes de armas reais, seis acabamentos,
-  170 objetos físicos, 35 refúgios e uma rota de evacuação com três objetivos.
+  175 objetos físicos, 36 refúgios e uma rota de evacuação com três objetivos.
 
 ## Entregas e aceitação
 
@@ -76,7 +76,17 @@ defesa do terminal e o ciclo completo de ambos os modos. A rota desta entrega
 aproveita a arquitetura original do K-17; o desenho mais linear de um próximo
 mapa ZE deve evoluir a partir dessa validação.
 
-### 0.4 — Interface, desempenho e progressão
+### 0.4 — Defesa e acompanhamento da partida
+
+Pacote implementado: retenções na saída da estação elétrica e subida de
+manutenção, fechamento com consulta de ocupação, posição protegida no gerador
+com cinco props, placas nos acessos e orientação por trechos do percurso.
+Inclui espectador com filtro de equipe, troca de alvo, prazo de retorno e
+restauração de câmera/zoom. O servidor bloqueia movimento do Lobby durante a
+rodada e limpa a restrição antes de esperar outra partida/treino.
+[Entrega e aceite](RELEASE_0_4.md).
+
+### 0.5 — Apresentação e desempenho
 
 Simplificar loja e HUD, melhorar navegação e áudio ambiental, medir física e
 renderização no motor e só então habilitar persistência de progresso. Integrar

@@ -1,11 +1,13 @@
 --!nonstrict
 -- Round owns this session and its lifetime; there is no second round ticker.
 local Session={}
+local HoldGates=require(script.Parent.HoldGates)
 function Session.new(map,rs,config,policy,valid,participants)
     local controls=assert(map:FindFirstChild("EscapeObjectives"),"EscapeObjectives ausente")
     local bay=assert(map:FindFirstChild("R50_EvacuationBay"),"Terminal de evacuação ausente")
     local gate=assert(bay:FindFirstChild("EvacuationGate"),"Portão de evacuação ausente")
     local self={state=policy.new(config),connections={},controls={},escaped={},destroyed=false}
+    local doors=HoldGates.new(map,config)
     local function safe()
         local count,list=0,{}
         for player in participants do
@@ -20,6 +22,7 @@ function Session.new(map,rs,config,policy,valid,participants)
     function self:publish(now)
         local s=self.state
         local extracting=s.status=="Extraction" or s.status=="Done"
+        rs:SetAttribute("ZO_HoldGateStatus",doors:update(s.stage,s.status))
         gate.CanCollide=not extracting;gate.CanQuery=not extracting;gate.Transparency=if extracting then 1 else .15
         for i,item in self.controls do
             item.prompt.Enabled=not self.destroyed and rs:GetAttribute("ZO_RoundState")=="Active" and s.stage==i and s.status=="Ready"
@@ -55,6 +58,7 @@ function Session.new(map,rs,config,policy,valid,participants)
     function self:destroy()
         if self.destroyed then return end
         self.destroyed=true
+        doors:destroy();rs:SetAttribute("ZO_HoldGateStatus",nil)
         for _,connection in self.connections do connection:Disconnect() end
         for _,item in self.controls do item.prompt.Enabled=false;item.part:SetAttribute("ZO_ObjectiveState",nil) end
         gate.CanCollide=false;gate.CanQuery=false;gate.Transparency=1

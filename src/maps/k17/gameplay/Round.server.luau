@@ -98,7 +98,18 @@ local function style(player: Player)
     if hum and hum.Health>0 then
         hum.MaxHealth=if player.Team==zombies then Config.ZombieHealth else Config.HumanHealth
         hum.Health=hum.MaxHealth
-        MovementState.setBase(hum,if player.Team==zombies then Config.ZombieWalkSpeed else Config.HumanWalkSpeed,os.clock())
+        local observing=player.Team==lobby and (state=="Active" or state=="Preparation")
+        if observing then
+            if hum:GetAttribute("ZO_LobbyJumpPower")==nil then
+                hum:SetAttribute("ZO_LobbyJumpPower",if typeof(hum.JumpPower)=="number" then hum.JumpPower else 50)
+                hum:SetAttribute("ZO_LobbyJumpHeight",if typeof(hum.JumpHeight)=="number" then hum.JumpHeight else 7.2)
+            end
+            hum.JumpPower=0;hum.JumpHeight=0;hum.Jump=false
+        elseif hum:GetAttribute("ZO_LobbyJumpPower")~=nil then
+            hum.JumpPower=hum:GetAttribute("ZO_LobbyJumpPower");hum.JumpHeight=hum:GetAttribute("ZO_LobbyJumpHeight")
+            hum:SetAttribute("ZO_LobbyJumpPower",nil);hum:SetAttribute("ZO_LobbyJumpHeight",nil)
+        end
+        MovementState.setBase(hum,if observing then 0 elseif player.Team==zombies then Config.ZombieWalkSpeed else Config.HumanWalkSpeed,os.clock())
     end
     -- Remove the old full-body team glow; role is represented by HUD and character tint.
     local old=char and char:FindFirstChild("ZO_RoleHighlight")
@@ -161,6 +172,7 @@ local function join(player: Player)
                     diedConnection=hum.Died:Connect(function()
                         if currentCharacter~=char or player.Character~=char or boundHumanoid~=hum
                             or state~="Active" or not participants[player] then return end
+                        player:SetAttribute("ZO_RespawnAt",workspace:GetServerTimeNow()+Config.RespawnSeconds)
                         if player.Team==humans then setRole(player,zombies) end
                         -- Zombies retain their role until Roblox respawns them.
                     end)
@@ -168,7 +180,7 @@ local function join(player: Player)
             end
             local root=char:FindFirstChild("HumanoidRootPart")
             if placed or not hum or hum.Health<=0 or not root or not root:IsA("BasePart") then return end
-            placed=true;style(player)
+            placed=true;style(player);player:SetAttribute("ZO_RespawnAt",nil)
             if participants[player] and (state=="Preparation" or state=="Active") then
                 if player.Team==zombies then teleportZombie(player) else teleport(player,humanSpawn) end
             else teleport(player,lobbySpawn) end
@@ -256,6 +268,9 @@ local function cleanup(winner: string)
     RS:SetAttribute("ZO_LastWinner",winner)
     setState("Results",Config.Results)
     for player in participants do if player.Parent==Players then setRole(player,lobby) end end
+    -- Late spectators are not participants; release their observer movement
+    -- restriction too before Waiting/solo training can take over.
+    for _,player in Players:GetPlayers() do if not participants[player] then style(player) end end
     participants={};updateCounts()
     local deadline=os.clock()+Config.Results
     while os.clock()<deadline do

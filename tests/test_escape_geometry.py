@@ -54,4 +54,20 @@ class EscapeGeometry(unittest.TestCase):
         p=CONFIG['MotherSpawn']
         self.assertIsNone(CollisionIndex(self.boxes).sweep({'points':[p,p]},self.data['avatar'])[0])
 
+    def test_retention_doors_block_their_route_only_when_enabled(self):
+        legs=[r for r in self.data['routes'] if r['name'].startswith('ZE ')]
+        for gate in CONFIG['HoldGates']:
+            node=next(i for i in self.tree.iter('Item') if i.findtext('Properties/string[@name="Name"]')==gate['Name'])
+            p=node.find('Properties')
+            self.assertEqual(p.findtext('bool[@name="CanCollide"]'),'false')
+            self.assertEqual(p.findtext('bool[@name="CanQuery"]'),'false')
+            for surface in node.findall('Item[@class="SurfaceGui"]'):
+                self.assertEqual(surface.findtext('Properties/bool[@name="Enabled"]'),'false')
+            cf=p.find('CoordinateFrame');size=p.find('Vector3[@name="size"]')
+            center=[float(cf.find(k).text) for k in 'XYZ'];half=[float(size.find(k).text)/2 for k in 'XYZ']
+            box=(gate['Name'],[center[i]-half[i] for i in range(3)],[center[i]+half[i] for i in range(3)])
+            route=legs[gate['Stage']]
+            self.assertIsNone(CollisionIndex(self.boxes).sweep(route,self.data['avatar'])[0])
+            self.assertIn(gate['Name'],CollisionIndex(self.boxes+[box]).sweep(route,self.data['avatar'])[0])
+
 if __name__=='__main__':unittest.main()

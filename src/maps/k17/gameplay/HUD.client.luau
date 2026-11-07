@@ -11,6 +11,7 @@ local shared=RS:WaitForChild("K17Gameplay")
 local State=require(shared:WaitForChild("TacticalState"))
 local Config=require(shared:WaitForChild("Config"))
 local EscapeConfig=require(shared:WaitForChild("EscapeConfig"))
+local RouteGuide=require(shared:WaitForChild("RouteGuide"))
 local refuges=require(RS:WaitForChild("K17Refuges"))
 local playerGui=player:WaitForChild("PlayerGui")
 local old=playerGui:FindFirstChild("ZO_RoundHUD");if old then old:Destroy() end
@@ -81,6 +82,9 @@ waypoint.StudsOffsetWorldSpace=Vector3.new(0,5,0);waypoint.AlwaysOnTop=true;wayp
 waypoint.Enabled=false;waypoint.Parent=gui
 local waypointText=label(waypoint,"Objective",UDim2.new(),UDim2.fromScale(1,1),13,C.gold)
 waypointText.TextWrapped=true;waypointText.TextXAlignment=Enum.TextXAlignment.Center;waypointText.TextStrokeTransparency=.4
+local guidePart=Instance.new("Part");guidePart.Name="ZO_EscapeGuidePoint";guidePart.Size=Vector3.new(.1,.1,.1)
+guidePart.Transparency=1;guidePart.Anchored=true;guidePart.CanCollide=false;guidePart.CanTouch=false;guidePart.CanQuery=false;guidePart.CastShadow=false
+guidePart.Parent=workspace.CurrentCamera
 local board=frame(gui,"SessionScoreboard",UDim2.fromScale(.5,.5),UDim2.fromOffset(720,450));board.AnchorPoint=Vector2.new(.5,.5);board.Visible=false
 local boardTitle=label(board,"Title",UDim2.fromOffset(18,12),UDim2.new(1,-36,0,28),19,C.gold);boardTitle.Text="K-17 / PLACAR DA SESSÃO"
 local boardSummary=label(board,"Summary",UDim2.fromOffset(18,43),UDim2.new(1,-36,0,22),11,C.muted)
@@ -242,7 +246,7 @@ connect(Run.RenderStepped,function(dt)
     if errorMessage then instruction="FALHA: "..tostring(errorMessage);objective.TextColor3=C.red
     elseif phase=="Starting" then instruction="Iniciando · "..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando servidor");objective.TextColor3=C.muted
     else objective.TextColor3=C.text end
-    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.3.0")
+    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.4.0")
     local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role
     if key~=announcementKey then announcementKey=key;bannerUntil=os.clock()+3;bannerTitle.Text=string.upper(title);bannerDetail.Text=instruction end
     banner.Visible=not modal and not boardOpen and os.clock()<bannerUntil and phase~="Waiting" and phase~="Starting"
@@ -265,7 +269,7 @@ connect(Run.RenderStepped,function(dt)
     reloadBack.Visible=reload and not zombie;reloadFill.Size=UDim2.fromScale(1-State.ratio(remaining,weapon.ReloadSeconds),1)
     local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     waypoint.Enabled=false
-    if mode=="Escape" and phase=="Active" and not modal and not boardOpen and root then
+    if mode=="Escape" and phase=="Active" and not modal and not boardOpen and root and player:GetAttribute("ZO_Spectating")~=true then
         local map=workspace:FindFirstChild("ZO_K17Foundry")
         local controls=map and map:FindFirstChild("EscapeObjectives")
         local bay=map and map:FindFirstChild("R50_EvacuationBay")
@@ -273,14 +277,26 @@ connect(Run.RenderStepped,function(dt)
             else controls and controls:FindFirstChild("Control"..escapeStage)
         if target then
             waypoint.Adornee=target;waypoint.Enabled=true
-            waypointText.Text=("%s\n%.0f studs"):format(if escapeStatus=="Extraction" then "EXTRAÇÃO / ENTRE NO TERMINAL" else EscapeConfig.Stages[escapeStage].Label,
-                (target.Position-root.Position).Magnitude)
+            local destination=target.Position
+            local detail="Acione o painel"
+            local path=EscapeConfig.Paths and EscapeConfig.Paths[escapeStage]
+            if escapeStatus~="Extraction" and path and (target.Position-root.Position).Magnitude>10 then
+                local p,hint=RouteGuide.next(path,{root.Position.X,root.Position.Y-3,root.Position.Z},3)
+                destination=Vector3.new(p[1],p[2]+3,p[3]);guidePart.Position=destination;guidePart.Parent=camera
+                waypoint.Adornee=guidePart;detail=hint
+            end
+            waypointText.Text=("%s\n%s · %.0f studs"):format(if escapeStatus=="Extraction" then "EXTRAÇÃO / ENTRE NO TERMINAL" else EscapeConfig.Stages[escapeStage].Label,
+                if escapeStatus=="Extraction" then "Entre e defenda" else detail,(destination-root.Position).Magnitude)
         end
     end
     zone.Text=if root then State.zone(refuges,root.Position.X,root.Position.Y,root.Position.Z) else "K-17 / carregando personagem"
     hints.Text=if UIS.TouchEnabled then "Mapa e arsenal nos botões da tela" elseif zombie then "Clique: atacar · M: mapa · Tab: placar" else "B: arsenal · R: recarga · 1/2: armas · M: mapa"
     if mode=="Escape" and phase=="Active" and escapeStatus=="Ready" then
         hints.Text=EscapeConfig.Stages[escapeStage].Hint or hints.Text
+    elseif mode=="Escape" and phase=="Active" and escapeStatus=="Holding" then
+        local gate=RS:GetAttribute("ZO_HoldGateStatus")
+        if gate=="Closed" then hints.Text="Saída em retenção · defenda os flancos até liberar"
+        elseif gate=="Blocked" then hints.Text="Retenção aguarda passagem livre · mantenha os flancos" end
     end
     inspect(camera,root,active and not modal and not boardOpen,zombie)
     feed:expire(os.clock())
@@ -292,6 +308,7 @@ gui.Destroying:Connect(function()
     disposed=true
     player:SetAttribute("ZO_TacticalHUDReady",false);player:SetAttribute("ZO_ScoreboardOpen",false);CAS:UnbindAction("ZO_Scoreboard")
     if healthConnection then healthConnection:Disconnect() end
+    guidePart:Destroy()
     for _,c in connections do c:Disconnect() end
     pcall(function()StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList,true)end)
 end)

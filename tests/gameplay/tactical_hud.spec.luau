@@ -45,6 +45,7 @@ local moduleMap={}
 moduleMap[object('ModuleScript','TacticalState',shared)]=State
 moduleMap[object('ModuleScript','Config',shared)]=Config
 moduleMap[object('ModuleScript','EscapeConfig',shared)]={Stages={{Label='Gerador'},{Label='Bombas'},{Label='Terminal'}}}
+moduleMap[object('ModuleScript','RouteGuide',shared)]=assert(loadstring(GUIDE_SOURCE))()
 moduleMap[object('ModuleScript','K17Refuges',rs)]={}
 local remote=object('RemoteEvent','ZO_CombatFX',rs);remote.OnClientEvent=signal()
 local world=object('Workspace','Workspace')
@@ -129,9 +130,19 @@ local bay=object('Model','R50_EvacuationBay',map);local gate=object('Part','Evac
 rs:SetAttribute('ZO_RoundMode','Escape');rs:SetAttribute('ZO_RoundState','Active');rs:SetAttribute('ZO_EscapeStatus','Ready')
 rs:SetAttribute('ZO_EscapeStage',1);rs:SetAttribute('ZO_EscapeLabel','Gerador');tick()
 check(get('EscapeWaypoint').Enabled and get('EscapeWaypoint').Adornee==control,'Escape guidance targets the current static controller')
+local escapeData
+for _,value in moduleMap do if type(value)=='table' and value.Stages then escapeData=value end end
+escapeData.Paths={{{-68,1,-136},{-68,1,-124},{144,1,-224}}}
+tick()
+local guide=get('EscapeWaypoint').Adornee
+check(guide.Name=='ZO_EscapeGuidePoint' and guide.Position.Z==-124 and not guide.CanQuery and not guide.CanCollide,'route guidance selects the next access without adding a collision or ray target')
+root.Position=control.Position;tick()
+check(get('EscapeWaypoint').Adornee==control,'near the objective guidance returns to the real interactable')
 check(get('Objective').Text:find('1/3',1,true)~=nil,'Escape objective sequence is shown in HUD')
 rs:SetAttribute('ZO_EscapeStatus','Holding');rs:SetAttribute('ZO_EscapeRemaining',12);tick()
 check(get('RoundHeader','Clock').Text=='00:12','defense clock uses objective deadline')
+rs:SetAttribute('ZO_HoldGateStatus','Closed');tick()
+check(get('Controls').Text:find('retenção',1,true)~=nil,'closed retention explains the defense to the player')
 rs:SetAttribute('ZO_EscapeStatus','Extraction');rs:SetAttribute('ZO_EscapeStage',3);tick()
 check(get('EscapeWaypoint').Adornee==gate,'extraction guidance moves from panel to terminal entrance')
 rs:SetAttribute('ZO_RoundState','Results');rs:SetAttribute('ZO_LastWinner','Humans');rs:SetAttribute('ZO_LastEscaped',1);tick()

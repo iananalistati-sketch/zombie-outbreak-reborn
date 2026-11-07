@@ -5,6 +5,10 @@ CONFIG={
     'Duration':360,'ExtractionSeconds':18,'ActivationRange':8,
     'MotherSpawn':[-68,1,-246],
     'Extraction':{'Min':[214,-1,216],'Max':[242,12,240]},
+    'HoldGates':[
+        {'Stage':1,'Name':'GeneratorExit','Min':[138,1,-124.2],'Max':[150,12,-123.8]},
+        {'Stage':2,'Name':'MaintenanceExit','Min':[133,.1,122.2],'Max':[147,10.5,123.2]},
+    ],
     'Stages':[
         {'Label':'Gerador de emergência','Hint':'Entre na estação elétrica, na ala norte.','Point':[144,1,-224],'Control':[150,4,-228],'HoldSeconds':12},
         {'Label':'Bombeamento subterrâneo','Hint':'Desça pelas escadarias de manutenção. M mostra o percurso.','Point':[-70,-22.5,158],'Control':[-70,-19.5,162],'HoldSeconds':15},
@@ -84,3 +88,5 @@ def build_escape(m):
     m.architecture.append({'id':'escape_evacuation_terminal','model':g,'features':[
         'Three sequential controllers inside existing power/pump/yard sectors',
         'Sheltered extraction bay, shutter, cover, framed glazing and six physical props']})
+    from k17_escape_defense import build_escape_defense
+    build_escape_defense(m,CONFIG)

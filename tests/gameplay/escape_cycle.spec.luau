@@ -18,7 +18,7 @@ local checks=0
 local function check(v,label)assert(v,label);checks+=1 end
 local function start()
     local s=tools.simulation({roundSource=ROUND_SOURCE,startupSource=STARTUP_SOURCE,roundConfig=RoundConfig,
-        roundRules=RoundRules,mapConfig=MapConfig,escapeConfig=EscapeConfig,escapeState=EscapeState,escapeSessionSource=SESSION_SOURCE})
+        roundRules=RoundRules,mapConfig=MapConfig,escapeConfig=EscapeConfig,escapeState=EscapeState,escapeSessionSource=SESSION_SOURCE,holdGatesSource=HOLD_GATES_SOURCE})
     local people={s.add('One','Humans'),s.add('Two','Humans'),s.add('Three','Humans')}
     s.advance(RoundConfig.Intermission+RoundConfig.Preparation+1)
     check(s.rs:GetAttribute('ZO_RoundState')=='Active' and s.rs:GetAttribute('ZO_RoundMode')=='Escape','production first round starts Escape')
@@ -40,6 +40,7 @@ do
     activate(2,human);check(s.rs:GetAttribute('ZO_EscapeStage')==1 and s.rs:GetAttribute('ZO_EscapeStatus')=='Ready','future trigger cannot skip sequence')
     activate(1,zombie);check(s.rs:GetAttribute('ZO_EscapeStatus')=='Ready','zombie cannot operate human objective')
     local outsider=s.add('Late','Humans');activate(1,outsider)
+    check(outsider.Team.Name=='Lobby' and outsider.Character.Humanoid.WalkSpeed==0 and outsider.Character.Humanoid.JumpPower==0,'late spectator cannot move its body through the active fight')
     check(s.rs:GetAttribute('ZO_EscapeStatus')=='Ready','late spectator cannot operate an objective')
     local control=map.EscapeObjectives.Control1
     human.Character.HumanoidRootPart.Position=tools.Vector.zero;control.Activate.Triggered:Fire(human);s.advance(0)
@@ -64,6 +65,7 @@ do
     check(human:GetAttribute('ZO_Credits')==credit+Config.Economy.SurvivalReward,'Combat pays extraction reward exactly once')
     for _,p in people do if p~=human then check(p:GetAttribute('ZO_SurvivedRound')==0,'players outside extraction cannot receive survival reward')end end
     check(s.rs:GetAttribute('ZO_LastEscaped')==1 and not gate.CanCollide,'result preserves escaped count and resets gate')
+    check(outsider.Character.Humanoid.WalkSpeed>0 and outsider.Character.Humanoid.JumpPower>0,'result cleanup releases nonparticipant movement before next mode or training')
     local old=map.EscapeObjectives.Control1.Activate
     old.Triggered:Fire(human);s.advance(0)
     check(s.rs:GetAttribute('ZO_EscapeStage')==nil,'destroyed session disconnects old triggers')
@@ -90,5 +92,34 @@ do
     check(s.rs:GetAttribute('ZO_LastWinner')=='Zombies','zombie inside the bay cannot count as an evacuated human')
     check(human:GetAttribute('ZO_SurvivedRound')==0 and s.rs:GetAttribute('ZO_LastEscaped')==0,'living human outside bay is not a survivor')
     check(not gate.CanCollide,'failed extraction also resets the gate')
+end
+do
+    local s,people,human,_,map,_,activate=start()
+    local gate=map.EscapeHoldGates.GeneratorExit
+    local params
+    s.overlap(function(_,_,p)params=p;return {human.Character.HumanoidRootPart}end)
+    activate(1,human)
+    check(not gate.CanCollide and s.rs:GetAttribute('ZO_HoldGateStatus')=='Blocked','retention cannot close through a character or barricade')
+    check(params.FilterType=='Include' and params.MaxParts==1 and table.find(params.FilterDescendantsInstances,s.props)~=nil,'clearance query includes physical props and limits overlap output')
+    s.overlap(function()return{}end);s.advance(.3)
+    check(gate.CanCollide and gate.CanQuery and gate.Lettering.Enabled,'clear passage closes and enables its warning')
+    s.overlap(function()return {human.Character.HumanoidRootPart}end);s.advance(.3)
+    check(gate.CanCollide,'touching an already closed retention cannot reopen it')
+    s.advance(EscapeConfig.Stages[1].HoldSeconds+.3)
+    check(not gate.CanCollide and not gate.Lettering.Enabled,'defense deadline opens and clears first retention')
+    activate(2,human)
+    check(not map.EscapeHoldGates.MaintenanceExit.CanCollide,'occupied maintenance exit also waits to close')
+    s.overlap(function()return{}end);s.advance(.3)
+    check(map.EscapeHoldGates.MaintenanceExit.CanCollide,'second retention closes once clear')
+    s.remove(people[1]);s.remove(people[2]);s.advance(.4)
+    check(not gate.CanCollide and not map.EscapeHoldGates.MaintenanceExit.CanCollide,'cancellation restores every retention collider')
+end
+do
+    local s,_,_,zombie=start()
+    zombie.Character.Humanoid:TakeDamage(1000);s.advance(0)
+    local deadline=zombie:GetAttribute('ZO_RespawnAt')
+    check(type(deadline)=='number' and math.abs(deadline-s.world:GetServerTimeNow()-RoundConfig.RespawnSeconds)<.01,'real death publishes a server-time respawn deadline')
+    s.character(zombie);s.advance(0)
+    check(zombie:GetAttribute('ZO_RespawnAt')==nil and zombie.Character.Humanoid.Health==RoundConfig.ZombieHealth,'new character clears deadline and restores infected role')
 end
 print(('PASS integrated Escape + combat + round: %d checks; API doubles, no engine execution'):format(checks))

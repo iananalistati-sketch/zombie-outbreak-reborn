@@ -92,7 +92,7 @@ def validate(path,manifest,quiet=False):
     lights=tree.findall('.//Item[@class="PointLight"]')
     assert len(lights)==manifest['lights'] and len(lights)<=96
     assert sum(props(l)['Shadows'].text=='true' for l in lights)<=8
-    assert {d['id'] for d in manifest['defenses']}==set(range(1,35))|set(range(40,51))
+    assert {d['id'] for d in manifest['defenses']}==set(range(1,35))|set(range(40,52))
     assert len(manifest['buildings'])==5
     assert {2,3,4} <= {b['floors'] for b in manifest['buildings']}
     for aperture in manifest['openings']:

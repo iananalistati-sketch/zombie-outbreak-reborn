@@ -161,7 +161,7 @@ local function simulation(options)
     end
     local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
         Vector3=Vector,CFrame={lookAt=basis,new=function(x,y,z) return basis(Vector.new(x or 0,y or 0,z or 0),Vector.new(x or 0,y or 0,(z or 0)-1)) end},
-        Enum={RaycastFilterType={Exclude="Exclude"},Material={Air="Air"}},RaycastParams={new=function() return {} end},
+        Enum={RaycastFilterType={Exclude="Exclude",Include="Include"},Material={Air="Air"}},RaycastParams={new=function() return {} end},OverlapParams={new=function()return{}end},
         Random={new=function() return {NextNumber=function(_,low,high) return ((low or 0)+(high or 1))/2 end,
             NextInteger=function(_,low) return low end} end},
         BrickColor={new=function(name) return name end},Color3={fromRGB=function(...) return {...} end},
@@ -217,10 +217,21 @@ local function simulation(options)
                 local prompt=instance("ProximityPrompt","Activate",part);prompt.Triggered=signal()
             end
             local bay=instance("Model","R50_EvacuationBay",map);instance("Part","EvacuationGate",bay)
+            local gates=instance("Model","EscapeHoldGates",map)
+            for _,gate in options.escapeConfig.HoldGates do
+                local p=instance("Part",gate.Name,gates)
+                p.Size=Vector.new(gate.Max[1]-gate.Min[1],gate.Max[2]-gate.Min[2],gate.Max[3]-gate.Min[3])
+                instance("SurfaceGui","Lettering",p).Enabled=false
+            end
+            local bounds=options.overlap
+            function world:GetPartBoundsInBox(frame,size,params)return if bounds then bounds(frame,size,params) else {} end
+            options.setOverlap=function(callback)bounds=callback end
             local config=instance("ModuleScript","EscapeConfig",shared);modules[config]=options.escapeConfig
             local state=instance("ModuleScript","EscapeState",shared);modules[state]=options.escapeState
-            local session=assert(loadstring(options.escapeSessionSource));setfenv(session,env)
-            local module=instance("ModuleScript","EscapeSession",server);modules[module]=session()
+            local gatesModule=instance("ModuleScript","HoldGates",server)
+            local gatesSource=assert(loadstring(options.holdGatesSource));setfenv(gatesSource,env);modules[gatesModule]=gatesSource()
+            local module=instance("ModuleScript","EscapeSession",server)
+            local session=assert(loadstring(options.escapeSessionSource));setfenv(session,setmetatable({script=module},{__index=env}));modules[module]=session()
         end
         local roundEnv=setmetatable({script=instance("Script","ZombieRound",server)},{__index=env})
         local round=assert(loadstring(options.roundSource,"Round.server.luau"));setfenv(round,roundEnv);tasks.spawn(round)
@@ -231,6 +242,7 @@ local function simulation(options)
     end
     local function request(name,player,...) local remote=assert(rs:FindFirstChild(name),name);remote.OnServerEvent:Fire(player,...);advance(0) end
     return {rs=rs,ss=ss,world=world,players=players,internal=internal,props=props,infect=infect,push=push,damage=damage,
+        overlap=function(callback)assert(options.setOverlap);options.setOverlap(callback)end,
         errors=errors,raycasts=raycasts,add=add,character=character,advance=advance,instance=instance,
         now=function() return now end,
         ray=function(fn) raycast=fn end,

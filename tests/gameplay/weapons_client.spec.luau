@@ -377,6 +377,7 @@ do
     for _,cancel in {
         function(s) s.player:SetAttribute("ZO_ShopOpen",true);s.advance(0) end,
         function(s) s.player:SetAttribute("ZO_ScoreboardOpen",true);s.advance(0) end,
+        function(s) s.player:SetAttribute("ZO_Spectating",true);s.advance(0) end,
         function(s) s.key("ZO_Equip","Begin","Keyboard","Two") end,
         function(s) s.uis.WindowFocusReleased:Fire();s.advance(0) end,
         function(s) s.player.Team={Name="Zombies"};s.advance(0) end,

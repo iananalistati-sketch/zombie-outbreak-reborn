@@ -77,6 +77,7 @@ local function simulation(options)
     local ss=instance("ServerStorage","ServerStorage")
     local teams=instance("Teams","Teams")
     local world=instance("Workspace","Workspace")
+    function world:GetServerTimeNow()return now end
     local map=instance("Model","ZO_K17Foundry",world)
     local spawns=instance("Model","Spawns",map)
     local cf

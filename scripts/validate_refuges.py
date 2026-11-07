@@ -26,7 +26,7 @@ def ray_blocker(a,b,boxes):
 
 def validate(data,boxes):
     errors=[];index=CollisionIndex(boxes)
-    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15,16,17,18}|set(range(19,35))|set(range(40,51))
+    assert {r['id'] for r in data['refuges']}=={2,7,10,14,15,16,17,18}|set(range(19,35))|set(range(40,52))
     assert len(data['barricades'])>=164
     for r in data['refuges']:
         prefix=f'Refuge {r["id"]}'

@@ -101,6 +101,12 @@
         },
         "EscapeState": {
           "$path": "src/maps/k17/gameplay/EscapeState.luau"
+        },
+        "RouteGuide": {
+          "$path": "src/maps/k17/gameplay/RouteGuide.luau"
+        },
+        "SpectatorState": {
+          "$path": "src/maps/k17/gameplay/SpectatorState.luau"
         }
       },
       "K17Refuges": {
@@ -149,6 +155,9 @@
         },
         "EscapeSession": {
           "$path": "src/maps/k17/gameplay/EscapeSession.luau"
+        },
+        "HoldGates": {
+          "$path": "src/maps/k17/gameplay/HoldGates.luau"
         }
       }
     },
@@ -178,6 +187,9 @@
           },
           "TrainingAnimation": {
             "$path": "src/maps/k17/gameplay/TrainingAnimation.client.luau"
+          },
+          "Spectator": {
+            "$path": "src/maps/k17/gameplay/Spectator.client.luau"
           }
         },
         "K17_Barricades": {

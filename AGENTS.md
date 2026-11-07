@@ -29,6 +29,12 @@
 - Round é também a única autoridade de modo. EscapeSession é uma sessão
   subordinada, sem loop próprio: limpa prompts/portão na saída e confirma
   extração por posição, vida, equipe e participação no servidor.
+- HoldGates só fecha uma passagem livre de personagens e barricadas. Tocar uma
+  porta já fechada não a reabre; sair do hold/cancelar libera todas as portas.
+- Espectador usa zumbis vivos em Active para impedir exposição de refúgios dos
+  humanos, devolve câmera/zoom ao renascer e respeita controle externo de câmera.
+  Lobby durante Preparation/Active tem movimento bloqueado pelo servidor;
+  limpeza libera também os espectadores que não estavam entre participantes.
 - Movimento inicial nativo Humanoid. SourceMotor experimental fora do perfil.
   MovementState compõe postura e efeito temporário dos tiros sem acumulação.
 - K-17 e quatro armas reais são o conteúdo inicial, sem contar skins como armas.
