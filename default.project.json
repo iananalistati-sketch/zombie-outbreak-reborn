@@ -107,6 +107,18 @@
         },
         "SpectatorState": {
           "$path": "src/maps/k17/gameplay/SpectatorState.luau"
+        },
+        "WeaponHandling": {
+          "$path": "src/maps/k17/gameplay/WeaponHandling.luau"
+        },
+        "ImpactProfiles": {
+          "$path": "src/maps/k17/gameplay/ImpactProfiles.luau"
+        },
+        "ViewRig": {
+          "$path": "src/maps/k17/gameplay/ViewRig.luau"
+        },
+        "RoundStats": {
+          "$path": "src/maps/k17/gameplay/RoundStats.luau"
         }
       },
       "K17Refuges": {

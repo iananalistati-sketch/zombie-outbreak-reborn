@@ -4,6 +4,7 @@ local Config=assert(loadstring(CONFIG_SOURCE))()
 local Rules=assert(loadstring(RULES_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
 local TacticalRecoil=assert(loadstring(TACTICAL_RECOIL_SOURCE))()
+local Handling=assert(loadstring(HANDLING_SOURCE))()
 local checks=0
 local function check(ok,label) assert(ok,label);checks+=1 end
 local function close(a,b) return math.abs(a-b)<1e-5 end
@@ -164,7 +165,7 @@ local function simulation(options)
     function motion:kick(amount) self.lastKick=amount end
     logs.motion=motion
     local WeaponMotion={new=function() return motion end}
-    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,TacticalRecoil=TacticalRecoil,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig} do modules[instance("ModuleScript",name,shared)]=value end
+    for name,value in {Config=Config,Rules=Rules,WeaponSkins=WeaponSkins,TacticalRecoil=TacticalRecoil,WeaponPresentation=Presentation,WeaponMotion=WeaponMotion,PresentationConfig=PresentationConfig,WeaponHandling=Handling} do modules[instance("ModuleScript",name,shared)]=value end
     local requests={}
     local remotes={}
     for _,name in {"ZO_FireRifle","ZO_Melee","ZO_CombatFX","ZO_LoadoutAction"} do

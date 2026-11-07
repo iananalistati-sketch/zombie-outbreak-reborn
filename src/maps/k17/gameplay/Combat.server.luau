@@ -12,6 +12,7 @@ local LoadoutState=require(shared.LoadoutState)
 local Containment=require(shared.Containment)
 local MovementState=require(shared.MovementState)
 local WeaponSkins=require(shared.WeaponSkins)
+local Stats=require(shared.RoundStats)
 local function event(name: string): RemoteEvent
     local remote=Instance.new("RemoteEvent");remote.Name=name;remote.Parent=RS;return remote
 end
@@ -24,6 +25,11 @@ local infection=internal:WaitForChild("Infect") :: BindableFunction
 local barricadeDamage=internal:WaitForChild("DamageBarricade") :: BindableFunction
 local barricadePush=internal:WaitForChild("PushBarricade") :: BindableFunction
 local loadouts: {[Player]: any}={}
+local roundStats: {[Player]: any}={}
+local function activeStats(player: Player)
+    local record=roundStats[player]
+    return if record and record.Id==RS:GetAttribute("ZO_RoundId") and RS:GetAttribute("ZO_RoundState")=="Active" then record else nil
+end
 -- Cosmetics persist through equipment/round resets for the current session.
 local skins: {[Player]: {[string]: string}}={}
 local lastRequest: {[Player]: {[string]: number}}={}
@@ -137,6 +143,7 @@ local function beginRound(player: Player)
     if loadout and role(player)=="Humans" and RS:GetAttribute("ZO_RoundState")=="Preparation"
         and typeof(id)=="number" and id>0 and loadout:beginRound(id) then
         nextFire[player]=nil;nextMelee[player]=nil;sync(player)
+        roundStats[player]=Stats.new(id);player:SetAttribute("ZO_SummaryRound",0)
     end
 end
 local function survivorReward(player: Player)
@@ -148,7 +155,10 @@ local function survivorReward(player: Player)
         and player:GetAttribute("ZO_SurvivedRound")==id
         and RS:GetAttribute("ZO_RoundState")=="Results" and RS:GetAttribute("ZO_LastWinner")=="Humans"
         and rewardedSurvival[player]~=id then
+        local before=loadout.credits
         rewardedSurvival[player]=id;award(player,Config.Economy.SurvivalReward)
+        local record=roundStats[player]
+        if record and record.Id==id then record.Reward=loadout.credits-before end
         tally(player,"ZO_SessionSurvived")
     end
 end
@@ -211,6 +221,7 @@ end
 Players.PlayerAdded:Connect(join)
 for _,player in Players:GetPlayers() do join(player) end
 Players.PlayerRemoving:Connect(function(player: Player)
+    roundStats[player]=nil
     clearSuppression(player.Character,false)
     if deathConnections[player] then deathConnections[player]:Disconnect();deathConnections[player]=nil end
     loadouts[player]=nil;lastRequest[player]=nil;nextMelee[player]=nil;nextFire[player]=nil
@@ -218,6 +229,29 @@ Players.PlayerRemoving:Connect(function(player: Player)
     rewardedSurvival[player]=nil
     removingCharacters[player]=nil
 end)
+local function publishSummary()
+    local id=RS:GetAttribute("ZO_RoundId")
+    if typeof(id)~="number" or id<=0 then return end
+    local rows={}
+    for player,loadout in loadouts do
+        local record=roundStats[player]
+        if record and record.Id==id then
+            survivorReward(player)
+            for _,key in {"Shots","Hits","Damage","Kills","Headshots","Infections","Reward"} do
+                player:SetAttribute("ZO_Summary"..key,math.floor(record[key]+.5))
+            end
+            local objectives=player:GetAttribute("ZO_RoundObjectives") or 0
+            player:SetAttribute("ZO_SummaryObjectives",objectives)
+            player:SetAttribute("ZO_SummaryCredits",loadout.credits)
+            player:SetAttribute("ZO_SummaryRound",id)
+            table.insert(rows,{Id=player.UserId,Name=player.DisplayName or player.Name,Kills=record.Kills,
+                Infections=record.Infections,Damage=record.Damage,Objectives=objectives,Survived=player:GetAttribute("ZO_SurvivedRound")==id})
+        end
+    end
+    local best=if RS:GetAttribute("ZO_LastWinner")=="Cancelled" then nil else Stats.best(rows)
+    RS:SetAttribute("ZO_MVPName",if best then best.Name else "")
+    RS:SetAttribute("ZO_SummaryRound",id)
+end
 workspace:GetAttributeChangedSignal("ZO_PracticeRevision"):Connect(function()
     if practice() then
         local player=Players:GetPlayers()[1]
@@ -235,6 +269,7 @@ RS:GetAttributeChangedSignal("ZO_RoundState"):Connect(function()
         elseif state=="Results" then survivorReward(player) end
         if not allowed(player) then loadout:cancelReloads();sync(player) end
     end
+    if state=="Results" then publishSummary() end
 end)
 local function admit(player: Player,key: string): boolean
     if not loadouts[player] then return false end
@@ -352,6 +387,9 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
     if movementMode=="Sprint" then return end
     if not directionAllowed(head,direction) or now<(nextFire[player] or -math.huge) then return end
     if not weapon:fire(now) then return end
+    local record=activeStats(player)
+    if record then Stats.shot(record) end
+    local confirmedHit=false
     nextFire[player]=now+config.FireInterval
     sync(player)
     local pellets=math.clamp(math.floor(config.Pellets),1,12)
@@ -371,8 +409,14 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
         -- Limit each volley to four visual rays while still resolving every hit.
         if i<=3 or i==pellets then
             local destination=if hit then hit.Position else head.Position+shot*config.Range
+            local surface="Generic"
+            if hit then
+                local model=targetModel(hit.Instance)
+                if model and targetRole(model)=="Zombies" and not model:FindFirstChildOfClass("ForceField") then surface="Flesh"
+                elseif hit.Material then surface=hit.Material.Name end
+            end
             for _,observer in nearby do
-                effects:FireClient(observer,"Shot",head.Position,destination,player.UserId,config.Id,if hit then hit.Normal else nil,i==1)
+                effects:FireClient(observer,"Shot",head.Position,destination,player.UserId,config.Id,if hit then hit.Normal else nil,i==1,surface)
             end
         end
         if not hit then continue end
@@ -410,7 +454,11 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
         if victim.Health<=0 or targetRole(model)~="Zombies" then continue end
         local health=victim.Health
         victim:TakeDamage(entry.damage)
-        rifle:FireClient(player,"Hit",entry.damage,if entry.head then "Head" else "Body")
+        local actual=math.max(0,health-victim.Health)
+        if actual<=0 then continue end
+        confirmedHit=true
+        if record then Stats.damage(record,actual) end
+        rifle:FireClient(player,"Hit",actual,if entry.head then "Head" else "Body")
         local root=model:FindFirstChild("HumanoidRootPart")
         if root and root:IsA("BasePart") and not root.Anchored and root.AssemblyMass>0 and root.AssemblyMass<math.huge then
             local velocity=root.AssemblyLinearVelocity
@@ -428,6 +476,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
             local defeated=Players:GetPlayerFromCharacter(model)
             local training=practice() and model:GetAttribute("ZO_TrainingEnemy")==true
             if defeated then
+                if record then record.Kills+=1;if entry.head then record.Headshots+=1 end end
                 award(player,Config.Economy.KillReward);tally(player,"ZO_SessionKills")
                 report(player,"Elimination",defeated.DisplayName or defeated.Name,config.Id,entry.head,false)
             elseif training then
@@ -437,6 +486,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
             rifle:FireClient(player,"Kill",entry.damage,if entry.head then "Head" else "Body")
         elseif victim.Health>0 then suppress(model,victim,now) end
     end
+    if record and confirmedHit then Stats.hit(record) end
 end)
 melee.OnServerEvent:Connect(function(player: Player,direction: any)
     if not admit(player,"Melee") then return end
@@ -452,6 +502,7 @@ melee.OnServerEvent:Connect(function(player: Player,direction: any)
         local realVictim=Players:GetPlayerFromCharacter(model)
         local infected=infection:Invoke(player,model)
         if infected and realVictim then
+            local record=activeStats(player);if record then record.Infections+=1 end
             award(player,Config.Economy.InfectionReward);tally(player,"ZO_SessionInfections")
             report(player,"Infection",realVictim.DisplayName or realVictim.Name)
         end

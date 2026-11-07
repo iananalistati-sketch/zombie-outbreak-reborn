@@ -45,7 +45,10 @@ function Session.new(map,rs,config,policy,valid,participants)
             local delta=part.Position-head.Position
             local hit=if delta.Magnitude>.01 then workspace:Raycast(head.Position,delta,params) else nil
             if hit and hit.Instance~=part then return end
-            if self.state:activate(i,os.clock()) then self:publish(os.clock()) end
+            if self.state:activate(i,os.clock()) then
+                player:SetAttribute("ZO_RoundObjectives",(player:GetAttribute("ZO_RoundObjectives") or 0)+1)
+                self:publish(os.clock())
+            end
         end))
     end
     function self:update(now,remaining)

@@ -257,6 +257,7 @@ local function cleanup(winner: string)
                 and (mode~="Escape" or (escape and escape.escaped[player]==true))
             player:SetAttribute("ZO_SurvivedRound",if survived then roundId else 0)
             player:SetAttribute("ZO_EscapedRound",if survived and mode=="Escape" then roundId else 0)
+            player:SetAttribute("ZO_ResultRound",roundId);player:SetAttribute("ZO_ResultRole",if player.Team then player.Team.Name else "Lobby")
         end
     end
     local escaped=0
@@ -299,6 +300,7 @@ while true do
     RS:SetAttribute("ZO_WaitingReason","")
     if not countdown("Intermission",Config.Intermission) then continue end
     participants={};roundId+=1;RS:SetAttribute("ZO_RoundId",roundId)
+    RS:SetAttribute("ZO_SummaryRound",0);RS:SetAttribute("ZO_MVPName","")
     mode=RoundRules.mode(Config.ModeRotation,roundId)
     RS:SetAttribute("ZO_RoundMode",mode)
     workspace:SetAttribute("ZO_BarricadePractice",false)
@@ -306,7 +308,8 @@ while true do
     if practice then practice:Destroy() end
     for _,player in Players:GetPlayers() do
         if characterReady(player) then
-            participants[player]=true;player:SetAttribute("ZO_SurvivedRound",0);player:SetAttribute("ZO_EscapedRound",0);setRole(player,humans,true)
+            participants[player]=true;player:SetAttribute("ZO_SurvivedRound",0);player:SetAttribute("ZO_EscapedRound",0)
+            player:SetAttribute("ZO_RoundObjectives",0);setRole(player,humans,true)
         end
     end
     if mode=="Escape" then

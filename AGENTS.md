@@ -26,6 +26,9 @@
   Sem DataStores, HTTP ou bans como dependências para a primeira sessão.
 - Dano, munição, créditos, infecção e rodadas pertencem ao servidor. O treino
   é uma fase própria, limitada a um jogador; a segunda conexão a desabilita.
+- Resumos contam disparos aceitos e dano efetivo do servidor, por rodada;
+  treino não entra nas estatísticas multiplayer. Impactos e recarga visual
+  são cosméticos, com orçamento/expiração e sem alterar física do personagem.
 - Round é também a única autoridade de modo. EscapeSession é uma sessão
   subordinada, sem loop próprio: limpa prompts/portão na saída e confirma
   extração por posição, vida, equipe e participação no servidor.

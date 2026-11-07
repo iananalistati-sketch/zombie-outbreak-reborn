@@ -86,9 +86,21 @@ restauração de câmera/zoom. O servidor bloqueia movimento do Lobby durante a
 rodada e limpa a restrição antes de esperar outra partida/treino.
 [Entrega e aceite](RELEASE_0_4.md).
 
-### 0.5 — Apresentação e desempenho
+### 0.5 — Armas, impactos e resultado
 
-Simplificar loja e HUD, melhorar navegação e áudio ambiental, medir física e
+Pacote implementado: braços reais R6/R15 em primeira pessoa, recarga visual por
+classe com movimento do carregador e bomba da escopeta, impactos por material
+e resumo pessoal da rodada. Corrige apresentação da arma no treino público.
+O servidor conta disparos aceitos e vida efetivamente removida; o treino não
+contamina o resumo multiplayer. [Entrega e aceite](RELEASE_0_5.md).
+
+Validar aparência e alinhamento R6/R15, cancelamento de recarga, apresentação
+vista por outro cliente e os resultados completos de Escape e Survival. Não
+houve expansão do catálogo nem substituição do motor nesta entrega.
+
+### Próximas entregas — Conteúdo e desempenho
+
+Evoluir o arsenal revisado, simplificar loja, melhorar navegação e áudio ambiental, medir física e
 renderização no motor e só então habilitar persistência de progresso. Integrar
 serviços com falha tolerada: uma indisponibilidade não pode impedir jogar.
 

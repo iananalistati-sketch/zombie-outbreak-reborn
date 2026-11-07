@@ -5,6 +5,7 @@ local WeaponState=assert(loadstring(WEAPON_SOURCE))()
 local Containment=assert(loadstring(CONTAINMENT_SOURCE))()
 local MovementState=assert(loadstring(MOVEMENT_STATE_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
+local RoundStats=assert(loadstring(ROUND_STATS_SOURCE))()
 local RoundConfig=assert(loadstring(ROUND_CONFIG_SOURCE))()
 local RoundRules=assert(loadstring(ROUND_RULES_SOURCE))()
 local MapConfig=assert(loadstring(MAP_CONFIG_SOURCE))()
@@ -13,7 +14,7 @@ local EscapeState=assert(loadstring(ESCAPE_STATE_SOURCE))()
 local dependency={};local loadout=assert(loadstring(LOADOUT_SOURCE))
 setfenv(loadout,setmetatable({script={Parent={WeaponState=dependency}},require=function(m)assert(m==dependency);return WeaponState end},{__index=getfenv()}))
 local tools=assert(loadstring(SIMULATION_SOURCE))()({Config=Config,Rules=Rules,WeaponState=WeaponState,
-    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,LoadoutState=loadout(),CombatSource=COMBAT_SOURCE})
+    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,RoundStats=RoundStats,LoadoutState=loadout(),CombatSource=COMBAT_SOURCE})
 local checks=0
 local function check(v,label)assert(v,label);checks+=1 end
 local function start()
@@ -63,6 +64,8 @@ do
     check(s.rs:GetAttribute('ZO_RoundState')=='Results' and s.rs:GetAttribute('ZO_LastWinner')=='Humans','actual Round awards extraction victory')
     check(human:GetAttribute('ZO_EscapedRound')==1 and human:GetAttribute('ZO_SurvivedRound')==1,'only extracted human receives reward eligibility')
     check(human:GetAttribute('ZO_Credits')==credit+Config.Economy.SurvivalReward,'Combat pays extraction reward exactly once')
+    check(human:GetAttribute('ZO_SummaryObjectives')==3 and human:GetAttribute('ZO_SummaryRound')==1,'summary counts only the three accepted objective activations')
+    check(human:GetAttribute('ZO_SummaryReward')==Config.Economy.SurvivalReward,'extraction bonus appears in confirmed round summary')
     for _,p in people do if p~=human then check(p:GetAttribute('ZO_SurvivedRound')==0,'players outside extraction cannot receive survival reward')end end
     check(s.rs:GetAttribute('ZO_LastEscaped')==1 and not gate.CanCollide,'result preserves escaped count and resets gate')
     check(outsider.Character.Humanoid.WalkSpeed>0 and outsider.Character.Humanoid.JumpPower>0,'result cleanup releases nonparticipant movement before next mode or training')

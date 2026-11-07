@@ -17,6 +17,7 @@ local Config=require(shared.Config)
 local Rules=require(shared.Rules)
 local Presentation=require(shared:WaitForChild("WeaponPresentation"))
 local WeaponMotion=require(shared:WaitForChild("WeaponMotion"))
+local Handling=require(shared:WaitForChild("WeaponHandling"))
 local WeaponSkins=require(shared:WaitForChild("WeaponSkins"))
 local TacticalRecoil=require(shared:WaitForChild("TacticalRecoil"))
 local PresentationConfig=require(shared:WaitForChild("PresentationConfig"))
@@ -393,7 +394,7 @@ connect(melee.OnClientEvent,function(kind: string,value: any)
     else notice="" end
     noticeUntil=os.clock()+1
 end)
-connect(effects.OnClientEvent,function(kind: string,origin: any,destination: any,shooter: any,weaponId: any,hitNormal: any,firstRay: any)
+connect(effects.OnClientEvent,function(kind: string,origin: any,destination: any,shooter: any,weaponId: any,hitNormal: any,firstRay: any,material: any)
     if kind=="PracticeAim" and RunService:IsStudio() and typeof(origin)=="Vector3" and typeof(destination)=="Vector3" then
         practiceOrigin=origin;practiceTarget=destination;practiceDeadline=os.clock()+3;return
     end
@@ -410,7 +411,7 @@ connect(effects.OnClientEvent,function(kind: string,origin: any,destination: any
             if template then Presentation.playDistantShot(template,origin,shotWeapon.Id) end
         end
     end
-    if typeof(hitNormal)=="Vector3" and hitNormal.Magnitude>.001 then Presentation.impact(destination,hitNormal.Unit) end
+    if typeof(hitNormal)=="Vector3" and hitNormal.Magnitude>.001 then Presentation.impact(destination,hitNormal.Unit,material) end
     local distance=(destination-origin).Magnitude
     if distance<.1 then return end
     -- Query-free trace uses only the server result; it cannot register hits.
@@ -492,10 +493,12 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         motionPose=weaponMotion:update(dt,if hum and hum.FloorMaterial~=Enum.Material.Air then speed else 0,
             aimAlpha,hum~=nil and hum:GetAttribute("ZO_Crouching")==true,mouse.X,mouse.Y)
     else weaponMotion:reset() end
-    local reloadPose=if reloading then CFrame.new(0,-.3,.2)*CFrame.Angles(-.4,0,-.2) elseif equipping then CFrame.new(0,-.24,.15) else CFrame.identity
+    local handling=Handling.reload(equipped.Id,1-remaining/equipped.ReloadSeconds)
+    local reloadPose=if reloading then CFrame.new(handling.X,handling.Y,handling.Z)*CFrame.Angles(handling.Pitch,handling.Yaw,handling.Roll)
+        elseif equipping then CFrame.new(0,-.24,.15) else CFrame.identity
     if currentPresentation then
         currentPresentation:update(camera.CFrame,sprintPose*motionPose*reloadPose,gun and presentationId==equipped.Id,aimAlpha)
-        currentPresentation:setReloading(gun and reloading,remaining)
+        currentPresentation:setReloading(gun and reloading,remaining,equipped.ReloadSeconds)
     end
     if zombie then ensureZombieArms() end
     if zombieArms then Presentation.updateArms(zombieArms,camera.CFrame,zombie,math.max(0,(swingUntil-os.clock())/.24)) end
@@ -541,7 +544,7 @@ RunService:BindToRenderStep(renderName,Enum.RenderPriority.Camera.Value+1,functi
         elseif gun and presentationStatus=="Loading" then "Carregando modelo da arma..."
         elseif gun and not currentPresentation then "Modelo da arma indisponível · veja o Output"
         elseif assetFailure then "Assets da arma indisponíveis · veja o Output"
-        elseif (gun and presentationStatus~="Ready") or (zombie and not zombieArms) then "Braços em primeira pessoa requerem personagem R15"
+        elseif (gun and presentationStatus~="Ready") or (zombie and not zombieArms) then "Braços do personagem indisponíveis · veja o Output"
         elseif gun and clip==0 then "Recarregar · 1 / 2: trocar arma"
         elseif zombie then "Segure atacar para golpear e infectar" else ""
     status.Visible=active or standBlocked

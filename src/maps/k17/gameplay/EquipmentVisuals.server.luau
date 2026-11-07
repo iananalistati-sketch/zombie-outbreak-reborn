@@ -72,6 +72,7 @@ local function eligible(session: Session): string?
         or typeof(id)~="string" or not Config.Weapons[id] then return nil end
     local phase=RS:GetAttribute("ZO_RoundState")
     if phase=="Preparation" or phase=="Active" then return id end
+    if phase=="Training" and workspace:GetAttribute("ZO_BarricadePractice")==true and #Players:GetPlayers()==1 then return id end
     if phase=="Waiting" and RunService:IsStudio()
         and workspace:GetAttribute("ZO_BarricadePractice")==true and #Players:GetPlayers()==1 then return id end
     return nil
@@ -129,6 +130,8 @@ local function mirrorReload(session: Session,tool: Tool)
     local endsAt=session.player:GetAttribute("ZO_ReloadEndsAt")
     -- Publish the deadline first: client reload audio reads it on the flag edge.
     tool:SetAttribute("ZO_ReloadEndsAt",if typeof(endsAt)=="number" then endsAt else 0)
+    local id=tool:GetAttribute("ZO_WeaponId")
+    tool:SetAttribute("ZO_ReloadDuration",if Config.Weapons[id] then Config.Weapons[id].ReloadSeconds else 0)
     tool:SetAttribute("ZO_Reloading",session.player:GetAttribute("ZO_Reloading")==true)
 end
 

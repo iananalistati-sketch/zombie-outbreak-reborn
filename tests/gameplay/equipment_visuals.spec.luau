@@ -290,4 +290,11 @@ do
     check(not s.character:FindFirstChild("ZO_EquippedWeapon"),"removal disposes the selected variant")
 end
 
+do
+    local s=simulation();s.rs:SetAttribute('ZO_RoundState','Training');s.flush()
+    check(not s.character:FindFirstChild('ZO_EquippedWeapon'),'training visual waits for solo practice capability')
+    s.world:SetAttribute('ZO_BarricadePractice',true);s.flush()
+    local tool=s.character:FindFirstChild('ZO_EquippedWeapon')
+    check(tool~=nil and tool:GetAttribute('ZO_ReloadDuration')==Config.Weapons.Rifle.ReloadSeconds,'public solo training carries the reviewed real world weapon and reload duration')
+end
 print(("PASS actual EquipmentVisuals + WeaponAimPose: %d assertions; pose timelines and lifecycle with API doubles; Roblox observer rendering not executed"):format(checks))

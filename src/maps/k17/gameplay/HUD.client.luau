@@ -12,6 +12,8 @@ local State=require(shared:WaitForChild("TacticalState"))
 local Config=require(shared:WaitForChild("Config"))
 local EscapeConfig=require(shared:WaitForChild("EscapeConfig"))
 local RouteGuide=require(shared:WaitForChild("RouteGuide"))
+local Handling=require(shared:WaitForChild("WeaponHandling"))
+local Stats=require(shared:WaitForChild("RoundStats"))
 local refuges=require(RS:WaitForChild("K17Refuges"))
 local playerGui=player:WaitForChild("PlayerGui")
 local old=playerGui:FindFirstChild("ZO_RoundHUD");if old then old:Destroy() end
@@ -77,6 +79,18 @@ local bannerTitle=label(banner,"Title",UDim2.fromOffset(16,8),UDim2.new(1,-32,0,
 bannerTitle.TextXAlignment=Enum.TextXAlignment.Center
 local bannerDetail=label(banner,"Detail",UDim2.fromOffset(16,40),UDim2.new(1,-32,0,30),12)
 bannerDetail.TextXAlignment=Enum.TextXAlignment.Center;bannerDetail.TextWrapped=true
+local summary=frame(gui,"RoundSummary",UDim2.fromScale(.5,.5),UDim2.fromOffset(620,208))
+summary.AnchorPoint=Vector2.new(.5,.5);summary.Visible=false
+local summaryTitle=label(summary,"Title",UDim2.fromOffset(18,12),UDim2.new(1,-80,0,30),21,C.gold)
+local summaryBody=label(summary,"Statistics",UDim2.fromOffset(18,51),UDim2.new(1,-36,0,94),14)
+summaryBody.TextWrapped=true;summaryBody.TextTruncate=Enum.TextTruncate.None
+local summaryMVP=label(summary,"Highlight",UDim2.fromOffset(18,153),UDim2.new(1,-36,0,24),13,C.green)
+local summaryCredits=label(summary,"Credits",UDim2.fromOffset(18,180),UDim2.new(1,-36,0,20),12,C.muted)
+local summaryClose=Instance.new("TextButton");summaryClose.Name="Close";summaryClose.Text="×";summaryClose.TextSize=24
+summaryClose.TextColor3=C.text;summaryClose.BackgroundTransparency=1;summaryClose.Position=UDim2.new(1,-46,0,9)
+summaryClose.Size=UDim2.fromOffset(34,34);summaryClose.Modal=true;summaryClose.Parent=summary
+local dismissedSummary=0
+summaryClose.Activated:Connect(function()dismissedSummary=RS:GetAttribute("ZO_RoundId") or 0;summary.Visible=false end)
 local waypoint=Instance.new("BillboardGui");waypoint.Name="EscapeWaypoint";waypoint.Size=UDim2.fromOffset(230,62)
 waypoint.StudsOffsetWorldSpace=Vector3.new(0,5,0);waypoint.AlwaysOnTop=true;waypoint.MaxDistance=1000
 waypoint.Enabled=false;waypoint.Parent=gui
@@ -208,6 +222,7 @@ connect(Run.RenderStepped,function(dt)
     top.Size=UDim2.fromOffset(math.min(560,width-24),66);objective.Size=UDim2.fromOffset(math.min(670,width-28),32)
     banner.Size=UDim2.fromOffset(math.min(580,width-28),80);board.Size=UDim2.fromOffset(math.min(720,width-24),math.min(450,camera.ViewportSize.Y-40))
     boardButton.Text=if UIS.TouchEnabled then "PLACAR" else "TAB / PLACAR"
+    summary.Size=UDim2.fromOffset(math.min(620,width-24),208)
     for i,t in feedLabels do
         t.Visible=not modal and not boardOpen
         t.Size=UDim2.fromOffset(math.min(460,width-36),26);t.Position=UDim2.new(1,-math.min(478,width-18),0,175+(i-1)*29)
@@ -246,10 +261,32 @@ connect(Run.RenderStepped,function(dt)
     if errorMessage then instruction="FALHA: "..tostring(errorMessage);objective.TextColor3=C.red
     elseif phase=="Starting" then instruction="Iniciando · "..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando servidor");objective.TextColor3=C.muted
     else objective.TextColor3=C.text end
-    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.4.0")
+    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.5.0")
     local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role
     if key~=announcementKey then announcementKey=key;bannerUntil=os.clock()+3;bannerTitle.Text=string.upper(title);bannerDetail.Text=instruction end
-    banner.Visible=not modal and not boardOpen and os.clock()<bannerUntil and phase~="Waiting" and phase~="Starting"
+    banner.Visible=not modal and not boardOpen and os.clock()<bannerUntil and phase~="Waiting" and phase~="Starting" and phase~="Results"
+    local roundId=RS:GetAttribute("ZO_RoundId") or 0
+    summary.Visible=phase=="Results" and roundId>0 and dismissedSummary~=roundId and not modal and not boardOpen
+    if summary.Visible then
+        summaryTitle.Text=if mode=="Escape" then "ZE / RESUMO DA FUGA" else "ZM / RESUMO DA RODADA"
+        local own=player:GetAttribute("ZO_SummaryRound")==roundId
+        local ready=RS:GetAttribute("ZO_SummaryRound")==roundId
+        local function value(key)return player:GetAttribute("ZO_Summary"..key) or 0 end
+        if own and ready then
+            local outcome=if RS:GetAttribute("ZO_LastWinner")=="Cancelled" then "CANCELADA"
+                elseif player:GetAttribute("ZO_EscapedRound")==roundId then "EXTRAÍDO"
+                elseif player:GetAttribute("ZO_SurvivedRound")==roundId then "RESISTIU"
+                elseif player:GetAttribute("ZO_ResultRole")=="Zombies" then "INFECÇÃO" else "FIM DA RODADA"
+            summaryBody.Text=("%s\nABATES %d   ·   INFECÇÕES %d   ·   OBJETIVOS %d\nDANO %d   ·   PRECISÃO %d%%   ·   ABATES NA CABEÇA %d"):format(
+                outcome,value("Kills"),value("Infections"),value("Objectives"),value("Damage"),Stats.accuracy(value("Shots"),value("Hits")),value("Headshots"))
+            summaryCredits.Text=("Bônus de sobrevivência $%d   ·   Saldo $%d"):format(value("Reward"),value("Credits"))
+        else
+            summaryBody.Text=if ready and player:GetAttribute("ZO_ResultRound")~=roundId then "Você acompanhou esta rodada como espectador." else "Preparando seu resumo…"
+            summaryCredits.Text=""
+        end
+        local mvp=RS:GetAttribute("ZO_MVPName") or ""
+        summaryMVP.Text=if ready and mvp~="" then "DESTAQUE / "..mvp else ""
+    end
     healthPanel.Visible=active and not modal;ammoPanel.Visible=active and not modal;wallet.Visible=active and not modal
     healthPanel.Size=UDim2.fromOffset(if compact then 176 else 220,56);ammoPanel.Size=UDim2.fromOffset(if compact then 200 else 260,68)
     ammoPanel.Position=UDim2.new(1,if compact then -218 else -278,1,if UIS.TouchEnabled then -268 else -98)
@@ -263,6 +300,10 @@ connect(Run.RenderStepped,function(dt)
     local remaining=math.max(0,(player:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow())
     local equip=workspace:GetServerTimeNow()<(player:GetAttribute("ZO_EquipReadyAt") or 0)
     weaponText.Text=if zombie then "INFECÇÃO / COMBATE PRÓXIMO" else string.upper(weapon.Label).." / "..(if weapon.Slot=="Primary" then "PRIMÁRIA" else "SECUNDÁRIA")
+    if reload and not zombie then
+        local handling=Handling.reload(weapon.Id,1-remaining/weapon.ReloadSeconds)
+        weaponText.Text=if compact then handling.Phase else string.upper(weapon.Label).." / "..handling.Phase
+    end
     ammoText.Text=if zombie then "GARRAS" elseif reload then ("RECARGA %.1fs"):format(remaining) elseif equip then "EQUIPANDO"
         else ("%02d / %03d"):format(clip,player:GetAttribute("ZO_Reserve") or 0)
     ammoText.TextColor3=if not zombie and clip<=weapon.Magazine*.2 then C.gold else C.text

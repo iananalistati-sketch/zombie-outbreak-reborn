@@ -5,6 +5,7 @@ local Config,Rules,WeaponState=deps.Config,deps.Rules,deps.WeaponState
 local LoadoutState,Containment=deps.LoadoutState,deps.Containment
 local MovementState=deps.MovementState
 local WeaponSkins=deps.WeaponSkins
+local RoundStats=deps.RoundStats
 local COMBAT_SOURCE=deps.CombatSource
 -- Engine float properties do not preserve every Luau double. Model that storage
 -- boundary so equality-based effect ownership cannot pass on table precision.
@@ -103,6 +104,7 @@ local function simulation(options)
     function methods:FireClient(player,...) table.insert(self._calls,{player,...}) end
     function methods:FireAllClients(...) table.insert(self._calls,{...}) end
     function methods:TakeDamage(damage)
+        if self.Parent and self.Parent:FindFirstChildOfClass("ForceField") then return end
         table.insert(self._calls,{damage});local wasAlive=self.Health>0;self.Health=math.max(0,self.Health-damage)
         if wasAlive and self.Health<=0 then self.Died:Fire() end
     end
@@ -139,7 +141,7 @@ local function simulation(options)
         end
     end
     local modules={}
-    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins} do
+    for name,result in {Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,RoundStats=RoundStats} do
         local module=instance("ModuleScript",name,shared);modules[module]=result
     end
     local heartbeat=signal()

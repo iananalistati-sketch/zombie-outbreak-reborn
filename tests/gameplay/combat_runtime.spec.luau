@@ -6,6 +6,7 @@ local WeaponState=assert(loadstring(WEAPON_SOURCE))()
 local Containment=assert(loadstring(CONTAINMENT_SOURCE))()
 local MovementState=assert(loadstring(MOVEMENT_STATE_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
+local RoundStats=assert(loadstring(ROUND_STATS_SOURCE))()
 local LoadoutState
 do
     local dependency={}
@@ -20,7 +21,7 @@ local function check(ok,label) assert(ok,label);checks+=1 end
 local function near(a,b) return math.abs(a-b)<.00001 end
 local tools=assert(loadstring(SIMULATION_SOURCE))()({
     Config=Config,Rules=Rules,WeaponState=WeaponState,LoadoutState=LoadoutState,
-    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,CombatSource=COMBAT_SOURCE,
+    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,RoundStats=RoundStats,CombatSource=COMBAT_SOURCE,
 })
 local simulation,Vector=tools.simulation,tools.Vector
 local function attr(player,key) return player:GetAttribute("ZO_"..key) end
@@ -516,7 +517,7 @@ do
     end
     local observed=assert(loadstring(SIMULATION_SOURCE))()({
         Config=Config,Rules=table.freeze(observedRules),WeaponState=WeaponState,LoadoutState=LoadoutState,
-        Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,CombatSource=COMBAT_SOURCE,
+        Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,RoundStats=RoundStats,CombatSource=COMBAT_SOURCE,
     })
     local s=observed.simulation();local p=s.add("AccuracyShooter","Humans");s.add("Second","Humans");ready(s,p)
     local hum=p.Character.Humanoid
@@ -715,5 +716,38 @@ do
     check(attr(p,'PrimaryWeapon')=='Rifle','Escape refill exception cannot buy a new primary mid-round')
     s.role(p,'Zombies');local before=attr(p,'Credits');s.advance(.05);s.loadout(p,'Ammo')
     check(attr(p,'Credits')==before,'infected player cannot use the Escape refill exception')
+end
+do
+    local s,p=twoHumans();local z=s.add('StatsVictim','Zombies');s.phase('Active');ready(s,p)
+    s.ray(function()return nil end);s.fire(p)
+    s.advance(.12);local hum=z.Character.Humanoid;hum.Health=1000
+    s.ray(function()return hit(z.Character.Head)end);s.fire(p)
+    s.advance(.12);hum.Health=1;s.fire(p);s.fire(p)
+    local credits=attr(p,'Credits')
+    p:SetAttribute('ZO_SurvivedRound',1);s.rs:SetAttribute('ZO_LastWinner','Humans');s.phase('Results')
+    check(attr(p,'SummaryShots')==3 and attr(p,'SummaryHits')==2,'summary counts accepted volleys, excluding rejected duplicate requests')
+    check(attr(p,'SummaryDamage')==45 and attr(p,'SummaryKills')==1 and attr(p,'SummaryHeadshots')==1,'summary caps overkill at actual removed health')
+    check(attr(p,'SummaryReward')==Config.Economy.SurvivalReward and attr(p,'SummaryCredits')==credits+Config.Economy.SurvivalReward,'summary snapshots actual credited survival reward')
+    check(s.rs:GetAttribute('ZO_SummaryRound')==1 and s.rs:GetAttribute('ZO_MVPName')==p.Name,'server publishes summary readiness and highlight')
+    s.role(p,'Lobby');check(attr(p,'Credits')==credits+Config.Economy.SurvivalReward,'deferred team cleanup cannot duplicate summary reward')
+end
+do
+    local s,p=twoHumans();local z=s.add('Protected','Zombies');s.phase('Active');ready(s,p)
+    s.instance('ForceField','Protection',z.Character)
+    local health=z.Character.Humanoid.Health;local speed=z.Character.Humanoid.WalkSpeed
+    s.ray(function()return hit(z.Character.Head)end);s.fire(p)
+    check(z.Character.Humanoid.Health==health and z.Character.Humanoid.WalkSpeed==speed,'blocked health damage cannot apply hit containment')
+    local hits=0;for _,call in s.rs.ZO_FireRifle._calls do if call[2]=='Hit'then hits+=1 end end
+    check(hits==0 and #z.Character.HumanoidRootPart._calls==0,'protected target produces no false hit confirmation or impulse')
+    s.rs:SetAttribute('ZO_LastWinner','Cancelled');s.phase('Results')
+    check(attr(p,'SummaryHits')==0 and attr(p,'SummaryDamage')==0,'protected target cannot inflate round accuracy/damage')
+end
+do
+    local s,p=twoHumans();s.phase('Active');ready(s,p)
+    local wall=s.instance('Part','MetalWall',s.world)
+    s.ray(function()local r=hit(wall);r.Material={Name='DiamondPlate'};return r end);s.fire(p)
+    local found=false
+    for _,call in s.rs.ZO_CombatFX._calls do if call[2]=='Shot'and call[9]=='DiamondPlate'then found=true end end
+    check(found,'server derives impact material from the first validated trace')
 end
 print(("PASS actual Combat controller: %d assertions; inventory, skins, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

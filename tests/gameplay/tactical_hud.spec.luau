@@ -46,6 +46,8 @@ moduleMap[object('ModuleScript','TacticalState',shared)]=State
 moduleMap[object('ModuleScript','Config',shared)]=Config
 moduleMap[object('ModuleScript','EscapeConfig',shared)]={Stages={{Label='Gerador'},{Label='Bombas'},{Label='Terminal'}}}
 moduleMap[object('ModuleScript','RouteGuide',shared)]=assert(loadstring(GUIDE_SOURCE))()
+moduleMap[object('ModuleScript','WeaponHandling',shared)]=assert(loadstring(HANDLING_SOURCE))()
+moduleMap[object('ModuleScript','RoundStats',shared)]=assert(loadstring(ROUND_STATS_SOURCE))()
 moduleMap[object('ModuleScript','K17Refuges',rs)]={}
 local remote=object('RemoteEvent','ZO_CombatFX',rs);remote.OnClientEvent=signal()
 local world=object('Workspace','Workspace')
@@ -147,6 +149,16 @@ rs:SetAttribute('ZO_EscapeStatus','Extraction');rs:SetAttribute('ZO_EscapeStage'
 check(get('EscapeWaypoint').Adornee==gate,'extraction guidance moves from panel to terminal entrance')
 rs:SetAttribute('ZO_RoundState','Results');rs:SetAttribute('ZO_LastWinner','Humans');rs:SetAttribute('ZO_LastEscaped',1);tick()
 check(get('Objective').Text:find('1 humanos',1,true)~=nil and not get('EscapeWaypoint').Enabled,'Escape results preserve rescued count and clear active guidance')
+rs:SetAttribute('ZO_RoundId',1);rs:SetAttribute('ZO_SummaryRound',1);rs:SetAttribute('ZO_MVPName','Player')
+for key,value in {Round=1,Shots=3,Hits=2,Damage=45,Kills=1,Headshots=1,Infections=0,Objectives=3,Reward=800,Credits=5000}do player:SetAttribute('ZO_Summary'..key,value)end
+player:SetAttribute('ZO_EscapedRound',1);tick()
+check(get('RoundSummary').Visible and get('RoundSummary','Statistics').Text:find('PRECISÃO 67%',1,true)~=nil,'results project confirmed shot accuracy and extraction status')
+check(get('RoundSummary','Credits').Text:find('$800',1,true)~=nil and get('RoundSummary','Highlight').Text:find('Player',1,true)~=nil,'result shows actual reward and server highlight')
+get('RoundSummary','Close').Activated:Fire();tick();check(not get('RoundSummary').Visible,'closing summary remains dismissed for this result')
+rs:SetAttribute('ZO_RoundId',2);rs:SetAttribute('ZO_SummaryRound',2);player:SetAttribute('ZO_ResultRound',2);tick()
+check(get('RoundSummary').Visible and get('RoundSummary','Statistics').Text=='Preparando seu resumo…','new result never reuses stale personal statistics')
+player:SetAttribute('ZO_ResultRound',0);tick()
+check(get('RoundSummary','Statistics').Text:find('espectador',1,true)~=nil,'late spectator receives no fabricated combat statistics')
 gui:Destroy();tick()
 check(player:GetAttribute('ZO_TacticalHUDReady')==false and actions.ZO_Scoreboard==nil,'teardown restores fallback and releases input binding')
 print(('PASS actual tactical HUD: %d checks; state/cleanup API doubles, no rendering simulation'):format(checks))

@@ -11,7 +11,7 @@ if __name__=='__main__':
     files={'COMBAT_SOURCE':'Combat.server','ROUND_SOURCE':'Round.server','STARTUP_SOURCE':'Startup.server',
         'CONFIG_SOURCE':'Config','RULES_SOURCE':'Rules','WEAPON_SOURCE':'WeaponState','LOADOUT_SOURCE':'LoadoutState',
         'CONTAINMENT_SOURCE':'Containment','MOVEMENT_STATE_SOURCE':'MovementState','WEAPON_SKINS_SOURCE':'WeaponSkins',
-        'ROUND_RULES_SOURCE':'RoundRules','ESCAPE_CONFIG_SOURCE':'EscapeConfig','ESCAPE_STATE_SOURCE':'EscapeState','SESSION_SOURCE':'EscapeSession','HOLD_GATES_SOURCE':'HoldGates'}
+        'ROUND_RULES_SOURCE':'RoundRules','ESCAPE_CONFIG_SOURCE':'EscapeConfig','ESCAPE_STATE_SOURCE':'EscapeState','SESSION_SOURCE':'EscapeSession','HOLD_GATES_SOURCE':'HoldGates','ROUND_STATS_SOURCE':'RoundStats'}
     sources={key:'src/maps/k17/gameplay/'+name+'.luau' for key,name in files.items()}
     sources.update(ROUND_CONFIG_SOURCE='src/maps/k17/RoundConfig.luau',MAP_CONFIG_SOURCE='src/maps/k17/Config.luau',
         SIMULATION_SOURCE='tests/gameplay/support/CombatSimulation.luau')

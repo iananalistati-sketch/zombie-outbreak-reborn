@@ -26,6 +26,7 @@ def run(luau):
         'CONTAINMENT_SOURCE': 'src/maps/k17/gameplay/Containment.luau',
         'MOVEMENT_STATE_SOURCE': 'src/maps/k17/gameplay/MovementState.luau',
         'WEAPON_SKINS_SOURCE': 'src/maps/k17/gameplay/WeaponSkins.luau',
+        'ROUND_STATS_SOURCE': 'src/maps/k17/gameplay/RoundStats.luau',
         'ROUND_CONFIG_SOURCE': 'src/maps/k17/RoundConfig.luau',
         'ROUND_RULES_SOURCE': 'src/maps/k17/gameplay/RoundRules.luau',
         'MAP_CONFIG_SOURCE': 'src/maps/k17/Config.luau',

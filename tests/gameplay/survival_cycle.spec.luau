@@ -6,6 +6,7 @@ local WeaponState=assert(loadstring(WEAPON_SOURCE))()
 local Containment=assert(loadstring(CONTAINMENT_SOURCE))()
 local MovementState=assert(loadstring(MOVEMENT_STATE_SOURCE))()
 local WeaponSkins=assert(loadstring(WEAPON_SKINS_SOURCE))()
+local RoundStats=assert(loadstring(ROUND_STATS_SOURCE))()
 local RoundConfig=table.clone(assert(loadstring(ROUND_CONFIG_SOURCE))())
 RoundConfig.ModeRotation={"Survival"}
 local RoundRules=assert(loadstring(ROUND_RULES_SOURCE))()
@@ -16,7 +17,7 @@ setfenv(loadout,setmetatable({script={Parent={WeaponState=dependency}},require=f
     assert(module==dependency);return WeaponState
 end},{__index=getfenv()}))
 local tools=assert(loadstring(SIMULATION_SOURCE))()({Config=Config,Rules=Rules,WeaponState=WeaponState,
-    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,LoadoutState=loadout(),CombatSource=COMBAT_SOURCE})
+    Containment=Containment,MovementState=MovementState,WeaponSkins=WeaponSkins,RoundStats=RoundStats,LoadoutState=loadout(),CombatSource=COMBAT_SOURCE})
 local s=tools.simulation({roundSource=ROUND_SOURCE,startupSource=STARTUP_SOURCE,
     roundConfig=RoundConfig,roundRules=RoundRules,mapConfig=MapConfig})
 local checks=0

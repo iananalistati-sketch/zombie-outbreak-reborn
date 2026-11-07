@@ -10,6 +10,10 @@ local Debris=game:GetService("Debris")
 local RS=game:GetService("ReplicatedStorage")
 local PresentationConfig=require(script.Parent.PresentationConfig)
 local WeaponAimPose=require(script.Parent.WeaponAimPose)
+local ViewRig=require(script.Parent.ViewRig)
+local Handling=require(script.Parent.WeaponHandling)
+local ImpactProfiles=require(script.Parent.ImpactProfiles)
+local impactBudget=ImpactProfiles.budget(24)
 local localRandom=Random.new()
 local Presentation={}
 Presentation.__index=Presentation
@@ -92,6 +96,7 @@ function Presentation:fire()
     if self.lastFireSound then self.lastFireSound:Stop() end
     self.lastFireSound=self:tryPlaySound("Fired",self:getConfigValue("FiredPlaybackSpeedRange",.1))
     self.shotSequence+=1
+    self.lastShotAt=os.clock()
     local sequence=self.shotSequence
     if self.boltMotor then
         task.spawn(function()
@@ -128,7 +133,8 @@ local function alignReload(self,remaining)
     if track and track.Length>0 then track:AdjustSpeed(math.clamp(track.Length/remaining,.2,5)) end
 end
 
-function Presentation:setReloading(reloading,remaining)
+function Presentation:setReloading(reloading,remaining,duration)
+    if type(duration)=="number" and duration>0 then self.reloadDuration=duration end
     if reloading==self.reloading then
         -- The boolean and deadline can arrive in separate replication packets.
         if reloading and remaining and remaining>0
@@ -178,83 +184,11 @@ function Presentation:stop()
     self.idleStarted=false
 end
 
-local armNames={RightUpperArm=true,RightLowerArm=true,RightHand=true,LeftUpperArm=true,LeftLowerArm=true,LeftHand=true}
-local function placeArms(arms,rootCFrame)
-    arms.root.CFrame=rootCFrame
-    for _,joint in arms.joints do
-        joint.Part1.CFrame=joint.Part0.CFrame*joint.C0*joint.Transform*joint.C1:Inverse()
-    end
-    for part,offset in arms.disconnected do part.CFrame=rootCFrame*offset end
-end
-
-local function copyArms(character,parent,zombie)
-    local humanoid=character and character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.RigType~=Enum.HumanoidRigType.R15 then return nil,"NoR15Arms" end
-    local archivable=character.Archivable
-    character.Archivable=true
-    local ok,rig=pcall(function() return character:Clone() end)
-    character.Archivable=archivable
-    if not ok or not rig then return nil,"CloneUnavailable" end
-    rig.Name="ZO_FirstPersonArms"
-    for _,descendant in rig:GetDescendants() do
-        if descendant:IsA("LuaSourceContainer") or descendant:IsA("Tool") or descendant:IsA("Accessory")
-            or descendant:IsA("Humanoid") or descendant:IsA("AnimationController") or descendant:IsA("Sound") then
-            descendant:Destroy()
-        end
-    end
-    local root=rig:FindFirstChild("HumanoidRootPart")
-    local hand=rig:FindFirstChild("RightHand")
-    if not root or not root:IsA("BasePart") or not hand or not hand:IsA("BasePart") then
-        rig:Destroy();return nil,"IncompleteR15Rig"
-    end
-    local parts,motors,offsets={},{},{}
-    for _,part in rig:GetDescendants() do
-        if part:IsA("BasePart") then
-            offsets[part]=root.CFrame:ToObjectSpace(part.CFrame)
-            -- AnimationController writes Motor6D.Transform; positioning the cloned
-            -- parts explicitly avoids a one-physics-frame lag behind the camera.
-            part.Anchored=true;part.CanCollide=false;part.CanQuery=false;part.CanTouch=false
-            part.Massless=true;part.CastShadow=false
-            if not armNames[part.Name] then part.Transparency=1
-            elseif zombie then part.Color=Color3.fromRGB(112,130,104) end
-            part.LocalTransparencyModifier=1
-            table.insert(parts,part)
-        elseif part:IsA("Motor6D") then
-            if part.Part0 and part.Part1 and part.Part0:IsDescendantOf(rig) and part.Part1:IsDescendantOf(rig) then
-                part.Transform=CFrame.identity
-                table.insert(motors,part)
-                if zombie and (part.Name=="LeftShoulder" or part.Name=="RightShoulder") then
-                    -- Real R15 arms, posed forward; no placeholder claw geometry.
-                    part.C0*=CFrame.Angles(math.rad(78),0,if part.Name=="LeftShoulder" then -.12 else .12)
-                end
-            else part:Destroy() end
-        end
-    end
-    local ordered,connected={}, {[root]=true}
-    for _=1,#motors do
-        local progress=false
-        for index=#motors,1,-1 do
-            local motor=motors[index]
-            if connected[motor.Part0] then
-                connected[motor.Part1]=true;table.insert(ordered,motor);table.remove(motors,index);progress=true
-            end
-        end
-        if not progress then break end
-    end
-    local disconnected={}
-    for part,offset in offsets do if not connected[part] then disconnected[part]=offset end end
-    local controller=Instance.new("AnimationController");controller.Name="ViewmodelAnimations";controller.Parent=rig
-    local animator=Instance.new("Animator");animator.Parent=controller
-    local head=rig:FindFirstChild("Head")
-    local headOffset=if head and head:IsA("BasePart") then root.CFrame:ToObjectSpace(head.CFrame) else CFrame.new(0,2.5,0)
-    local arms={model=rig,root=root,hand=hand,parts=parts,animator=animator,headOffset=headOffset,
-        joints=ordered,disconnected=disconnected}
-    rig.PrimaryPart=root;placeArms(arms,CFrame.new(0,-10000,0));rig.Parent=parent
-    return arms,"Ready"
-end
+local copyArms=ViewRig.copy
+local placeArms=ViewRig.place
 
 function Presentation:getTrack(kind)
-    if not self.arms then return nil end
+    if not self.arms or not self.arms.animator then return nil end
     if self.tracks[kind]~=nil then return self.tracks[kind] or nil end
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
     local prefix=self.instance:GetAttribute("ZO_AnimationPrefix") or self.instance:GetAttribute("AnimationPrefix")
@@ -365,8 +299,7 @@ function Presentation.new(template,parent,id,character)
     if self.arms then
         local grip=Instance.new("Motor6D");grip.Name="RightGrip"
         grip.Part0=self.arms.hand;grip.Part1=handle
-        local handGrip=self.arms.hand:FindFirstChild("RightGripAttachment")
-        grip.C0=if handGrip and handGrip:IsA("Attachment") then handGrip.CFrame else CFrame.identity
+        grip.C0=self.arms.gripOffset
         grip.C1=instance.Grip;grip.Parent=self.arms.hand;self.handGrip=grip
         for _,part in self.arms.parts do table.insert(self.visualParts,part) end
     end
@@ -400,12 +333,25 @@ function Presentation:update(cameraCFrame,pose,visible,aimAlpha)
             for _,part in entry.parts do part.CFrame=delta*part.CFrame end
         end
     end
+    local progress=if self.reloading and self.reloadDeadline then 1-math.max(0,self.reloadDeadline-os.clock())/(self.reloadDuration or 2.4) else 0
+    local handling=Handling.reload(self.id,progress)
+    for part in self.partOffsets do
+        if part.Name=="Magazine" and self.reloading then
+            part.CFrame*=CFrame.new(0,-handling.Magazine,0)
+        elseif part.Name=="Pump" then
+            local pump=if self.reloading then handling.Pump else Handling.pump(os.clock()-(self.lastShotAt or -math.huge))
+            part.CFrame*=CFrame.new(0,0,pump)
+        end
+    end
     if self.visible~=visible then
         self.visible=visible
         for _,part in self.visualParts do part.LocalTransparencyModifier=if visible then 0 else 1 end
         if visible then self:tryPlaySound("Equip") else self:stop() end
     end
-    if self.arms and visible and not self.reloading then
+    for part in self.partOffsets do
+        if part.Name=="Magazine" then part.LocalTransparencyModifier=if not visible or (self.reloading and handling.HideMagazine) then 1 else 0 end
+    end
+    if self.arms and self.arms.animator and visible and not self.reloading then
         local aim=(aimAlpha or 0)>.5
         local poseKind=if aim then "AimDownSights" else "Aim"
         local retryAnimations=self.tracks[poseKind]==nil and os.clock()>=(self.nextAnimationRetry or 0)
@@ -439,7 +385,7 @@ function Presentation.observeWorld(tool)
     self=bind(tool);worldPresentations[tool]=self
     local function reload()
         self:setReloading(tool:GetAttribute("ZO_Reloading")==true,
-            math.max(0,(tool:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow()))
+            math.max(0,(tool:GetAttribute("ZO_ReloadEndsAt") or 0)-workspace:GetServerTimeNow()),tool:GetAttribute("ZO_ReloadDuration"))
     end
     table.insert(self.connections,tool:GetAttributeChangedSignal("ZO_Reloading"):Connect(reload))
     table.insert(self.connections,tool:GetAttributeChangedSignal("ZO_ReloadEndsAt"):Connect(reload))
@@ -469,11 +415,13 @@ function Presentation.playDistantShot(template,origin,id)
     return true
 end
 
-function Presentation.impact(position,normal)
+function Presentation.impact(position,normal,material)
     local kit=RS:FindFirstChild("ZO_WeaponAssets")
     local effects=kit and kit:FindFirstChild("Effects")
     local template=effects and effects:FindFirstChild("HitEffect",true)
     if not template or not template:IsA("Attachment") or normal.Magnitude<.001 then return end
+    if not impactBudget:admit(os.clock()) then return end
+    local profile=ImpactProfiles.get(material)
     normal=normal.Unit
     local part=Instance.new("Part");part.Name="ZO_Impact"
     part.Size=Vector3.one*.05;part.Transparency=1;part.Anchored=true
@@ -484,11 +432,14 @@ function Presentation.impact(position,normal)
     for _,item in effect:GetDescendants() do
         if item:IsA("ParticleEmitter") then
             item.Enabled=false
-            local count=item:GetAttribute("EmitCount")
-            item:Emit(if typeof(count)=="number" then math.clamp(math.floor(count),1,100) else 5)
+            item.Color=ColorSequence.new(Color3.fromRGB(table.unpack(profile.Color)))
+            item.Lifetime=NumberRange.new(profile.Life*.7,profile.Life);item.Speed=NumberRange.new(profile.Speed*.5,profile.Speed)
+            item.Size=NumberSequence.new(profile.Size);item.LightEmission=profile.Glow
+            item.EmissionDirection=Enum.NormalId.Front;item.SpreadAngle=Vector2.new(45,45)
+            item:Emit(profile.Count)
         elseif item:IsA("Sound") then item:Play() end
     end
-    Debris:AddItem(part,3)
+    Debris:AddItem(part,profile.Life+.2)
 end
 
 function Presentation:destroy()
