@@ -50,7 +50,7 @@ local function stop()
 end
 local function eligible()
     local own=ownHumanoid();local role=if player.Team then player.Team.Name else "Lobby"
-    local allowed=State.allowed(role,own~=nil and own.Health>0,RS:GetAttribute("ZO_RoundState"))
+    local allowed=State.allowed(role,own~=nil and own.Health>0 and player:GetAttribute("ZO_SpawnPending")~=true,RS:GetAttribute("ZO_RoundState"))
     if not allowed then released=false end
     return allowed and not released,role
 end
@@ -63,7 +63,7 @@ local function refresh(direction)
         local char=other.Character;local hum=char and char:FindFirstChildOfClass("Humanoid")
         local root=char and char:FindFirstChild("HumanoidRootPart")
         table.insert(rows,{Id=other.UserId,Player=other,Humanoid=hum,Role=if other.Team then other.Team.Name else "Lobby",
-            Alive=hum~=nil and hum.Health>0,Ready=root~=nil and char:IsDescendantOf(workspace)})
+            Alive=hum~=nil and hum.Health>0,Ready=root~=nil and char:IsDescendantOf(workspace) and other:GetAttribute("ZO_SpawnPending")~=true})
     end
     local choices=State.targets(rows,player.UserId,State.side(role,phase))
     local selected=State.pick(choices,targetId,direction)
@@ -76,7 +76,8 @@ local function refresh(direction)
     title.Text=if selected then "OBSERVANDO / "..selected.Player.DisplayName else "Aguardando companheiro vivo"
     local at=player:GetAttribute("ZO_RespawnAt")
     local seconds=if type(at)=="number" then math.max(0,math.ceil(at-workspace:GetServerTimeNow())) else nil
-    hint.Text=if seconds then ("Retorno em %ds · ← / → trocar"):format(seconds) else "Próxima rodada · ← / → trocar"
+    hint.Text=if player:GetAttribute("ZO_SpawnPending")==true then "Retorno aguardando espaço seguro · ← / → trocar"
+        elseif seconds then ("Retorno em %ds · ← / → trocar"):format(seconds) else "Próxima rodada · ← / → trocar"
     previous.Visible=#choices>1;nextButton.Visible=#choices>1
 end
 connect(previous.Activated,function()refresh(-1)end);connect(nextButton.Activated,function()refresh(1)end)

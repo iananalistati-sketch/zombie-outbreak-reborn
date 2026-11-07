@@ -566,4 +566,13 @@ do
     s.script:Destroy();s.advance(0)
     check(s.gui._destroyed and s.cas.actions.ZO_Aim==nil,"script destruction cleans HUD and action bindings")
 end
+do
+    local s=simulation();s.rs:SetAttribute('ZO_RoundState','Active');s.player.Team={Name='Zombies'}
+    s.player:SetAttribute('ZO_SpawnPending',true);s.advance(0);s.render(.1)
+    local before=#s.requests;s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End')
+    check(#s.requests==before,'safe return wait cannot predict or request a melee attack')
+    s.player:SetAttribute('ZO_SpawnPending',nil);s.advance(0);s.render(.1)
+    s.key('ZO_Trigger','Begin');s.key('ZO_Trigger','End')
+    check(#s.requests==before+1,'releasing pending guard restores zombie attack input')
+end
 print(("PASS actual Weapons client: %d assertions; ADS/control cancellation, generic tool imports, audio/impact dispatch and server-owned ammo (Roblox API doubles; presentation stubbed)"):format(checks))

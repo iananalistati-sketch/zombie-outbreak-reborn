@@ -90,7 +90,11 @@ local function simulation(options)
     function methods:IsA(kind) return self.ClassName==kind or kind=="Instance" or (self.ClassName=="Part" and kind=="BasePart") end
     function methods:GetChildren() local result={};for _,child in self._children do table.insert(result,child) end;return result end
     function methods:GetDescendants() local result={};local function add(parent) for _,child in parent:GetChildren() do table.insert(result,child);add(child) end end;add(self);return result end
-    function methods:FindFirstChild(name) return self._children[name] end
+    function methods:FindFirstChild(name,recursive)
+        if self._children[name] then return self._children[name] end
+        if recursive then for _,child in self:GetChildren() do local found=child:FindFirstChild(name,true);if found then return found end end end
+        return nil
+    end
     function methods:WaitForChild(name) return assert(self._children[name],"Unexpected dependency/yield: "..self.Name.."."..name) end
     function methods:FindFirstChildOfClass(class) for _,child in self._children do if child:IsA(class) then return child end end;return nil end
     function methods:FindFirstAncestorOfClass(class) local node=self.Parent;while node do if node:IsA(class) then return node end;node=node.Parent end;return nil end
@@ -217,8 +221,10 @@ local function simulation(options)
             for i,stage in options.escapeConfig.Stages do
                 local part=instance("Part","Control"..i,controls);part.Position=Vector.new(table.unpack(stage.Control))
                 local prompt=instance("ProximityPrompt","Activate",part);prompt.Triggered=signal()
+                instance("Part","Indicator"..i,controls)
             end
             local bay=instance("Model","R50_EvacuationBay",map);instance("Part","EvacuationGate",bay)
+            local board=instance("Part","EvacuationStatus",bay);instance("TextLabel","Text",board)
             local gates=instance("Model","EscapeHoldGates",map)
             for _,gate in options.escapeConfig.HoldGates do
                 local p=instance("Part",gate.Name,gates)

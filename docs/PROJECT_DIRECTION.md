@@ -38,7 +38,7 @@ usar novos placeholders de armas para preencher um catálogo.
 - **Modos:** rotação Escape → Survival. Round controla todo o ciclo e possui
   EscapeSession como sessão subordinada; não há segundo controlador de rodada.
 - **Conteúdo atual:** K-17, quatro classes de armas reais, seis acabamentos,
-  175 objetos físicos, 36 refúgios e uma rota de evacuação com três objetivos.
+  187 objetos físicos, 38 refúgios e uma rota de evacuação com três objetivos.
 
 ## Entregas e aceitação
 
@@ -97,6 +97,19 @@ contamina o resumo multiplayer. [Entrega e aceite](RELEASE_0_5.md).
 Validar aparência e alinhamento R6/R15, cancelamento de recarga, apresentação
 vista por outro cliente e os resultados completos de Escape e Survival. Não
 houve expansão do catálogo nem substituição do motor nesta entrega.
+
+### 0.6 — Travessia e pressão da infecção
+
+Pacote implementado: retornos por setor no Escape, condicionados à defesa
+concluída e à travessia real dos humanos, com distância mínima, consulta de
+ocupação, alternativa em setores anteriores e espera protegida quando não há
+espaço. Zumbis vivos continuam perseguindo sem teleporte. A mesma rodada
+controla as tentativas de retorno e limpa a espera no encerramento.
+
+Inclui oficina do anel oeste e câmara de válvulas: dois acessos e seis props
+por sala, quatro posições de grupo e recuo fora da linha direta da entrada.
+Indicadores dos objetivos, painel de extração no mundo e avisos da horda
+acompanham o estado do servidor. [Entrega e aceite](RELEASE_0_6.md).
 
 ### Próximas entregas — Conteúdo e desempenho
 

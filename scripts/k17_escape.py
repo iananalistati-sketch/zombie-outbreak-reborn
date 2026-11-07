@@ -4,6 +4,16 @@ import json
 CONFIG={
     'Duration':360,'ExtractionSeconds':18,'ActivationRange':8,
     'MotherSpawn':[-68,1,-246],
+    'SpawnDistance':48,
+    'InitialSpawns':[[-68,1,-246],[-68,1,-238],[-68,1,-230]],
+    'Respawns':[
+        {'AfterStage':1,'Label':'Descida norte',
+         'Advance':{'Min':[-230,-25,-200],'Max':[-168,-13,-40]},
+         'Points':[[0,-24,-146],[0,-24,-154],[0,-24,-162]]},
+        {'AfterStage':2,'Label':'Travessia das bombas',
+         'Advance':{'Min':[-10,-25,168],'Max':[148,-13,188]},
+         'Points':[[-160,-24,144],[-152,-24,144],[-144,-24,144]]},
+    ],
     'Extraction':{'Min':[214,-1,216],'Max':[242,12,240]},
     'HoldGates':[
         {'Stage':1,'Name':'GeneratorExit','Min':[138,1,-124.2],'Max':[150,12,-123.8]},
@@ -90,3 +100,11 @@ def build_escape(m):
         'Sheltered extraction bay, shutter, cover, framed glazing and six physical props']})
     from k17_escape_defense import build_escape_defense
     build_escape_defense(m,CONFIG)
+    # Every candidate is a measured standing position connected to the route;
+    # the runtime also rejects occupied volumes and nearby living humans.
+    for level,points in enumerate([CONFIG['InitialSpawns']]+[r['Points'] for r in CONFIG['Respawns']]):
+        connection=[[-68,1,-224],[0,-24,-120],[-108,-24,144]][level]
+        for index,point in enumerate(points,1):
+            m.route(f'Infection return {level}/{index}',[point,connection],'spawn')
+    board=m.sign('R50_EvacuationBay',228,8.1,214.7,'ZE / AGUARDE A SEQUÊNCIA',width=27,face=2,color='dark')
+    board.find('Properties/string[@name="Name"]').text='EvacuationStatus'

@@ -65,6 +65,12 @@ local fn=assert(loadstring(CLIENT_SOURCE));setfenv(fn,env);fn()
 local function step(dt)dt=dt or .11;now+=dt;for _,f in table.clone(bindings)do f(dt)end end
 local gui=assert(pg.ZO_SpectatorHUD);local panel=gui.Observer
 step();check(not panel.Visible and camera.CameraSubject==own,'living combatant retains camera')
+player:SetAttribute('ZO_SpawnPending',true);step()
+check(panel.Visible and camera.CameraSubject==zhA and panel.Hint.Text:find('espaço seguro',1,true)~=nil,'queued live avatar keeps teammate observation with safe return message')
+zombieA:SetAttribute('ZO_SpawnPending',true);step()
+check(camera.CameraSubject==zhB,'queued teammate cannot become a spectator target')
+zombieA:SetAttribute('ZO_SpawnPending',nil);player:SetAttribute('ZO_SpawnPending',nil);step()
+check(not panel.Visible and camera.CameraSubject==own,'safe return restores own camera after pending wait')
 camera.CameraType='Scriptable';step();camera.CameraType='Custom'
 own.Health=0;player:SetAttribute('ZO_RespawnAt',now+5);step()
 check(panel.Visible and camera.CameraSubject==zhA and player:GetAttribute('ZO_Spectating'),'death starts observation of live teammate')

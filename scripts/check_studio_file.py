@@ -25,9 +25,10 @@ def release(binary):
     required|={'EscapeSession','EscapeState','EscapeConfig','EscapeObjectives','Control1','Control2','Control3','R50_EvacuationBay','EvacuationGate'}
     required|={'HoldGates','EscapeHoldGates','GeneratorExit','MaintenanceExit','R51_GeneratorHold','EscapeRouteSigns','Spectator','SpectatorState','RouteGuide'}
     required|={'ViewRig','WeaponHandling','ImpactProfiles','RoundStats'}
+    required|={'R52_RingWorkshop','R53_ValveRoom','EvacuationStatus','WorkshopBlastReturn','ValveRoomBlastReturn'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
-    assert names.count('Hull')==175,'Expected current Survival and Escape defense barricades'
+    assert names.count('Hull')==187,'Expected current Survival and Escape defense barricades'
     assert not {'ZO_SantaAurora','ZO_HarborCollision','HarborLocks_Survival_Visual'}&set(names),'Legacy scene in K-17 build'
     assert not {'ZO_StudioSurvivalScenario','ZO_StudioSurvivalDriver'}&set(names),'Automated Studio drivers in playable release'
     assert not {'ZO_ReusedWeaponKit','ReusedRiflePresentation','RifleCasing','Bullet'}&set(names),'Unused former weapon templates in release'

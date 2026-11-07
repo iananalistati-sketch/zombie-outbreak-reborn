@@ -59,5 +59,15 @@ class Refuges(unittest.TestCase):
         boxes=[b for b in self.boxes if '/R48_UnderStair/InnerReturn' not in b[0]]
         self.assertIn('Refuge 48: protected bay exposed to entry',validate(self.data,boxes))
 
+    def test_maintenance_returns_break_entrance_sight(self):
+        for number,name in ((52,'WorkshopBlastReturn'),(53,'ValveRoomBlastReturn')):
+            boxes=[box for box in self.boxes if '/'+name not in box[0]]
+            self.assertIn(f'Refuge {number}: protected bay exposed to entry',validate(self.data,boxes))
+
+    def test_closing_workshop_entry_is_detected(self):
+        boxes=self.boxes+[('sealed_workshop',[-210.3,-24,-58],[-209.7,-14.5,-50])]
+        self.assertTrue(any('R52 workshop north approach' in error and 'sealed_workshop' in error
+                            for error in validate(self.data,boxes)))
+
 
 if __name__=='__main__':unittest.main()

@@ -124,12 +124,12 @@ local function menuOpen(): boolean
         or player:GetAttribute("ZO_ScoreboardOpen")==true or player:GetAttribute("ZO_Spectating")==true or GuiService.MenuIsOpen
 end
 local function canShoot(): boolean
-    if menuOpen() then return false end
+    if menuOpen() or player:GetAttribute("ZO_SpawnPending")==true then return false end
     local hum=humanoid()
     return Rules.canFire(role(),phase(),hum~=nil and hum.Health>0,player:GetAttribute("ZO_BarricadeSelection")~=nil)
 end
 local function canMelee(): boolean
-    if menuOpen() then return false end
+    if menuOpen() or player:GetAttribute("ZO_SpawnPending")==true then return false end
     local hum=humanoid()
     return Rules.canMelee(role(),phase(),hum~=nil and hum.Health>0)
 end

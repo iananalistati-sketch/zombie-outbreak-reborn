@@ -77,6 +77,7 @@ local function assetAvailable(id: string,skin: string?): boolean
     return WeaponSkins.resolve(kit,id,skin)~=nil
 end
 local function allowed(player: Player): boolean
+    if player:GetAttribute("ZO_SpawnPending")==true then return false end
     local _,_,hum=character(player)
     local loadout=loadouts[player]
     local config=loadout and loadout:current()
@@ -490,6 +491,7 @@ rifle.OnServerEvent:Connect(function(player: Player,action: any,direction: any,a
 end)
 melee.OnServerEvent:Connect(function(player: Player,direction: any)
     if not admit(player,"Melee") then return end
+    if player:GetAttribute("ZO_SpawnPending")==true then return end
     local char,head,hum=character(player)
     if not Rules.canMelee(role(player),phase(),hum~=nil) or not char or not head or not directionAllowed(head,direction) then return end
     local now=os.clock()

@@ -55,6 +55,7 @@ local characterCleanups: {[Player]: () -> ()}={}
 local mode="Survival"
 local escape: any=nil
 local escapeConfig: any=nil
+local pendingSpawns: {[Player]: any}={}
 RS:SetAttribute("ZO_RoundMode",mode)
 
 local function alive(model: Model?): boolean
@@ -126,11 +127,41 @@ end
 local function teleport(player: Player,marker: BasePart)
     if player.Character and alive(player.Character) then player.Character:PivotTo(marker.CFrame*CFrame.new(0,4,0)) end
 end
+local function clearPendingSpawn(player: Player)
+    local pending=pendingSpawns[player]
+    if pending then
+        if pending.root.Parent then pending.root.Anchored=pending.anchored end
+        pending.shield:Destroy();pendingSpawns[player]=nil
+    end
+    player:SetAttribute("ZO_SpawnPending",nil)
+end
 local function teleportZombie(player: Player)
-    if mode=="Escape" and escapeConfig and player.Character and alive(player.Character) then
-        local p=escapeConfig.MotherSpawn
-        player.Character:PivotTo(CFrame.new(p[1],p[2]+4,p[3]))
-    else teleport(player,zombieSpawn) end
+    local char=player.Character
+    if not char or not alive(char) then return end
+    if mode~="Escape" or not escape then clearPendingSpawn(player);teleport(player,zombieSpawn);return end
+    local root=char:FindFirstChild("HumanoidRootPart") :: BasePart
+    if not root then return end
+    local params=OverlapParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances={char};params.MaxParts=0
+    local point,group=escape:spawn(function(p)
+        local parts=workspace:GetPartBoundsInBox(CFrame.new(p[1],p[2]+4,p[3]),Vector3.new(3.5,7,3.5),params)
+        for _,part in parts do if part.CanCollide then return false end end
+        return true
+    end)
+    if point then
+        clearPendingSpawn(player)
+        char:PivotTo(CFrame.new(point[1],point[2]+4,point[3]))
+        root.AssemblyLinearVelocity=Vector3.zero;root.AssemblyAngularVelocity=Vector3.zero
+        player:SetAttribute("ZO_SpawnSector",if group>0 then escapeConfig.Respawns[group].Label else "Administração norte")
+        player:SetAttribute("ZO_RespawnAt",nil)
+    elseif not pendingSpawns[player] then
+        -- All authored sites are occupied or close to humans: wait at the
+        -- lobby, protected and unable to attack, rather than overlapping them.
+        local shield=Instance.new("ForceField");shield.Name="ZO_SpawnWait";shield.Visible=false;shield.Parent=char
+        pendingSpawns[player]={root=root,anchored=root.Anchored,shield=shield,retryAt=os.clock()+.5}
+        teleport(player,lobbySpawn);root.Anchored=true
+        player:SetAttribute("ZO_SpawnPending",true)
+    end
 end
 local function setRole(player: Player,team: Team,move: boolean?)
     player.Team=team;player.Neutral=false;player:SetAttribute("ZO_Role",team.Name)
@@ -150,6 +181,7 @@ local function join(player: Player)
     local characterConnections: {RBXScriptConnection}={}
     local placed=false
     local function clearCharacter()
+        clearPendingSpawn(player)
         for _,connection in characterConnections do connection:Disconnect() end
         table.clear(characterConnections)
         if diedConnection then diedConnection:Disconnect();diedConnection=nil end
@@ -203,6 +235,7 @@ end
 Players.PlayerAdded:Connect(join)
 for _,player in Players:GetPlayers() do join(player) end
 Players.PlayerRemoving:Connect(function(player)
+    clearPendingSpawn(player)
     local cleanupCharacter=characterCleanups[player]
     if cleanupCharacter then cleanupCharacter();characterCleanups[player]=nil end
     participants[player]=nil;previousMothers[player]=nil;updateCounts()
@@ -211,6 +244,7 @@ Players.RespawnTime=Config.RespawnSeconds
 
 infection.OnInvoke=function(attacker: Player,target: Model): boolean
     if typeof(attacker)~="Instance" or not attacker:IsA("Player") or typeof(target)~="Instance" or not target:IsA("Model") then return false end
+    if attacker:GetAttribute("ZO_SpawnPending")==true then return false end
     local victim=Players:GetPlayerFromCharacter(target)
     if victim then
         if victim==attacker or victim.Character~=target then return false end
@@ -249,6 +283,8 @@ local function countdown(value: string,seconds: number): boolean
     end
 end
 local function cleanup(winner: string)
+    for player in pendingSpawns do clearPendingSpawn(player) end
+    for _,player in Players:GetPlayers() do player:SetAttribute("ZO_SpawnSector",nil) end
     -- Snapshot eligibility before Results/Lobby signals. Economy must not infer
     -- survival from a delayed Team event after infection, death or round cleanup.
     for player in participants do
@@ -339,6 +375,12 @@ while true do
         health()
         local remaining=math.max(0,math.ceil(deadline-os.clock()))
         setState("Active",remaining)
+        for player,pending in pendingSpawns do
+            if not participants[player] or player.Parent~=Players or player.Team~=zombies or not characterReady(player) then clearPendingSpawn(player)
+            elseif os.clock()>=pending.retryAt then
+                pending.retryAt=os.clock()+.5;teleportZombie(player)
+            end
+        end
         local h,z=counts()
         if mode=="Escape" then
             result=if h+z<Config.MinimumPlayers then "Cancelled" elseif h==0 then "Zombies" elseif z==0 then "Cancelled" else nil

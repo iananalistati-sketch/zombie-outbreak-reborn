@@ -123,6 +123,7 @@ end
 -- Only Combat can invoke this, after consuming ammo and tracing the first hit.
 local bullet=internal:WaitForChild("PushBarricade") :: BindableFunction
 bullet.OnInvoke=function(player: Player,part: BasePart,direction: Vector3,weaponScale: number?): boolean
+    if player:GetAttribute("ZO_SpawnPending")==true then return false end
     local entry=entryFor(part)
     local _,head,hum=character(player)
     if not entry or not head or not Rules.canBuild(role(player),phase(),hum~=nil) then return false end
@@ -146,6 +147,7 @@ damage.OnInvoke=function(player: Player|Model,part: BasePart): number?
         char=player;head=player:FindFirstChild("Head");hum=player:FindFirstChildOfClass("Humanoid")
         if not hum or hum.Health<=0 then return nil end
     else
+        if player:GetAttribute("ZO_SpawnPending")==true then return nil end
         char,head,hum=character(player)
         if not Rules.canAttack(role(player),phase(),hum~=nil) then return nil end
     end

@@ -159,6 +159,7 @@ connect(player.CharacterRemoving,function()
 end)
 if player.Character then task.spawn(bindHumanoid,player.Character) end
 local announcementKey=""
+local lastCheckpoint: number?=nil
 local bannerUntil=0
 task.spawn(function()
     local remote=RS:WaitForChild("ZO_CombatFX",20)
@@ -234,6 +235,7 @@ connect(Run.RenderStepped,function(dt)
     local escapeStatus=RS:GetAttribute("ZO_EscapeStatus")
     local escapeStage=RS:GetAttribute("ZO_EscapeStage") or 1
     local active=(phase=="Training" or phase=="Preparation" or phase=="Active") and alive and (role=="Humans" or zombie)
+        and player:GetAttribute("ZO_SpawnPending")~=true
     local instruction,title=State.objective(phase,role,RS:GetAttribute("ZO_LastWinner"),stage)
     local seconds=math.max(0,math.ceil((if phase=="Training" then RS:GetAttribute("ZO_TrainingRemaining") else RS:GetAttribute("ZO_Remaining")) or 0))
     if mode=="Escape" and phase=="Active" then
@@ -244,7 +246,10 @@ connect(Run.RenderStepped,function(dt)
         elseif escapeStatus=="Extraction" then
             instruction=("ENTRE NO TERMINAL · %d humanos na área · extração em %ds"):format(RS:GetAttribute("ZO_EscapeInside") or 0,waitTime);seconds=waitTime
         else instruction=("%d/3 · %s · acione o painel no local"):format(escapeStage,target) end
-        if zombie then instruction="Impeça os humanos de extrair · "..instruction end
+        if zombie then
+            instruction=if player:GetAttribute("ZO_SpawnPending")==true then "Retorno aguardando espaço seguro · os postos estão ocupados"
+                else "Retorno: "..tostring(RS:GetAttribute("ZO_InfectionSector") or "Administração norte").." · "..instruction
+        end
     elseif mode=="Escape" and phase=="Preparation" then
         title="ZE / Preparação";instruction="Equipe-se · siga os objetivos após a primeira infecção"
     elseif mode=="Escape" and phase=="Results" then
@@ -261,9 +266,17 @@ connect(Run.RenderStepped,function(dt)
     if errorMessage then instruction="FALHA: "..tostring(errorMessage);objective.TextColor3=C.red
     elseif phase=="Starting" then instruction="Iniciando · "..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando servidor");objective.TextColor3=C.muted
     else objective.TextColor3=C.text end
-    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.5.0")
-    local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role
+    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.6.0")
+    local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role..":"..tostring(RS:GetAttribute("ZO_InfectionCheckpoint"))
     if key~=announcementKey then announcementKey=key;bannerUntil=os.clock()+3;bannerTitle.Text=string.upper(title);bannerDetail.Text=instruction end
+    local checkpoint=RS:GetAttribute("ZO_InfectionCheckpoint") or 0
+    if phase=="Active" and mode=="Escape" then
+        if not zombie and lastCheckpoint and checkpoint>lastCheckpoint then
+            bannerUntil=os.clock()+3;bannerTitle.Text="A HORDA AVANÇOU"
+            bannerDetail.Text="Novo retorno de infectados / "..tostring(RS:GetAttribute("ZO_InfectionSector") or "Setor de manutenção")
+        end
+        lastCheckpoint=checkpoint
+    else lastCheckpoint=nil end
     banner.Visible=not modal and not boardOpen and os.clock()<bannerUntil and phase~="Waiting" and phase~="Starting" and phase~="Results"
     local roundId=RS:GetAttribute("ZO_RoundId") or 0
     summary.Visible=phase=="Results" and roundId>0 and dismissedSummary~=roundId and not modal and not boardOpen

@@ -258,6 +258,11 @@ do
     check(health==kind.Health-Config.MeleeDamage and hull.AssemblyLinearVelocity.X>0
         and hull.AssemblyLinearVelocity.X<rifleSpeed,"zombie melee damages the prop but has less displacement impulse than a rifle hit")
     check(brake.Enabled,"zombie melee cannot disable body resistance")
+    zombie:SetAttribute('ZO_SpawnPending',true)
+    check(s.internal.DamageBarricade.OnInvoke(zombie,hull)==nil,'safe-return wait cannot damage props through the private callback')
+    zombie:SetAttribute('ZO_SpawnPending',nil);human:SetAttribute('ZO_SpawnPending',true)
+    check(not s.internal.PushBarricade.OnInvoke(human,hull,Vector.xAxis),'pending guard also blocks private bullet impulse')
+    human:SetAttribute('ZO_SpawnPending',nil)
     options.supported=false;hull.AssemblyLinearVelocity=Vector.new(1,-9,2);s.heartbeat:Fire(.1)
     check(not brake.Enabled and hull.AssemblyLinearVelocity.Y==-9,"unsupported falling prop loses only the planar brake and keeps downward velocity")
     check(not hull.Anchored and hull.CanCollide and hull.CanQuery and hull.ServerOwned,"falling retains collision and server-owned physical motion")

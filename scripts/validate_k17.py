@@ -87,12 +87,12 @@ def validate(path,manifest,quiet=False):
     tree=ET.parse(path);boxes,parts=geometry(tree)
     assert len(parts)==manifest['parts'],(len(parts),manifest['parts'])
     assert all(p['Anchored'].text=='true' for p in parts)
-    # v0.3 adds a playable evacuation bay, not repeated decorative tiles.
+    # v0.6 adds two fitted tunnel interiors with floors and connected entrances.
     assert len(parts)<=5650,'Review part budget before adding more decorative repetition'
     lights=tree.findall('.//Item[@class="PointLight"]')
-    assert len(lights)==manifest['lights'] and len(lights)<=96
+    assert len(lights)==manifest['lights'] and len(lights)<=98
     assert sum(props(l)['Shadows'].text=='true' for l in lights)<=8
-    assert {d['id'] for d in manifest['defenses']}==set(range(1,35))|set(range(40,52))
+    assert {d['id'] for d in manifest['defenses']}==set(range(1,35))|set(range(40,54))
     assert len(manifest['buildings'])==5
     assert {2,3,4} <= {b['floors'] for b in manifest['buildings']}
     for aperture in manifest['openings']:

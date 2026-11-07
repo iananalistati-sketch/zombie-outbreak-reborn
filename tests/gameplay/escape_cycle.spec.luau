@@ -125,4 +125,57 @@ do
     s.character(zombie);s.advance(0)
     check(zombie:GetAttribute('ZO_RespawnAt')==nil and zombie.Character.Humanoid.Health==RoundConfig.ZombieHealth,'new character clears deadline and restores infected role')
 end
+do
+    local s,_,human,zombie,map,_,activate=start()
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==0,'Escape begins with initial infection return only')
+    check(map.EscapeObjectives.Indicator1.Color[1]==233 and map.EscapeObjectives.Indicator2.Color[1]==155,'ready and locked objective lamps differ')
+    local pivots=zombie.Character.PivotCount
+    activate(1,human)
+    check(map.EscapeObjectives.Indicator1.Color[1]==242,'holding objective lamp turns amber')
+    s.advance(EscapeConfig.Stages[1].HoldSeconds+.3)
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==0,'hold completion does not advance return until actual traversal')
+    local late=s.add('LateScout','Humans');late.Character.HumanoidRootPart.Position=tools.Vector.new(-220,-20,-100);s.advance(.3)
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==0,'late spectator cannot advance infection spawns')
+    human.Character.HumanoidRootPart.Position=tools.Vector.new(-220,-20,-100);s.advance(.3)
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==1 and s.rs:GetAttribute('ZO_InfectionSector')=='Descida norte','actual participant traversal unlocks checkpoint')
+    check(zombie.Character.PivotCount==pivots,'checkpoint never teleports a living chasing zombie')
+    zombie.Character.Humanoid:TakeDamage(1000);s.advance(0);s.character(zombie);s.advance(0)
+    local p=zombie.Character.Pivot.Position
+    check(p.X==0 and p.Y==-20 and p.Z<=-146,'dead zombie returns to the unlocked underground group')
+    check(zombie:GetAttribute('ZO_SpawnSector')=='Descida norte'and zombie:GetAttribute('ZO_SpawnPending')~=true,'successful return publishes sector and clears pending guard')
+    activate(2,human);s.advance(EscapeConfig.Stages[2].HoldSeconds+.3)
+    human.Character.HumanoidRootPart.Position=tools.Vector.new(0,-20,178);s.advance(.3)
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==2,'real pump-to-east traversal unlocks final approach return')
+    local blocker=s.instance('Part','Occupied',s.world);blocker.CanCollide=true
+    local seen
+    s.overlap(function(frame,size,params)
+        seen={size=size,params=params}
+        return if frame.Position.Y<0 then {blocker} else {}
+    end)
+    s.character(zombie);s.advance(0)
+    check(zombie:GetAttribute('ZO_SpawnSector')=='Administração norte','occupied underground returns fall back to a clear initial group')
+    check(seen.size.Y==7 and seen.params.FilterType=='Exclude'and seen.params.MaxParts==0,'real return queries full body volume excluding only own avatar')
+    s.overlap(function()return {blocker}end);s.character(zombie);s.advance(0)
+    local root=zombie.Character.HumanoidRootPart
+    check(zombie:GetAttribute('ZO_SpawnPending')==true and root.Anchored and zombie.Character:FindFirstChild('ZO_SpawnWait')~=nil,'all occupied returns queue a protected anchored wait')
+    local rays=#s.raycasts;s.melee(zombie)
+    check(#s.raycasts==rays,'queued zombie cannot trace melee or push a barricade')
+    check(not s.internal.Infect:Invoke(zombie,human.Character),'queued zombie cannot infect through private authority either')
+    s.overlap(function()return {}end);s.advance(.8)
+    check(zombie:GetAttribute('ZO_SpawnPending')~=true and not root.Anchored and not zombie.Character:FindFirstChild('ZO_SpawnWait'),'round retries and releases only its own anchor/shield after safe return')
+    activate(3,human);s.advance(EscapeConfig.Stages[3].HoldSeconds+.3)
+    check(map.R50_EvacuationBay.EvacuationStatus.Text.Text:find('EXTRAÇÃO',1,true)~=nil,'world terminal board reports real extraction countdown')
+    s.advance(EscapeConfig.ExtractionSeconds+.3)
+    check(s.rs:GetAttribute('ZO_InfectionCheckpoint')==nil and s.rs:GetAttribute('ZO_InfectionSector')==nil,'result clears advanced return replication')
+    check(map.R50_EvacuationBay.EvacuationStatus.Text.Text=='ZE / AGUARDE A SEQUÊNCIA','world board resets for Survival/training')
+end
+do
+    local s,people,_,zombie=start()
+    local blocker=s.instance('Part','Occupied',s.world);blocker.CanCollide=true
+    s.overlap(function()return {blocker}end);s.character(zombie);s.advance(0)
+    local old=zombie.Character;local root=old.HumanoidRootPart
+    s.remove(people[1]);s.remove(people[2]);s.advance(.4)
+    check(not root.Anchored and not old:FindFirstChild('ZO_SpawnWait'),'disconnect/cancellation cannot leave an anchored respawn waiter')
+    check(zombie:GetAttribute('ZO_SpawnPending')==nil,'cancelled round clears pending combat restriction')
+end
 print(('PASS integrated Escape + combat + round: %d checks; API doubles, no engine execution'):format(checks))

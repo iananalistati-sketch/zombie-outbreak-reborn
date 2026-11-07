@@ -32,6 +32,11 @@
 - Round é também a única autoridade de modo. EscapeSession é uma sessão
   subordinada, sem loop próprio: limpa prompts/portão na saída e confirma
   extração por posição, vida, equipe e participação no servidor.
+- Retornos ZE avançam somente após objetivo concluído e travessia de humano
+  vivo participante. Nunca teleportar perseguidores vivos para acompanhar o
+  grupo. Consultar distância de humanos e volume de corpo, recuar para postos
+  anteriores ou aguardar protegido. Round retenta a cada 0,5s e limpa sua
+  âncora/ForceField; espera não pode disparar, infectar ou golpear barricadas.
 - HoldGates só fecha uma passagem livre de personagens e barricadas. Tocar uma
   porta já fechada não a reabre; sair do hold/cancelar libera todas as portas.
 - Espectador usa zumbis vivos em Active para impedir exposição de refúgios dos

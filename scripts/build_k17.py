@@ -22,6 +22,7 @@ from k17_power_architecture import build_power_architecture
 from k17_tower_architecture import build_tower_architecture
 from k17_defense_presentation import build_defense_presentation
 from k17_escape import build_escape, CONFIG as ESCAPE_CONFIG, luau as escape_luau
+from k17_maintenance_refuges import ROOMS as MAINTENANCE_ROOMS, build_maintenance_refuges
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = {
@@ -368,7 +369,7 @@ def office_block(m,name,rect,levels,color,bridges=()):
 SHAFTS=[(22,38,-112,-60),(132,148,122,174),(-260,-208,180,196)]
 TUNNELS=[(-10,10,-228,228),(-230,230,-222,-202),(-230,-210,-212,188),
          (-230,230,168,188),(210,230,-212,188),(-10,38,-130,-110),
-         (132,148,172,188),(-212,-198,180,196),(-220,-36,134,154),(-100,-36,122,164),(-36,0,134,154)]
+         (132,148,172,188),(-212,-198,180,196),(-220,-36,134,154),(-100,-36,122,164),(-36,0,134,154)]+MAINTENANCE_ROOMS
 
 
 def underground(m):
@@ -661,6 +662,7 @@ def build():
     build_tower_architecture(m)
     build_defense_presentation(m)
     build_escape(m)
+    build_maintenance_refuges(m)
     defenses(m)
     for name,point in [('HumanSpawn',(-68,1,-136)),('ZombieSpawn',(-217,1,136)),('LobbySpawn',(-30,.1,36))]:
         x,y,z=point;m.box('Spawns',name,(x-1,x+1,z-1,z+1),y,y+.1,physical=False,alpha=1)
