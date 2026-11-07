@@ -41,6 +41,7 @@ jobs:
           python scripts/test_round_controller.py --luau /tmp/luau_release/luau
           python scripts/test_combat_controller.py --luau /tmp/luau_release/luau
           python scripts/test_survival_cycle.py --luau /tmp/luau_release/luau
+          python scripts/test_escape.py --luau /tmp/luau_release/luau
           python scripts/test_loadout_client.py --luau /tmp/luau_release/luau
           python scripts/test_weapons_client.py --luau /tmp/luau_release/luau
           python scripts/test_weapon_motion.py --luau /tmp/luau_release/luau

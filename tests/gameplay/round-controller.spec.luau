@@ -1,6 +1,9 @@
 -- Executed by scripts/test_round_controller.py, which injects the current server sources.
 -- This runs the actual Round controller, including its Roblox service calls and scheduling.
 local passed=0
+-- Existing lifecycle scenarios exercise Survival; Escape has its own integrated runner.
+ROUND_CONFIG=table.clone(ROUND_CONFIG)
+ROUND_CONFIG.ModeRotation={"Survival"}
 local function check(ok,label) assert(ok,label);passed+=1 end
 
 local function simulation(options)

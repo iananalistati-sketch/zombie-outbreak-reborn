@@ -95,6 +95,12 @@
         },
         "TrainingRig": {
           "$path": "src/maps/k17/gameplay/TrainingRig.luau"
+        },
+        "EscapeConfig": {
+          "$path": "src/maps/k17/gameplay/EscapeConfig.luau"
+        },
+        "EscapeState": {
+          "$path": "src/maps/k17/gameplay/EscapeState.luau"
         }
       },
       "K17Refuges": {
@@ -140,6 +146,9 @@
         },
         "TrainingDirector": {
           "$path": "src/maps/k17/gameplay/TrainingDirector.server.luau"
+        },
+        "EscapeSession": {
+          "$path": "src/maps/k17/gameplay/EscapeSession.luau"
         }
       }
     },

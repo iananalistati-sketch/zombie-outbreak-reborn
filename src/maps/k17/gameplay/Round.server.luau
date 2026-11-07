@@ -52,6 +52,10 @@ local roundId=0
 local participants: {[Player]: boolean}={}
 local previousMothers: {[Player]: boolean}={}
 local characterCleanups: {[Player]: () -> ()}={}
+local mode="Survival"
+local escape: any=nil
+local escapeConfig: any=nil
+RS:SetAttribute("ZO_RoundMode",mode)
 
 local function alive(model: Model?): boolean
     local hum=model and model:FindFirstChildOfClass("Humanoid")
@@ -111,14 +115,23 @@ end
 local function teleport(player: Player,marker: BasePart)
     if player.Character and alive(player.Character) then player.Character:PivotTo(marker.CFrame*CFrame.new(0,4,0)) end
 end
+local function teleportZombie(player: Player)
+    if mode=="Escape" and escapeConfig and player.Character and alive(player.Character) then
+        local p=escapeConfig.MotherSpawn
+        player.Character:PivotTo(CFrame.new(p[1],p[2]+4,p[3]))
+    else teleport(player,zombieSpawn) end
+end
 local function setRole(player: Player,team: Team,move: boolean?)
     player.Team=team;player.Neutral=false;player:SetAttribute("ZO_Role",team.Name)
     style(player)
-    if move then teleport(player,if team==zombies then zombieSpawn else humanSpawn) end
+    if move then
+        if team==zombies then teleportZombie(player) else teleport(player,humanSpawn) end
+    end
     updateCounts()
 end
 local function join(player: Player)
     player:SetAttribute("ZO_SurvivedRound",0)
+    player:SetAttribute("ZO_EscapedRound",0)
     setRole(player,lobby)
     local currentCharacter: Model?=nil
     local boundHumanoid: Humanoid?=nil
@@ -157,7 +170,7 @@ local function join(player: Player)
             if placed or not hum or hum.Health<=0 or not root or not root:IsA("BasePart") then return end
             placed=true;style(player)
             if participants[player] and (state=="Preparation" or state=="Active") then
-                teleport(player,if player.Team==zombies then zombieSpawn else humanSpawn)
+                if player.Team==zombies then teleportZombie(player) else teleport(player,humanSpawn) end
             else teleport(player,lobbySpawn) end
         end
         table.insert(characterConnections,char.ChildAdded:Connect(function(child)
@@ -228,10 +241,18 @@ local function cleanup(winner: string)
     -- survival from a delayed Team event after infection, death or round cleanup.
     for player in participants do
         if player.Parent==Players then
-            player:SetAttribute("ZO_SurvivedRound",if winner=="Humans" and player.Team==humans
-                and alive(player.Character) then roundId else 0)
+            local survived=winner=="Humans" and player.Team==humans and alive(player.Character)
+                and (mode~="Escape" or (escape and escape.escaped[player]==true))
+            player:SetAttribute("ZO_SurvivedRound",if survived then roundId else 0)
+            player:SetAttribute("ZO_EscapedRound",if survived and mode=="Escape" then roundId else 0)
         end
     end
+    local escaped=0
+    if escape then
+        for _ in escape.escaped do escaped+=1 end
+        escape:destroy();escape=nil
+    end
+    RS:SetAttribute("ZO_LastEscaped",escaped)
     RS:SetAttribute("ZO_LastWinner",winner)
     setState("Results",Config.Results)
     for player in participants do if player.Parent==Players then setRole(player,lobby) end end
@@ -263,13 +284,24 @@ while true do
     RS:SetAttribute("ZO_WaitingReason","")
     if not countdown("Intermission",Config.Intermission) then continue end
     participants={};roundId+=1;RS:SetAttribute("ZO_RoundId",roundId)
+    mode=RoundRules.mode(Config.ModeRotation,roundId)
+    RS:SetAttribute("ZO_RoundMode",mode)
     workspace:SetAttribute("ZO_BarricadePractice",false)
     local practice=workspace:FindFirstChild("ZO_PracticeTargets")
     if practice then practice:Destroy() end
     for _,player in Players:GetPlayers() do
         if characterReady(player) then
-            participants[player]=true;player:SetAttribute("ZO_SurvivedRound",0);setRole(player,humans,true)
+            participants[player]=true;player:SetAttribute("ZO_SurvivedRound",0);player:SetAttribute("ZO_EscapedRound",0);setRole(player,humans,true)
         end
+    end
+    if mode=="Escape" then
+        escapeConfig=require(dependency(gameplay,"EscapeConfig","ModuleScript"))
+        local policy=require(dependency(gameplay,"EscapeState","ModuleScript"))
+        local session=require(dependency(script.Parent,"EscapeSession","ModuleScript"))
+        escape=session.new(world,RS,escapeConfig,policy,function(player)
+            return state=="Active" and participants[player]==true and player.Parent==Players
+                and player.Team==humans and characterReady(player)
+        end,participants)
     end
     if not countdown("Preparation",Config.Preparation) then cleanup("Cancelled");continue end
     local eligible={}
@@ -281,18 +313,31 @@ while true do
     previousMothers={}
     for _,player in mothers do
         previousMothers[player]=true
-        setRole(player,zombies,Config.MotherZombieTeleport)
+        setRole(player,zombies,if mode=="Escape" then true else Config.MotherZombieTeleport)
     end
-    local deadline=os.clock()+Config.Duration
+    local deadline=os.clock()+(if mode=="Escape" then escapeConfig.Duration else Config.Duration)
     local result=nil
     repeat
         health()
         local remaining=math.max(0,math.ceil(deadline-os.clock()))
         setState("Active",remaining)
         local h,z=counts()
-        result=RoundRules.result(h,z,h+z,Config.MinimumPlayers,remaining)
+        if mode=="Escape" then
+            result=if h+z<Config.MinimumPlayers then "Cancelled" elseif h==0 then "Zombies" elseif z==0 then "Cancelled" else nil
+            if not result then result=escape:update(os.clock(),remaining) end
+        else result=RoundRules.result(h,z,h+z,Config.MinimumPlayers,remaining) end
         if not result then task.wait(.25) end
     until result~=nil
+    if escape and escape.state.status=="Done" then
+        -- ZE finale: only living humans in the extraction bay are protected.
+        RS:SetAttribute("ZO_DecontaminationRound",roundId)
+        for player in participants do
+            if not escape.escaped[player] and alive(player.Character) then
+                local hum=player.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+                hum.Health=0
+            end
+        end
+    end
     cleanup(result :: string)
 end
 end

@@ -168,6 +168,9 @@ local function soloPractice(): boolean
         and (state=="Training" or (RunService:IsStudio() and state=="Waiting"))
 end
 local function canBuy(): boolean return role()=="Humans" and alive() and (phase()=="Preparation" or soloPractice()) end
+local function canRefill(): boolean
+    return canBuy() or (role()=="Humans" and alive() and phase()=="Active" and RS:GetAttribute("ZO_RoundMode")=="Escape")
+end
 local function canEquip(): boolean return role()=="Humans" and alive() and (phase()=="Preparation" or phase()=="Active") end
 local function owned(id: string): boolean
     return id==player:GetAttribute("ZO_PrimaryWeapon") or id==player:GetAttribute("ZO_SecondaryWeapon")
@@ -250,6 +253,7 @@ local function availabilityText(): (string,Color3)
         end
         return "PREPARAÇÃO · compre agora. Munição repõe as reservas das duas armas.",colors.accent
     end
+    if canRefill() then return "ZOMBIE ESCAPE · reabasteça munição com créditos; armas novas ficam para a preparação.",colors.accent end
     if phase()=="Active" then return "COMPRAS ENCERRADAS · troque entre suas armas com 1 / 2 ou Q.",colors.gold end
     return "O arsenal abre para compras durante a preparação da rodada.",colors.muted
 end
@@ -273,7 +277,8 @@ refresh=function()
     inventory.Text=("Primária: %s   |   Secundária: %s\nEm mãos: %s"):format(weaponName(primary),weaponName(secondary),weaponName(player:GetAttribute("ZO_WeaponId")))
     local stateText,stateColor=availabilityText();availability.Text=stateText;availability.TextColor3=stateColor
     local remaining=math.max(0,math.floor(RS:GetAttribute("ZO_Remaining") or 0))
-    timer.Text=if soloPractice() then "TREINO" elseif phase()=="Preparation" then ("COMPRA  %02d:%02d"):format(math.floor(remaining/60),remaining%60) else "COMPRA ENCERRADA"
+    timer.Text=if soloPractice() then "TREINO" elseif phase()=="Preparation" then ("COMPRA  %02d:%02d"):format(math.floor(remaining/60),remaining%60)
+        elseif canRefill() then "ZE / MUNIÇÃO DISPONÍVEL" else "COMPRA ENCERRADA"
     local item=Config.Weapons[selected]
     local applied=appliedSkin(selected)
     if not previewSkins[selected] or seenSkins[selected]~=applied then previewSkins[selected]=applied end
@@ -344,7 +349,7 @@ refresh=function()
     ammo.Text=("MUNIÇÃO  $%d"):format(Config.Economy.AmmoPrice)
     setEnabled(buy,modelReady and pending==nil and canBuy() and not isOwned and item.Slot=="Primary" and balance>=item.Price)
     setEnabled(equip,modelReady and pending==nil and canEquip() and isOwned and selected~=player:GetAttribute("ZO_WeaponId"))
-    setEnabled(ammo,pending==nil and canBuy() and balance>=Config.Economy.AmmoPrice)
+    setEnabled(ammo,pending==nil and canRefill() and balance>=Config.Economy.AmmoPrice)
     local human=role()=="Humans" and alive()
     touchPrimary.Visible=UIS.TouchEnabled and human and not open and player:GetAttribute("ZO_TacticalMapOpen")~=true
     touchSecondary.Visible=touchPrimary.Visible
@@ -394,7 +399,7 @@ local function request(action: string,id: string?,skin: string?)
     if action=="Skin" and (not id or not skin or not canStyle(id,skin,true)) then return end
     if (action=="Buy" or action=="Equip") and id and Config.Weapons[id] and not assetReady(id) then return end
     if action=="Buy" and (not canBuy() or owned(selected) or Config.Weapons[selected].Slot~="Primary") then return end
-    if action=="Ammo" and not canBuy() then return end
+    if action=="Ammo" and not canRefill() then return end
     if action=="Equip" and (not canEquip() or not id or (id~="Primary" and id~="Secondary" and not owned(id))) then return end
     pending=action;pendingSerial+=1
     local serial=pendingSerial

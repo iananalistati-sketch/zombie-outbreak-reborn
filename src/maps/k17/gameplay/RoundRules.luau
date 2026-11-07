@@ -1,5 +1,9 @@
 --!strict
 local RoundRules={}
+function RoundRules.mode(rotation: {string}?,id: number): string
+    if not rotation or #rotation==0 then return "Survival" end
+    return if rotation[(id-1)%#rotation+1]=="Escape" then "Escape" else "Survival"
+end
 function RoundRules.motherCount(count: number,ratio: number): number
     if count<2 then return 0 end
     return math.clamp(math.floor(count*ratio),1,count-1)

@@ -701,4 +701,19 @@ do
     end
 end
 
+do
+    local s,p=twoHumans();ready(s,p);s.fire(p);s.advance(.1);s.reload(p)
+    s.advance(Config.Weapons.Rifle.ReloadSeconds+.1)
+    local reserve,credits=attr(p,'Reserve'),attr(p,'Credits')
+    s.phase('Active');s.rs:SetAttribute('ZO_RoundMode','Survival');s.loadout(p,'Ammo')
+    check(attr(p,'Reserve')==reserve and attr(p,'Credits')==credits,'Survival keeps its preparation-only ammunition purchase rule')
+    s.advance(.05);s.rs:SetAttribute('ZO_RoundMode','Escape');s.loadout(p,'Ammo')
+    check(attr(p,'Reserve')==Config.Weapons.Rifle.Reserve and attr(p,'Credits')==credits-Config.Economy.AmmoPrice,'Escape allows paid reserve refill during the active escape')
+    s.advance(.05);s.loadout(p,'Ammo')
+    check(attr(p,'Credits')==credits-Config.Economy.AmmoPrice,'full reserve cannot be charged again')
+    s.advance(.05);s.loadout(p,'Buy','Shotgun')
+    check(attr(p,'PrimaryWeapon')=='Rifle','Escape refill exception cannot buy a new primary mid-round')
+    s.role(p,'Zombies');local before=attr(p,'Credits');s.advance(.05);s.loadout(p,'Ammo')
+    check(attr(p,'Credits')==before,'infected player cannot use the Escape refill exception')
+end
 print(("PASS actual Combat controller: %d assertions; inventory, skins, economy, pellet aggregation, timers, authority and containment (Roblox API doubles)"):format(checks))

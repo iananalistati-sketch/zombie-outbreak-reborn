@@ -227,6 +227,44 @@ for coordinate = -250, 250, 50 do
     rectangle("GridX", {coordinate, coordinate + .65, -300, 300}, colors.line, .7)
     rectangle("GridZ", {-300, 300, coordinate, coordinate + .65}, colors.line, .7)
 end
+local escapeConfig=require(RS:WaitForChild("K17Gameplay"):WaitForChild("EscapeConfig"))
+local escapeMarkers={}
+local escapePaths={}
+for i,points in escapeConfig.Paths do
+    local lines={};escapePaths[i]=lines
+    for j=2,#points do
+        local a,b=points[j-1],points[j]
+        local dx,dz=b[1]-a[1],b[3]-a[3]
+        local length=math.sqrt(dx*dx+dz*dz)
+        if length<.01 then continue end
+        local line=Instance.new("Frame");line.Name="EscapeRoute"..i;line.AnchorPoint=Vector2.new(.5,.5)
+        line.Position=uv((a[1]+b[1])/2,(a[3]+b[3])/2);line.Size=UDim2.new(length/600,0,0,2)
+        line.Rotation=math.deg(math.atan2(dz,dx));line.BorderSizePixel=0;line.BackgroundColor3=colors.gold
+        line.ZIndex=9;line.Parent=map;table.insert(lines,line)
+    end
+end
+for i,stage in escapeConfig.Stages do
+    local marker=text(map,"EscapeObjective"..i,"ZE "..i,12)
+    marker.Position=uv(stage.Point[1],stage.Point[3]);marker.Size=UDim2.fromOffset(48,24)
+    marker.AnchorPoint=Vector2.new(.5,.5);marker.TextXAlignment=Enum.TextXAlignment.Center
+    marker.BackgroundTransparency=.15;marker.BackgroundColor3=colors.base;marker.ZIndex=20
+    escapeMarkers[i]=marker
+end
+local a,b=escapeConfig.Extraction.Min,escapeConfig.Extraction.Max
+local extractionArea=rectangle("ExtractionArea",{a[1],b[1],a[3],b[3]},colors.accent,.4)
+extractionArea.ZIndex=19
+local function refreshEscape()
+    local phase=RS:GetAttribute("ZO_RoundState")
+    local enabled=RS:GetAttribute("ZO_RoundMode")=="Escape" and (phase=="Preparation" or phase=="Active")
+    local stage=RS:GetAttribute("ZO_EscapeStage") or 1
+    for i,marker in escapeMarkers do
+        marker.Visible=enabled;marker.TextColor3=if i==stage then colors.gold elseif i<stage then colors.accent else colors.muted
+    end
+    for i,lines in escapePaths do for _,line in lines do line.Visible=enabled and i==stage end end
+    extractionArea.Visible=enabled
+end
+for _,attribute in {"ZO_RoundMode","ZO_EscapeStage","ZO_RoundState"} do RS:GetAttributeChangedSignal(attribute):Connect(refreshEscape) end
+refreshEscape()
 rectangle("CentralYard", {-162, 162, -120, 60}, Color3.fromRGB(59, 72, 69), .4)
 local buildings = {
     {Label = "ADMINISTRAÇÃO", Bounds = {-148, 12, -250, -124}},

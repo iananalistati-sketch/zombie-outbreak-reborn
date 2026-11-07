@@ -3,6 +3,7 @@
 return table.freeze({
     MinimumPlayers = 2,
     SoloTraining = true,
+    ModeRotation = table.freeze({"Escape","Survival"}),
     Intermission = 5,
     Preparation = 15,
     Duration = 240,

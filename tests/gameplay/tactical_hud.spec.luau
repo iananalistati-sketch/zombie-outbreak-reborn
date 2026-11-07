@@ -44,6 +44,7 @@ local shared=object('Folder','K17Gameplay',rs)
 local moduleMap={}
 moduleMap[object('ModuleScript','TacticalState',shared)]=State
 moduleMap[object('ModuleScript','Config',shared)]=Config
+moduleMap[object('ModuleScript','EscapeConfig',shared)]={Stages={{Label='Gerador'},{Label='Bombas'},{Label='Terminal'}}}
 moduleMap[object('ModuleScript','K17Refuges',rs)]={}
 local remote=object('RemoteEvent','ZO_CombatFX',rs);remote.OnClientEvent=signal()
 local world=object('Workspace','Workspace')
@@ -69,6 +70,7 @@ local env=setmetatable({game={GetService=function(_,n)return assert(services[n],
     Instance={new=function(c)return object(c)end},Enum=enum,
     UDim2={new=dim,fromOffset=function(x,y)return dim(0,x,0,y)end,fromScale=function(x,y)return dim(x,0,y,0)end},
     UDim={new=function(s,o)return {Scale=s,Offset=o}end},Vector2={new=function(x,y)return{X=x,Y=y}end},
+    Vector3={new=vec},
     Color3={fromRGB=function(r,g,b)return{R=r,G=g,B=b}end},RaycastParams={new=function()return{}end},
     task={spawn=function(fn,...)fn(...)end,wait=function()end},os={clock=function()return now end},
     require=function(m)return assert(moduleMap[m],'Unknown HUD dependency')end},{__index=getfenv()})
@@ -120,6 +122,20 @@ prop:SetAttribute('ZO_Destroyed',true);tick();check(not get('Barricade').Visible
 camera.ViewportSize={X=640,Y=480};uis.TouchEnabled=true;tick()
 check(get('RoundHeader').Size.X.Offset<=616 and get('ScoreboardToggle').Text=='PLACAR','small touch viewport adapts header and scoreboard control')
 player.CharacterRemoving:Fire(char);player.Character=nil;tick();check(not get('Vitals').Visible,'respawn gap clears old character vitals')
+char,hum,root=spawn()
+local map=object('Model','ZO_K17Foundry',world);local controls=object('Model','EscapeObjectives',map)
+local control=object('Part','Control1',controls);control.Position=vec(150,4,-224)
+local bay=object('Model','R50_EvacuationBay',map);local gate=object('Part','EvacuationGate',bay);gate.Position=vec(228,6,242)
+rs:SetAttribute('ZO_RoundMode','Escape');rs:SetAttribute('ZO_RoundState','Active');rs:SetAttribute('ZO_EscapeStatus','Ready')
+rs:SetAttribute('ZO_EscapeStage',1);rs:SetAttribute('ZO_EscapeLabel','Gerador');tick()
+check(get('EscapeWaypoint').Enabled and get('EscapeWaypoint').Adornee==control,'Escape guidance targets the current static controller')
+check(get('Objective').Text:find('1/3',1,true)~=nil,'Escape objective sequence is shown in HUD')
+rs:SetAttribute('ZO_EscapeStatus','Holding');rs:SetAttribute('ZO_EscapeRemaining',12);tick()
+check(get('RoundHeader','Clock').Text=='00:12','defense clock uses objective deadline')
+rs:SetAttribute('ZO_EscapeStatus','Extraction');rs:SetAttribute('ZO_EscapeStage',3);tick()
+check(get('EscapeWaypoint').Adornee==gate,'extraction guidance moves from panel to terminal entrance')
+rs:SetAttribute('ZO_RoundState','Results');rs:SetAttribute('ZO_LastWinner','Humans');rs:SetAttribute('ZO_LastEscaped',1);tick()
+check(get('Objective').Text:find('1 humanos',1,true)~=nil and not get('EscapeWaypoint').Enabled,'Escape results preserve rescued count and clear active guidance')
 gui:Destroy();tick()
 check(player:GetAttribute('ZO_TacticalHUDReady')==false and actions.ZO_Scoreboard==nil,'teardown restores fallback and releases input binding')
 print(('PASS actual tactical HUD: %d checks; state/cleanup API doubles, no rendering simulation'):format(checks))

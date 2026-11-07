@@ -10,6 +10,11 @@
   Survival/Mod, infecção, posições defensivas, barricadas e ambiente detalhado.
 - Plano ativo: docs/PROJECT_DIRECTION.md. Projeto principal: este repositório,
   main. fps-lab é arquivo de pesquisa, sem desenvolvimento de produto paralelo.
+- Exigência reafirmada pelo usuário após validar a 0.2: o produto deve se
+  basear nos modos Zombie Escape e Zombie Survival/Mod do Counter-Strike.
+  Decidir combate, infecção, barricadas e objetivos a partir desse núcleo.
+  Survival vence por resistir; Escape exige percurso/objetivos e extração.
+  NPCs e ondas pertencem ao treino solo, não definem os modos multiplayer.
 - O usuário exige entregas grandes e coerentes, reunindo várias melhorias
   perceptíveis. Agrupar trabalho de gameplay, mapa e apresentação por objetivo
   jogável; não pedir nova validação a cada objeto ou ajuste mínimo. Correções
@@ -21,6 +26,9 @@
   Sem DataStores, HTTP ou bans como dependências para a primeira sessão.
 - Dano, munição, créditos, infecção e rodadas pertencem ao servidor. O treino
   é uma fase própria, limitada a um jogador; a segunda conexão a desabilita.
+- Round é também a única autoridade de modo. EscapeSession é uma sessão
+  subordinada, sem loop próprio: limpa prompts/portão na saída e confirma
+  extração por posição, vida, equipe e participação no servidor.
 - Movimento inicial nativo Humanoid. SourceMotor experimental fora do perfil.
   MovementState compõe postura e efeito temporário dos tiros sem acumulação.
 - K-17 e quatro armas reais são o conteúdo inicial, sem contar skins como armas.

@@ -289,7 +289,10 @@ loadoutAction.OnServerEvent:Connect(function(player: Player,action: any,id: any,
     elseif action=="Buy" then
         if Config.Weapons[id] and not assetAvailable(id,selectedSkin(player,id)) then reason="AssetUnavailable"
         else ok,reason=loadout:buy(id,currentRole,if practice() then "Preparation" else phase(),hum~=nil,os.clock()) end
-    else ok,reason=loadout:buyAmmo(currentRole,if practice() then "Preparation" else phase(),hum~=nil) end
+    else
+        local refill=practice() or (RS:GetAttribute("ZO_RoundMode")=="Escape" and phase()=="Active")
+        ok,reason=loadout:buyAmmo(currentRole,if refill then "Preparation" else phase(),hum~=nil)
+    end
     sync(player)
     local message=if not ok then messages[reason] or "Não foi possível concluir a ação."
         elseif action=="Buy" then "Arma comprada e equipada."

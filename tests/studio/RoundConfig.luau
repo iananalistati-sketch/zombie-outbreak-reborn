@@ -5,4 +5,5 @@ config.Intermission=2
 config.Preparation=3
 config.Duration=30
 config.Results=3
+config.ModeRotation=table.freeze({"Survival"})
 return table.freeze(config)

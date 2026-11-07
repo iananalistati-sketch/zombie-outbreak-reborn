@@ -208,7 +208,21 @@ local function simulation(options)
     rs:SetAttribute("ZO_RoundId",if options.roundSource then 0 else 1);rs:SetAttribute("ZO_BarricadesAvailable",true)
     local fn=assert(loadstring(COMBAT_SOURCE,"Combat.server.luau"));setfenv(fn,env);tasks.spawn(fn);advance(0)
     if options.roundSource then
-        local roundEnv=setmetatable({script=instance("Script","ZombieRound")},{__index=env})
+        local server=instance("Folder","Server")
+        if options.escapeSessionSource then
+            local map=world:FindFirstChild(options.mapConfig.ModelName)
+            local controls=instance("Model","EscapeObjectives",map)
+            for i,stage in options.escapeConfig.Stages do
+                local part=instance("Part","Control"..i,controls);part.Position=Vector.new(table.unpack(stage.Control))
+                local prompt=instance("ProximityPrompt","Activate",part);prompt.Triggered=signal()
+            end
+            local bay=instance("Model","R50_EvacuationBay",map);instance("Part","EvacuationGate",bay)
+            local config=instance("ModuleScript","EscapeConfig",shared);modules[config]=options.escapeConfig
+            local state=instance("ModuleScript","EscapeState",shared);modules[state]=options.escapeState
+            local session=assert(loadstring(options.escapeSessionSource));setfenv(session,env)
+            local module=instance("ModuleScript","EscapeSession",server);modules[module]=session()
+        end
+        local roundEnv=setmetatable({script=instance("Script","ZombieRound",server)},{__index=env})
         local round=assert(loadstring(options.roundSource,"Round.server.luau"));setfenv(round,roundEnv);tasks.spawn(round)
         if options.startupSource then
             local startup=assert(loadstring(options.startupSource,"Startup.server.luau"));setfenv(startup,env);tasks.spawn(startup)

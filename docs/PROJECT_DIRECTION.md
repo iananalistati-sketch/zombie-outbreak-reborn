@@ -6,10 +6,12 @@ decisões técnicas rotineiras pertencem ao desenvolvimento.
 
 ## Produto
 
-Zombie Survival inspirado no ritmo de Zombie Mod de CS e na atmosfera de Left
-4 Dead: preparação curta, infecção imprevisível, defesa de posições, rotas de
-fuga e barricadas físicas. O objetivo é sobreviver ao relógio; o zumbi precisa
-criar pressão real sem perder movimento de forma acumulativa a cada tiro.
+O usuário reafirmou após a validação da 0.2 que o jogo deve se basear no Zombie
+Escape e Zombie Survival/Mod do Counter-Strike. Esse é o núcleo obrigatório:
+preparação curta, primeira infecção, humanos armados, zumbis que infectam por
+ataque e defesa com contenção e barricadas físicas. Survival vence por resistir
+ao relógio; Escape exige objetivos de mapa e extração. Os zumbis precisam criar
+pressão real sem perder movimento de forma acumulativa a cada tiro.
 
 Um jogo legível e responsivo vem antes de aumentar o número de armas e mapas.
 O conteúdo visual deve ter proporções, função, entradas e rotas coerentes. Não
@@ -33,8 +35,10 @@ usar novos placeholders de armas para preencher um catálogo.
 - **Treino:** servidor de um jogador oferece três ondas curtas com perseguição,
   ataque, abates e reinício. A segunda conexão revoga o treino imediatamente.
   Seu progresso é de sessão, não ranking ou progressão persistente.
-- **Conteúdo inicial:** K-17, quatro classes de armas reais, seis acabamentos,
-  164 objetos físicos e 34 refúgios existentes. Expansão só após aceitação.
+- **Modos:** rotação Escape → Survival. Round controla todo o ciclo e possui
+  EscapeSession como sessão subordinada; não há segundo controlador de rodada.
+- **Conteúdo atual:** K-17, quatro classes de armas reais, seis acabamentos,
+  170 objetos físicos, 35 refúgios e uma rota de evacuação com três objetivos.
 
 ## Entregas e aceitação
 
@@ -59,23 +63,24 @@ movimento visto por observadores. Os contadores são de sessão e os abates do
 treino ficam separados dos de jogadores. A revisão visual completa do arsenal
 e a expansão de classes continuam nas próximas entregas.
 
-### 0.3 — Um setor do mapa em qualidade final
+### 0.3 — Zombie Escape e Survival
 
-Refinar administração, acessos e posição de defesa como uma fatia completa:
-duas aproximações, rota de escape, cobertura útil, objetos móveis, iluminação,
-sinalização e ambientação. Testar o confronto humano/zumbi nesse setor antes
-de repetir o padrão no restante do complexo.
+Pacote implementado: rotação dos modos, três objetivos sequenciais com tempos
+de defesa, portão, janela de extração e desfecho de descontaminação. Inclui
+marcadores no mundo/mapa, HUD por objetivo, terminal coberto, seis novos objetos
+físicos e compra de munição durante Escape com créditos. O treino permanece
+separado dos modos multiplayer. [Entrega e aceite](RELEASE_0_3.md).
+
+Conferir no motor perseguição, interação dos painéis, acessos do subterrâneo,
+defesa do terminal e o ciclo completo de ambos os modos. A rota desta entrega
+aproveita a arquitetura original do K-17; o desenho mais linear de um próximo
+mapa ZE deve evoluir a partir dessa validação.
 
 ### 0.4 — Interface, desempenho e progressão
 
 Simplificar loja e HUD, melhorar navegação e áudio ambiental, medir física e
 renderização no motor e só então habilitar persistência de progresso. Integrar
 serviços com falha tolerada: uma indisponibilidade não pode impedir jogar.
-
-### Posterior — Zombie Escape
-
-Modo separado quando o Survival estiver aprovado. Objetivos, rotas e mapas
-próprios; não misturar duas direções de jogo na primeira entrega.
 
 ## Regra de entrega
 

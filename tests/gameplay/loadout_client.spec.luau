@@ -498,4 +498,13 @@ do
     check(#s.clones==count,"destroyed previews disconnect asset lifecycle callbacks")
 end
 
+do
+    local s=simulation();s.rs:SetAttribute('ZO_RoundMode','Escape');s.rs:SetAttribute('ZO_RoundState','Active');s.advance(0);open(s);choose(s,'Shotgun')
+    check(s.ammo.Active and not s.buy.Active,'Escape enables reserve refill while new weapon purchases stay closed')
+    s.click(s.ammo);check(s.requests[#s.requests][1]=='Ammo','Escape refill uses the existing authoritative loadout protocol')
+    s.result('Result',true,'Reserva abastecida')
+    s.rs:SetAttribute('ZO_RoundMode','Survival');s.rs:SetAttribute('ZO_RoundState','Results');s.advance(0)
+    s.rs:SetAttribute('ZO_RoundState','Active');s.advance(0)
+    check(not s.ammo.Active,'Survival keeps active-round refill unavailable')
+end
 print(("PASS actual Loadout client: %d assertions; UI bindings, Result protocol, pending timers and server-owned attributes (Roblox API doubles)"):format(checks))

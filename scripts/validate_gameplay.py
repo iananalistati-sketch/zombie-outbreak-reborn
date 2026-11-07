@@ -29,6 +29,7 @@ def validate(path,studio_test=False):
         'ServerScriptService/ZO_Server/ZombieRound':'src/maps/k17/gameplay/Round.server.luau',
         'ServerScriptService/ZO_Server/Startup':'src/maps/k17/gameplay/Startup.server.luau',
         'ServerScriptService/ZO_Server/Combat':'src/maps/k17/gameplay/Combat.server.luau',
+        'ServerScriptService/ZO_Server/EscapeSession':'src/maps/k17/gameplay/EscapeSession.luau',
         'ServerScriptService/ZO_Server/EquipmentVisuals':'src/maps/k17/gameplay/EquipmentVisuals.server.luau',
         'ServerScriptService/ZO_Server/WeaponAssets':'src/maps/k17/gameplay/WeaponAssets.server.luau',
         'ServerScriptService/ZO_Server/WeaponAssetImport':'src/maps/k17/gameplay/WeaponAssetImport.luau',
@@ -47,7 +48,7 @@ def validate(path,studio_test=False):
         'ServerStorage/ZO_Validation/RefugeData':'src/maps/k17/Refuges.luau',
         'ServerScriptService/ZO_Server/Barricades':'src/maps/k17/barricades/Server.server.luau',
         **{'ReplicatedStorage/K17Barricades/'+name:'src/maps/k17/barricades/'+name+'.luau' for name in ('Config','Physics')},
-        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','TacticalSpring','TacticalRecoil','TacticalState','TrainingConfig','TrainingState','TrainingRig','WeaponSkins','PresentationConfig','WeaponPreview')},
+        **{'ReplicatedStorage/K17Gameplay/'+name:'src/maps/k17/gameplay/'+name+'.luau' for name in ('Config','Rules','WeaponState','RoundRules','LoadoutState','Containment','MovementState','MovementConfig','MovementPose','WeaponAimPose','WeaponPresentation','WeaponMotion','TacticalSpring','TacticalRecoil','TacticalState','TrainingConfig','TrainingState','TrainingRig','EscapeConfig','EscapeState','WeaponSkins','PresentationConfig','WeaponPreview')},
     }
     for instance_path,source_path in bindings.items():
         item=at(root,instance_path)

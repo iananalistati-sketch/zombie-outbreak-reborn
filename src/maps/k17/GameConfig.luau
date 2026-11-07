@@ -1,10 +1,10 @@
 --!strict
 return table.freeze({
-    Version = "0.2.0",
+    Version = "0.3.0",
     MinPlayers = 2,
     IntermissionSeconds = 5,
     RoundSeconds = 240,
     InitialZombieRatio = 1/7,
     Survival = table.freeze({ Enabled = true }),
-    Escape = table.freeze({ Enabled = false }),
+    Escape = table.freeze({ Enabled = true }),
 })
