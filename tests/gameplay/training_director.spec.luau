@@ -1,5 +1,6 @@
 -- Real director/state; rigs/navigation/physics are API doubles, not engine tests.
-local Config=assert(loadstring(CONFIG_SOURCE))()
+local Config=table.clone(assert(loadstring(CONFIG_SOURCE))())
+Config.Mode="Survival" -- Preserve finite-wave regression cases; integrated ZE runs separately.
 local State=assert(loadstring(STATE_SOURCE))()
 local Movement=assert(loadstring(MOVEMENT_SOURCE))()
 local checks=0

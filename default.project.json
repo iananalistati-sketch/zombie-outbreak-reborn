@@ -202,6 +202,9 @@
           },
           "Spectator": {
             "$path": "src/maps/k17/gameplay/Spectator.client.luau"
+          },
+          "Flashlight": {
+            "$path": "src/maps/k17/gameplay/Flashlight.client.luau"
           }
         },
         "K17_Barricades": {
@@ -261,18 +264,18 @@
       "$className": "Lighting",
       "$properties": {
         "LightingStyle": "Realistic",
-        "Brightness": 2.5,
-        "ClockTime": 17.1,
+        "Brightness": 2.0,
+        "ClockTime": 18.15,
         "GeographicLatitude": 35,
         "Ambient": [
-          0.22,
-          0.25,
-          0.25
+          0.18,
+          0.21,
+          0.28
         ],
         "OutdoorAmbient": [
-          0.34,
-          0.38,
-          0.4
+          0.25,
+          0.3,
+          0.39
         ],
         "GlobalShadows": true,
         "ShadowSoftness": 0.35,
@@ -302,12 +305,12 @@
       "K17Grade": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Contrast": 0.1,
-          "Saturation": -0.19,
+          "Contrast": 0.16,
+          "Saturation": -0.08,
           "TintColor": [
-            1,
-            0.98,
-            0.9
+            0.93,
+            0.97,
+            1
           ]
         }
       },

@@ -26,6 +26,7 @@ def release(binary):
     required|={'HoldGates','EscapeHoldGates','GeneratorExit','MaintenanceExit','R51_GeneratorHold','EscapeRouteSigns','Spectator','SpectatorState','RouteGuide'}
     required|={'ViewRig','WeaponHandling','ImpactProfiles','RoundStats'}
     required|={'R52_RingWorkshop','R53_ValveRoom','EvacuationStatus','WorkshopBlastReturn','ValveRoomBlastReturn'}
+    required|={'TrainingSpawn','Flashlight'}
     assert required<=set(names),'K-17 map/features missing: '+str(required-set(names))
     assert names.count('ZO_K17Foundry')==1,'Expected exactly one K-17 map'
     assert names.count('Hull')==187,'Expected current Survival and Escape defense barricades'
@@ -34,7 +35,7 @@ def release(binary):
     assert not {'ZO_ReusedWeaponKit','ReusedRiflePresentation','RifleCasing','Bullet'}&set(names),'Unused former weapon templates in release'
     assert 'WeaponsSystem' not in names,'An upstream combat system was bundled with the pistol'
     assert len(names)==sum(count for _,count in classes.values()),'Incomplete native Name properties'
-    for path in ('src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
+    for path in ('src/maps/k17/GameConfig.luau','src/maps/k17/gameplay/Round.server.luau','src/maps/k17/gameplay/HUD.client.luau','src/maps/k17/gameplay/Startup.server.luau','src/maps/k17/gameplay/TacticalMap.client.luau',
                  'src/maps/k17/barricades/Server.server.luau','src/maps/k17/barricades/Config.luau','src/maps/k17/barricades/Physics.luau',
                  'src/maps/k17/gameplay/Combat.server.luau','src/maps/k17/gameplay/Config.luau','src/maps/k17/gameplay/LoadoutState.luau',
                  'src/maps/k17/gameplay/Containment.luau','src/maps/k17/gameplay/WeaponAimPose.luau','src/maps/k17/gameplay/Loadout.client.luau','src/maps/k17/gameplay/Weapons.client.luau',
@@ -46,7 +47,7 @@ def release(binary):
                  'src/maps/k17/gameplay/EscapeConfig.luau','src/maps/k17/gameplay/EscapeState.luau','src/maps/k17/gameplay/EscapeSession.luau',
                  'src/maps/k17/gameplay/HoldGates.luau','src/maps/k17/gameplay/RouteGuide.luau','src/maps/k17/gameplay/SpectatorState.luau','src/maps/k17/gameplay/Spectator.client.luau',
                  'src/maps/k17/gameplay/ViewRig.luau','src/maps/k17/gameplay/WeaponHandling.luau','src/maps/k17/gameplay/ImpactProfiles.luau','src/maps/k17/gameplay/RoundStats.luau',
-                 'src/maps/k17/gameplay/TrainingDirector.server.luau','src/maps/k17/gameplay/TrainingAnimation.client.luau',
+                 'src/maps/k17/gameplay/TrainingDirector.server.luau','src/maps/k17/gameplay/TrainingAnimation.client.luau','src/maps/k17/gameplay/Flashlight.client.luau',
                  'src/maps/k17/gameplay/TrainingConfig.luau','src/maps/k17/gameplay/TrainingState.luau','src/maps/k17/gameplay/TrainingRig.luau',
                  'src/maps/k17/gameplay/WeaponSkins.luau',
                  'src/maps/k17/gameplay/EquipmentVisuals.server.luau','src/maps/k17/gameplay/WeaponPresentation.luau',

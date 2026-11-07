@@ -42,6 +42,7 @@ def validate(path,studio_test=False):
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Movement':'src/maps/k17/gameplay/Movement.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/TrainingAnimation':'src/maps/k17/gameplay/TrainingAnimation.client.luau',
         'StarterPlayer/StarterPlayerScripts/ZO_Client/Spectator':'src/maps/k17/gameplay/Spectator.client.luau',
+        'StarterPlayer/StarterPlayerScripts/ZO_Client/Flashlight':'src/maps/k17/gameplay/Flashlight.client.luau',
         'ServerScriptService/ZO_Server/TrainingDirector':'src/maps/k17/gameplay/TrainingDirector.server.luau',
         'ReplicatedStorage/K17Refuges':'src/maps/k17/Refuges.luau',
         'ServerStorage/ZO_Validation/GameplayAudit':'tests/k17/GameplayAudit.luau',

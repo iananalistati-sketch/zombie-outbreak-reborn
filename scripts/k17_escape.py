@@ -1,5 +1,24 @@
 """Original evacuation route through the existing K-17, never a CS map import."""
 import json
+import math
+
+
+def training_spawns(routes):
+    """Reuse measured flat route segments, avoiding spawn positions on stairs."""
+    paths=[r['points'] for r in routes if r['name'].startswith('ZE ')]
+    result=[];previous=[]
+    for stage,path in enumerate(paths):
+        points=list(previous)
+        segments=list(zip(path,path[1:]))
+        if stage==0:segments.append(([144,1,-244],[144,1,-132]))
+        for a,b in segments:
+            if abs(a[1]-b[1])>.2:continue
+            count=max(1,math.ceil(math.dist(a,b)/24))
+            for i in range(count+1):
+                p=[round(a[j]+(b[j]-a[j])*i/count,3) for j in range(3)]
+                if p not in points:points.append(p)
+        result.append(points);previous=points
+    return result
 
 CONFIG={
     'Duration':360,'ExtractionSeconds':18,'ActivationRange':8,
@@ -108,3 +127,6 @@ def build_escape(m):
             m.route(f'Infection return {level}/{index}',[point,connection],'spawn')
     board=m.sign('R50_EvacuationBay',228,8.1,214.7,'ZE / AGUARDE A SEQUÊNCIA',width=27,face=2,color='dark')
     board.find('Properties/string[@name="Name"]').text='EvacuationStatus'
+    m.route('Solo Escape arrival',[[144,1,-202],[144,1,-224]],'escape')
+    for stage,points in enumerate(training_spawns(m.routes),1):
+        for index,p in enumerate(points,1):m.route(f'Solo pressure {stage}/{index}',[p,p],'training')

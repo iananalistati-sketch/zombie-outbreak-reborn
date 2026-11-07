@@ -1,8 +1,8 @@
-# Zombie Outbreak Reborn — versão 0.6
+# Zombie Outbreak Reborn — versão 0.7
 
 Zombie Escape e Zombie Survival/Mod baseados no Counter-Strike: preparação,
 infecção por ataque, contenção por tiros, barricadas físicas e rodadas multiplayer.
-[Pacote 0.6 e validação](docs/RELEASE_0_6.md) ·
+[Pacote 0.7 e validação](docs/RELEASE_0_7.md) ·
 [Direção e próximas entregas](docs/PROJECT_DIRECTION.md).
 
 **Projeto principal:** `iananalistati-sketch/zombie-outbreak-reborn`, branch
@@ -14,7 +14,7 @@ arquivada. O arquivo CounterBlox_CS não é esta versão do produto.
 1. No GitHub Desktop, selecione **zombie-outbreak-reborn → main**.
 2. Faça **Fetch origin → Pull origin**, salve e feche o place anterior.
 3. Abra **ABRIR_JOGO.cmd** e execute **Play** no Studio. O HUD deve mostrar
-   **ZOMBIE OUTBREAK / v0.6.0** no canto inferior direito.
+   **ZOMBIE OUTBREAK / v0.7.0** no canto inferior direito.
 
 Não é necessário configurar HTTP, API Services, DataStore ou uma whitelist.
 A primeira sessão usa somente o conteúdo embarcado e serviços normais de
@@ -23,6 +23,17 @@ dependendo de disponibilidade e permissões da plataforma.
 
 ## O que testar nesta versão
 
+- **Play sozinho agora mostra Escape:** você começa perto do gerador. Após
+  cinco segundos, siga o marcador, segure **E** junto ao painel e defenda.
+  Atravesse até as bombas, depois até o terminal. Só entrar na área e concluir
+  a janela de extração dá vitória; eliminar NPCs não substitui os objetivos.
+- **Perseguição durante o percurso:** até quatro NPCs ativos, com dificuldade
+  por setor, ataques e dano às barricadas. Pontos ocupados ou diretamente
+  visíveis à frente são descartados. NPCs deixados muito longe são retirados
+  sem conceder abates. O HUD identifica **ZE / TREINO SOLO**.
+- **Fim de tarde e lanterna:** iluminação revisada e facho em primeira pessoa.
+  **F**, D-pad direito ou botão de toque ligam/desligam. A lanterna é local,
+  desliga ao morrer/espectar e não altera tiro, câmera ou física.
 - **Travessia e perseguição:** no Escape, completar o gerador e alcançar o
   anel oeste libera retornos de zumbis na descida norte. Completar as bombas
   e alcançar o corredor sul libera o retorno na travessia das bombas. Só quem
@@ -73,9 +84,10 @@ dependendo de disponibilidade e permissões da plataforma.
   Os infectados do treino tentam golpear objetos que bloqueiam seu caminho.
   Placas nas entradas identificam refúgios; o térreo da administração recebeu
   faixas de circulação, sinalização e acabamento de instalações/janelas.
-- **Sozinho:** o treino começa automaticamente. Após cinco segundos entram
-  infectados que perseguem e atacam. São três ondas de 3, 4 e 5 inimigos,
-  com até três ativos simultaneamente. Vitória ou morte levam a nova tentativa.
+- **Sozinho:** exercício de Escape com NPCs começa automaticamente, no mesmo
+  mapa e com os mesmos objetivos/portões do modo multiplayer. Vitória, morte
+  ou falha de extração levam a nova tentativa. O treino fica separado das
+  estatísticas de rodadas e não consome a rotação Escape → Survival.
 - **Combate:** clique dispara; botão direito mira; R recarrega; 1/2 ou Q trocam
   slots; B abre o arsenal. Há rifle, pistola, SMG e escopeta com modelos reais.
   Abates no treino concedem créditos de sessão para experimentar o arsenal.
@@ -99,7 +111,7 @@ modelos oficiais e componentes reutilizados têm licenças e procedência em
 O controlador Source experimental e os motores Counter Blox/Evostrike não
 executam nesta versão. A progressão persistente fica para entregas posteriores.
 O usuário informou ter realizado as validações da 0.1 e 0.2. As alterações da
-0.3–0.6 precisam de validação real de câmera, navegação, física, áudio e multiplayer no
+0.3–0.7 precisam de validação real de câmera, navegação, física, áudio e multiplayer no
 Studio; compilar não equivale a jogar. O mapa K-17 é original e foi adaptado
 para a primeira rota de evacuação. Equivalência completa à física Source
 depende de ajustes no motor e testes, não é uma funcionalidade comprovada.
@@ -111,6 +123,7 @@ Python 3, Rojo 7.7.1 e Luau 0.742 são as ferramentas de desenvolvimento.
 
 ```sh
 python scripts/test_training.py --luau CAMINHO_DO_LUAU
+python scripts/test_solo_escape.py --luau CAMINHO_DO_LUAU
 python scripts/test_tactical_hud.py --luau CAMINHO_DO_LUAU
 python scripts/test_escape.py --luau CAMINHO_DO_LUAU
 python scripts/test_defense.py --luau CAMINHO_DO_LUAU

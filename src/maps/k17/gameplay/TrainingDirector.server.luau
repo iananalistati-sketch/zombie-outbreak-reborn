@@ -14,17 +14,27 @@ local function main()
     local Rig=require(shared:WaitForChild("TrainingRig"))
     local Movement=require(shared:WaitForChild("MovementState"))
     local roundConfig=require(RS:WaitForChild("Shared"):WaitForChild("RoundConfig"))
+    local escapeMode=Config.Mode=="Escape"
+    local EscapeConfig=if escapeMode then require(shared:WaitForChild("EscapeConfig")) else nil
+    local EscapePolicy=if escapeMode then require(shared:WaitForChild("EscapeState")) else nil
+    local EscapeSession=if escapeMode then require(script.Parent:WaitForChild("EscapeSession")) else nil
     local map=assert(workspace:WaitForChild("ZO_K17Foundry",12),"Mapa K-17 ausente")
     local spawns=map:WaitForChild("Spawns")
-    local marker=spawns:WaitForChild("HumanSpawn") :: BasePart
+    local marker=(if escapeMode then spawns:FindFirstChild("TrainingSpawn") else nil) or spawns:WaitForChild("HumanSpawn") :: BasePart
     local damageBarricade=SS:WaitForChild("ZO_Gameplay"):WaitForChild("DamageBarricade") :: BindableFunction
     local folder: Folder?=nil
     local owner: Player?=nil
     local character: Model?=nil
     local session: any=nil
+    local exercise: any=nil
+    local spawnCursor=0
+    local fightStartedAt: number?=nil
     local actors={}
     local generation=0
     local protectedUntil=0
+    local function closeExercise()
+        if exercise then exercise:destroy();exercise=nil end
+    end
     local function clearActors()
         generation+=1
         for model,actor in actors do
@@ -36,10 +46,12 @@ local function main()
         if folder then folder:Destroy();folder=nil end
     end
     local function stop()
+        closeExercise()
         if owner or folder then clearActors() end
         owner=nil;character=nil;session=nil
         workspace:SetAttribute("ZO_BarricadePractice",false)
         RS:SetAttribute("ZO_TrainingStage",nil)
+        for _,key in {"ZO_TrainingMode","ZO_TrainingOutcome","ZO_TrainingObjectives","ZO_TrainingElapsed"} do RS:SetAttribute(key,nil) end
     end
     cleanup=stop
     local function liveCount()
@@ -55,28 +67,42 @@ local function main()
         RS:SetAttribute("ZO_TrainingKills",session.totalKills)
         RS:SetAttribute("ZO_TrainingAlive",liveCount())
         RS:SetAttribute("ZO_TrainingRemaining",math.max(0,math.ceil(session.deadline-os.clock())))
+        RS:SetAttribute("ZO_TrainingObjectives",if owner then owner:GetAttribute("ZO_RoundObjectives") or 0 else 0)
+        if fightStartedAt and session.stage=="Fighting" then RS:SetAttribute("ZO_TrainingElapsed",math.floor(os.clock()-fightStartedAt)) end
     end
     local function begin(player,model,hum)
+        closeExercise()
         clearActors()
         folder=Instance.new("Folder");folder.Name="ZO_PracticeTargets";folder.Parent=workspace
-        owner=player;character=model;session=State.new(Config,os.clock())
+        owner=player;character=model;session=State.new(Config,os.clock(),if escapeMode then EscapeConfig.Duration else nil)
+        spawnCursor=0;fightStartedAt=nil
+        player:SetAttribute("ZO_RoundObjectives",0)
+        RS:SetAttribute("ZO_TrainingMode",if escapeMode then "Escape" else "Survival")
+        RS:SetAttribute("ZO_TrainingOutcome",nil);RS:SetAttribute("ZO_TrainingElapsed",0)
         protectedUntil=os.clock()+Config.SpawnProtection
         workspace:SetAttribute("ZO_BarricadePractice",true)
         player.Team=assert(Teams:FindFirstChild("Humans"));player.Neutral=false;player:SetAttribute("ZO_Role","Humans")
         hum.MaxHealth=roundConfig.HumanHealth;hum.Health=hum.MaxHealth
         Movement.setBase(hum,roundConfig.HumanWalkSpeed,os.clock())
         model:PivotTo(marker.CFrame*CFrame.new(0,4,0))
+        if escapeMode then
+            exercise=EscapeSession.new(map,RS,EscapeConfig,EscapePolicy,function(actor)
+                return actor==owner and actor.Parent==Players and actor.Character==character
+                    and RS:GetAttribute("ZO_RoundState")=="Training" and #Players:GetPlayers()==1
+                    and session.stage=="Fighting" and hum.Health>0 and model:IsDescendantOf(workspace)
+            end,{[player]=true},{Phase="Training",Interactive=function()return session.stage=="Fighting"end})
+        end
         workspace:SetAttribute("ZO_PracticeRevision",(workspace:GetAttribute("ZO_PracticeRevision") or 0)+1)
         RS:SetAttribute("ZO_TrainingError",nil)
         publish()
     end
-    local function spawnActor()
+    local function spawnActor(at)
         local player=owner;local model=character;local current=session
-        local waveId=current.wave;local wave=Config.Waves[waveId]
+        local waveId=current.wave;local wave=if escapeMode then Config.Escape.Waves[waveId] else Config.Waves[waveId]
         local token=generation
         local index=current.spawned
         -- Authored clear administration corridor; does not intersect walls/desks.
-        local point=marker.Position+Vector3.new((index%3-1),4,-25-index%3)
+        local point=at or marker.Position+Vector3.new((index%3-1),4,-25-index%3)
         local bot=Rig.new(model,CFrame.new(point),wave.Health,wave.Speed)
         local hum=bot:FindFirstChildOfClass("Humanoid") :: Humanoid
         local root=bot:FindFirstChild("HumanoidRootPart") :: BasePart
@@ -87,7 +113,7 @@ local function main()
         actor.connection=hum.Died:Connect(function()
             if actor.stopped then return end
             actor.stopped=true
-            if session==current and current.wave==waveId and current:kill() then publish() end
+            if session==current and (escapeMode or current.wave==waveId) and current:kill() then publish() end
             Debris:AddItem(bot,2)
         end)
         task.spawn(function()
@@ -138,6 +164,47 @@ local function main()
             end
         end)
     end
+    local function pressurePoint()
+        local root=character and character:FindFirstChild("HumanoidRootPart")
+        local head=character and character:FindFirstChild("Head")
+        if not root or not head then return nil end
+        local settings=Config.Escape
+        local bounds=OverlapParams.new();bounds.FilterType=Enum.RaycastFilterType.Exclude
+        bounds.FilterDescendantsInstances={character};bounds.MaxParts=0
+        local rays=RaycastParams.new();rays.FilterType=Enum.RaycastFilterType.Include
+        local include={map}
+        local props=workspace:FindFirstChild("ZO_Barricades");if props then table.insert(include,props) end
+        rays.FilterDescendantsInstances=include
+        local point=State.pickSpawn(EscapeConfig.TrainingSpawns[session.wave],{root.Position.X,root.Position.Y,root.Position.Z},
+            settings.MinDistance,settings.MaxDistance,function(p)
+                local at=Vector3.new(p[1],p[2]+4,p[3])
+                for _,part in workspace:GetPartBoundsInBox(CFrame.new(at),Vector3.new(3.5,7,3.5),bounds) do
+                    if part.CanCollide then return false end
+                end
+                local delta=at-head.Position;local forward=head.CFrame.LookVector
+                local facing=(delta.X*forward.X+delta.Y*forward.Y+delta.Z*forward.Z)/math.max(.01,delta.Magnitude)
+                -- No near-range materialization in the player's unobstructed view.
+                if facing>.2 and not workspace:Raycast(head.Position,delta,rays) then return false end
+                return true
+            end,spawnCursor)
+        if point then spawnCursor+=1;return Vector3.new(point[1],point[2]+4,point[3]) end
+        return nil
+    end
+    local function retireDistantActors()
+        local root=character and character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        for model,actor in actors do
+            local other=model:FindFirstChild("HumanoidRootPart")
+            if actor.stopped and not model.Parent then
+                if actor.connection then actor.connection:Disconnect() end
+                actors[model]=nil
+            elseif not actor.stopped and other and (other.Position-root.Position).Magnitude>Config.Escape.RetireDistance then
+                actor.stopped=true
+                if actor.connection then actor.connection:Disconnect() end
+                model:Destroy();actors[model]=nil
+            end
+        end
+    end
     while true do
         task.wait(.2)
         if not Config.Enabled or RS:GetAttribute("ZO_RoundState")~="Training" or #Players:GetPlayers()~=1
@@ -155,10 +222,26 @@ local function main()
         end
         local previousStage=session.stage
         session:step(os.clock(),ready and character==model)
+        if escapeMode and session.stage=="Fighting" and exercise then
+            if not fightStartedAt then fightStartedAt=os.clock() end
+            session.wave=math.min(#Config.Escape.Waves,exercise.state.stage)
+            retireDistantActors()
+            local result=exercise:update(os.clock(),math.max(0,math.ceil(session.deadline-os.clock())))
+            if result then
+                RS:SetAttribute("ZO_TrainingOutcome",if result=="Humans" then "Extracted" else "ExtractionFailed")
+                session:finish(result=="Humans",os.clock())
+            end
+        end
         if session.stage=="Lost" or session.stage=="Won" then
-            if previousStage~=session.stage then clearActors() end
+            if previousStage~=session.stage then
+                closeExercise();clearActors()
+                if not RS:GetAttribute("ZO_TrainingOutcome") then RS:SetAttribute("ZO_TrainingOutcome","Eliminated") end
+            end
             if session:restartDue(os.clock()) and ready then begin(player,model,hum) end
-        elseif session:spawn(os.clock(),liveCount()) then spawnActor() end
+        elseif session:canSpawn(os.clock(),liveCount()) then
+            local point=if escapeMode then pressurePoint() else nil
+            if (not escapeMode or point) and session:spawn(os.clock(),liveCount()) then spawnActor(point) end
+        end
         publish()
     end
 end

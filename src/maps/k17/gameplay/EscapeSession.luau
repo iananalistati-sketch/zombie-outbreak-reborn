@@ -2,7 +2,8 @@
 -- Round owns this session and its lifetime; there is no second round ticker.
 local Session={}
 local HoldGates=require(script.Parent.HoldGates)
-function Session.new(map,rs,config,policy,valid,participants)
+function Session.new(map,rs,config,policy,valid,participants,options)
+    local phase=if options and options.Phase=="Training" then "Training" else "Active"
     local controls=assert(map:FindFirstChild("EscapeObjectives"),"EscapeObjectives ausente")
     local bay=assert(map:FindFirstChild("R50_EvacuationBay"),"Terminal de evacuação ausente")
     local gate=assert(bay:FindFirstChild("EvacuationGate"),"Portão de evacuação ausente")
@@ -42,11 +43,12 @@ function Session.new(map,rs,config,policy,valid,participants)
     end
     function self:publish(now)
         local s=self.state
+        local interactive=not options or not options.Interactive or options.Interactive()
         local extracting=s.status=="Extraction" or s.status=="Done"
         rs:SetAttribute("ZO_HoldGateStatus",doors:update(s.stage,s.status))
         gate.CanCollide=not extracting;gate.CanQuery=not extracting;gate.Transparency=if extracting then 1 else .15
         for i,item in self.controls do
-            item.prompt.Enabled=not self.destroyed and rs:GetAttribute("ZO_RoundState")=="Active" and s.stage==i and s.status=="Ready"
+            item.prompt.Enabled=not self.destroyed and interactive and rs:GetAttribute("ZO_RoundState")==phase and s.stage==i and s.status=="Ready"
             local status=if i<s.stage or extracting then "Complete" elseif i==s.stage then s.status else "Locked"
             item.part:SetAttribute("ZO_ObjectiveState",status)
             item.indicator.Color=if status=="Complete" then Color3.fromRGB(116,211,154)
@@ -70,7 +72,7 @@ function Session.new(map,rs,config,policy,valid,participants)
         local prompt=assert(part:FindFirstChild("Activate"),"Prompt do objetivo ausente")
         self.controls[i]={part=part,prompt=prompt,indicator=assert(controls:FindFirstChild("Indicator"..i),"Indicador ausente")}
         table.insert(self.connections,prompt.Triggered:Connect(function(player)
-            if self.destroyed or not valid(player) or rs:GetAttribute("ZO_RoundState")~="Active" then return end
+            if self.destroyed or not valid(player) or rs:GetAttribute("ZO_RoundState")~=phase then return end
             local char=player.Character;local root=char:FindFirstChild("HumanoidRootPart");local head=char:FindFirstChild("Head")
             if not root or not head or (root.Position-part.Position).Magnitude>config.ActivationRange then return end
             local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={char}

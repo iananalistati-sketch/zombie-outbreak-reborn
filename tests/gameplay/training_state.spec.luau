@@ -43,4 +43,25 @@ do
     check(s2.stage=="Lost" and s2:restartDue(7),"player death produces a retry deadline")
     s2:step(2,true);check(s2.stage=="Lost","a fast respawn cannot skip the result")
 end
+do
+    local s=State.new(Config,0,360);s:step(Config.IntroSeconds,true)
+    for i=1,12 do
+        local now=Config.IntroSeconds+(i-1)*Config.Escape.SpawnInterval
+        check(s:spawn(now,0)and s:kill(),'objective exercise supports continuing pressure beyond old finite waves')
+        s:step(now,true)
+    end
+    check(s.stage=='Fighting'and s.wave==1,'twelve NPC kills cannot replace extraction victory')
+    check(not s:canSpawn(100,Config.Escape.MaxAlive),'objective pressure honors its concurrent budget')
+    s:step(500,true);check(s.stage=='Fighting','global Escape timeout belongs to EscapeSession, not the wave ticker')
+    s:finish(true,500);check(s.stage=='Won'and s:restartDue(506),'confirmed exercise extraction uses normal retry deadline')
+    s:finish(false,501);check(s.stage=='Won','terminal exercise result cannot flip')
+end
+do
+    local points={{0,1,40},{0,1,32},{0,1,20},{0,15,35}}
+    local p=State.pickSpawn(points,{0,5,0},28,95,function()return true end,0)
+    check(p==points[2],'pressure prefers nearest safe authored point outside minimum distance')
+    check(State.pickSpawn(points,{0,5,0},28,95,function()return false end,0)==nil,'occupied/visible points cannot create enemies')
+    check(State.pickSpawn({{0,15,35}},{0,5,0},28,95,function()return true end,0)==nil,'pressure cannot materialize on another floor')
+    check(State.pickSpawn({{0,1,96}},{0,5,0},28,95,function()return true end,0)==nil,'distant candidates cannot consume spawn slots')
+end
 print("PASS training state and phase authority: "..checks.." checks")

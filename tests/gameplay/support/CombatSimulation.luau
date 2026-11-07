@@ -113,7 +113,15 @@ local function simulation(options)
         if wasAlive and self.Health<=0 then self.Died:Fire() end
     end
     function methods:ApplyImpulse(impulse) table.insert(self._calls,{impulse});self.AssemblyLinearVelocity+=impulse/self.AssemblyMass end
-    function methods:PivotTo(cf) self.Pivot=cf;self.PivotCount=(self.PivotCount or 0)+1 end
+    function methods:PivotTo(cf)
+        self.Pivot=cf;self.PivotCount=(self.PivotCount or 0)+1
+        if options.trainingDirectorSource then
+            local root=self:FindFirstChild('HumanoidRootPart');if root then root.Position=cf.Position end
+            local head=self:FindFirstChild('Head');if head then head.Position=cf.Position+Vector.yAxis*2;head.CFrame=basis(head.Position,head.Position-Vector.zAxis) end
+        end
+    end
+    function methods:SetNetworkOwner(owner)self.NetworkOwner=owner end
+    function methods:MoveTo(point)self.LastMove=point end
     local players=instance("Players","Players");players.PlayerAdded=signal();players.PlayerRemoving=signal()
     local list={}
     function players:GetPlayers() return table.clone(list) end
@@ -150,7 +158,9 @@ local function simulation(options)
     end
     local heartbeat=signal()
     local services={Players=players,ReplicatedStorage=rs,ServerStorage=ss,Workspace=world,
-        RunService={Heartbeat=heartbeat,IsStudio=function() return options.studio==true end}}
+        RunService={Heartbeat=heartbeat,IsStudio=function() return options.studio==true end},
+        Debris={AddItem=function(_,item,seconds)tasks.delay(seconds,function()item:Destroy()end)end},
+        PathfindingService={CreatePath=function()return{Status='Success',ComputeAsync=function()end,GetWaypoints=function()return{}end}end}}
     if options.roundSource then
         services.Teams=instance("Teams","Teams")
         services.ScriptContext={Error=signal()}
@@ -164,10 +174,15 @@ local function simulation(options)
         for _,name in {options.mapConfig.HumanSpawn,options.mapConfig.ZombieSpawn,options.mapConfig.LobbySpawn} do
             instance("Part",name,spawns)
         end
+        local marker=instance('Part','TrainingSpawn',spawns)
+        marker.CFrame=basis(Vector.new(144,1,-202),Vector.new(144,1,-203));marker.Position=marker.CFrame.Position
     end
     local env=setmetatable({game={GetService=function(_,name) return assert(services[name],name) end},workspace=world,
-        Vector3=Vector,CFrame={lookAt=basis,new=function(x,y,z) return basis(Vector.new(x or 0,y or 0,z or 0),Vector.new(x or 0,y or 0,(z or 0)-1)) end},
-        Enum={RaycastFilterType={Exclude="Exclude",Include="Include"},Material={Air="Air"}},RaycastParams={new=function() return {} end},OverlapParams={new=function()return{}end},
+        Vector3=Vector,CFrame={lookAt=basis,new=function(x,y,z)
+            local p=if type(x)=='table' then x else Vector.new(x or 0,y or 0,z or 0)
+            return basis(p,p-Vector.zAxis)
+        end},
+        Enum={RaycastFilterType={Exclude="Exclude",Include="Include"},Material={Air="Air"},PathStatus={Success='Success'},PathWaypointAction={Jump='Jump'}},RaycastParams={new=function() return {} end},OverlapParams={new=function()return{}end},
         Random={new=function() return {NextNumber=function(_,low,high) return ((low or 0)+(high or 1))/2 end,
             NextInteger=function(_,low) return low end} end},
         BrickColor={new=function(name) return name end},Color3={fromRGB=function(...) return {...} end},
@@ -245,6 +260,23 @@ local function simulation(options)
         local round=assert(loadstring(options.roundSource,"Round.server.luau"));setfenv(round,roundEnv);tasks.spawn(round)
         if options.startupSource then
             local startup=assert(loadstring(options.startupSource,"Startup.server.luau"));setfenv(startup,env);tasks.spawn(startup)
+        end
+        if options.trainingDirectorSource then
+            local made=0
+            local rig={new=function(_,at,health,speed)
+                made+=1
+                local bot=instance('Model','TrainingEnemy'..made)
+                local root=instance('Part','HumanoidRootPart',bot);root.Position=at.Position
+                local head=instance('Part','Head',bot);head.Position=at.Position+Vector.yAxis*2
+                local hum=instance('Humanoid','Humanoid',bot);hum.Health=health;hum.WalkSpeed=speed
+                bot:SetAttribute('ZO_TrainingEnemy',true);bot:SetAttribute('ZO_PracticeRole','Zombies')
+                return bot
+            end}
+            for name,value in {TrainingConfig=options.trainingConfig,TrainingState=options.trainingState,TrainingRig=rig} do
+                local token=instance('ModuleScript',name,shared);modules[token]=value
+            end
+            local source=assert(loadstring(options.trainingDirectorSource,'TrainingDirector.server.luau'))
+            setfenv(source,setmetatable({script=instance('Script','TrainingDirector',server)},{__index=env}));tasks.spawn(source)
         end
         rs:SetAttribute("ZO_BarricadesReady",true);advance(0)
     end

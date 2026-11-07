@@ -26,11 +26,15 @@
   Sem DataStores, HTTP ou bans como dependências para a primeira sessão.
 - Dano, munição, créditos, infecção e rodadas pertencem ao servidor. O treino
   é uma fase própria, limitada a um jogador; a segunda conexão a desabilita.
+- O solo padrão é exercício Escape, não três ondas no corredor. TrainingDirector
+  reutiliza EscapeSession exclusivamente na fase Training, com até quatro NPCs
+  e vitória por extração. Usa ZO_TrainingMode e não muda ZO_RoundMode/roundId.
+  Destruir sessão/portões/atores no handoff antes da preparação multiplayer.
 - Resumos contam disparos aceitos e dano efetivo do servidor, por rodada;
   treino não entra nas estatísticas multiplayer. Impactos e recarga visual
   são cosméticos, com orçamento/expiração e sem alterar física do personagem.
-- Round é também a única autoridade de modo. EscapeSession é uma sessão
-  subordinada, sem loop próprio: limpa prompts/portão na saída e confirma
+- Round é a única autoridade de modo multiplayer e da fase Training. EscapeSession
+  é subordinada ao controlador da fase, sem loop próprio: limpa prompts/portão na saída e confirma
   extração por posição, vida, equipe e participação no servidor.
 - Retornos ZE avançam somente após objetivo concluído e travessia de humano
   vivo participante. Nunca teleportar perseguidores vivos para acompanhar o
@@ -54,6 +58,9 @@
   abre ABRIR_JOGO.cmd; não depender de Command Bar ou instalações manuais.
 - Compilação e APIs simuladas não comprovam renderização, áudio, física ou
   multiplayer real. Nunca declarar acesso ao Studio local sem conexão.
+- Após a crítica à pouca evolução visível na 0.4–0.6, priorizar alterações que
+  o usuário encontre ao abrir/jogar. Não usar volume de testes como substituto
+  de experiência; não declarar aprovação sem relato explícito do usuário.
 - Corrigir falhas concretas na mesma arquitetura. Não trocar novamente de base
   só porque outra parece pronta. Priorizar uma sessão completa por entrega.
 

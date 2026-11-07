@@ -231,15 +231,16 @@ connect(Run.RenderStepped,function(dt)
     local phase=RS:GetAttribute("ZO_RoundState") or "Starting"
     local role=if player.Team then player.Team.Name else "Lobby";local zombie=role=="Zombies"
     local stage=RS:GetAttribute("ZO_TrainingStage");local alive=hum~=nil and hum.Health>0
-    local mode=RS:GetAttribute("ZO_RoundMode") or "Survival"
+    local mode=(if phase=="Training" then RS:GetAttribute("ZO_TrainingMode") else RS:GetAttribute("ZO_RoundMode")) or "Survival"
+    local escapePlaying=mode=="Escape" and (phase=="Active" or (phase=="Training" and stage=="Fighting"))
     local escapeStatus=RS:GetAttribute("ZO_EscapeStatus")
     local escapeStage=RS:GetAttribute("ZO_EscapeStage") or 1
     local active=(phase=="Training" or phase=="Preparation" or phase=="Active") and alive and (role=="Humans" or zombie)
         and player:GetAttribute("ZO_SpawnPending")~=true
     local instruction,title=State.objective(phase,role,RS:GetAttribute("ZO_LastWinner"),stage)
     local seconds=math.max(0,math.ceil((if phase=="Training" then RS:GetAttribute("ZO_TrainingRemaining") else RS:GetAttribute("ZO_Remaining")) or 0))
-    if mode=="Escape" and phase=="Active" then
-        title=if zombie then "ZE / Interrompa a fuga" else "ZE / Evacuação"
+    if escapePlaying then
+        title=if phase=="Training" then "ZE / Treino solo" elseif zombie then "ZE / Interrompa a fuga" else "ZE / Evacuação"
         local target=RS:GetAttribute("ZO_EscapeLabel") or "Objetivo"
         local waitTime=RS:GetAttribute("ZO_EscapeRemaining") or 0
         if escapeStatus=="Holding" then instruction=("Defenda por %ds · %s"):format(waitTime,target);seconds=waitTime
@@ -250,6 +251,11 @@ connect(Run.RenderStepped,function(dt)
             instruction=if player:GetAttribute("ZO_SpawnPending")==true then "Retorno aguardando espaço seguro · os postos estão ocupados"
                 else "Retorno: "..tostring(RS:GetAttribute("ZO_InfectionSector") or "Administração norte").." · "..instruction
         end
+    elseif mode=="Escape" and phase=="Training" then
+        title=if stage=="Won" then "ZE / VOCÊ ESCAPOU" elseif stage=="Lost" then "ZE / Fuga interrompida" else "ZE / Prepare-se"
+        instruction=if stage=="Won" then ("Extração concluída · %d abates · nova tentativa em %ds"):format(RS:GetAttribute("ZO_TrainingKills") or 0,seconds)
+            elseif stage=="Lost" then ("Treino encerrado · nova tentativa em %ds"):format(seconds)
+            else "Gerador → bombas subterrâneas → evacuação · R recarrega · B abre o arsenal"
     elseif mode=="Escape" and phase=="Preparation" then
         title="ZE / Preparação";instruction="Equipe-se · siga os objetivos após a primeira infecção"
     elseif mode=="Escape" and phase=="Results" then
@@ -259,18 +265,20 @@ connect(Run.RenderStepped,function(dt)
     elseif mode=="Survival" and (phase=="Active" or phase=="Preparation" or phase=="Results") then title="ZM / "..title end
     phaseText.Text=string.upper(title);phaseText.TextColor3=if zombie then C.red else C.green
     clockText.Text=("%02d:%02d"):format(math.floor(seconds/60),seconds%60);clockText.TextColor3=if phase=="Active" and seconds<=15 then C.red else C.text
-    counts.Text=if phase=="Training" then ("ONDA %d/3 · ABATES %d · VIVOS %d"):format(
+    counts.Text=if phase=="Training" and mode=="Escape" then ("SOLO / NPCs %d · ABATES %d · PAINÉIS %d/3"):format(
+        RS:GetAttribute("ZO_TrainingAlive") or 0,RS:GetAttribute("ZO_TrainingKills") or 0,RS:GetAttribute("ZO_TrainingObjectives") or 0)
+        elseif phase=="Training" then ("ONDA %d/3 · ABATES %d · VIVOS %d"):format(
         RS:GetAttribute("ZO_TrainingWave") or 1,RS:GetAttribute("ZO_TrainingKills") or 0,RS:GetAttribute("ZO_TrainingAlive") or 0)
         else ("HUMANOS %d / ZUMBIS %d"):format(RS:GetAttribute("ZO_Humans") or 0,RS:GetAttribute("ZO_Zombies") or 0)
     local errorMessage=RS:GetAttribute("ZO_GameplayError") or (if phase=="Training" then RS:GetAttribute("ZO_TrainingError") else nil)
     if errorMessage then instruction="FALHA: "..tostring(errorMessage);objective.TextColor3=C.red
     elseif phase=="Starting" then instruction="Iniciando · "..tostring(RS:GetAttribute("ZO_StartupStep") or "Aguardando servidor");objective.TextColor3=C.muted
     else objective.TextColor3=C.text end
-    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.6.0")
+    objective.Text=instruction;version.Text="ZOMBIE OUTBREAK / v"..tostring(RS:GetAttribute("ZO_Version") or "0.7.0")
     local key=phase..":"..mode..":"..tostring(escapeStatus)..":"..escapeStage..":"..tostring(stage)..":"..tostring(RS:GetAttribute("ZO_TrainingWave"))..":"..role..":"..tostring(RS:GetAttribute("ZO_InfectionCheckpoint"))
     if key~=announcementKey then announcementKey=key;bannerUntil=os.clock()+3;bannerTitle.Text=string.upper(title);bannerDetail.Text=instruction end
     local checkpoint=RS:GetAttribute("ZO_InfectionCheckpoint") or 0
-    if phase=="Active" and mode=="Escape" then
+    if escapePlaying then
         if not zombie and lastCheckpoint and checkpoint>lastCheckpoint then
             bannerUntil=os.clock()+3;bannerTitle.Text="A HORDA AVANÇOU"
             bannerDetail.Text="Novo retorno de infectados / "..tostring(RS:GetAttribute("ZO_InfectionSector") or "Setor de manutenção")
@@ -323,7 +331,7 @@ connect(Run.RenderStepped,function(dt)
     reloadBack.Visible=reload and not zombie;reloadFill.Size=UDim2.fromScale(1-State.ratio(remaining,weapon.ReloadSeconds),1)
     local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     waypoint.Enabled=false
-    if mode=="Escape" and phase=="Active" and not modal and not boardOpen and root and player:GetAttribute("ZO_Spectating")~=true then
+    if escapePlaying and not modal and not boardOpen and root and player:GetAttribute("ZO_Spectating")~=true then
         local map=workspace:FindFirstChild("ZO_K17Foundry")
         local controls=map and map:FindFirstChild("EscapeObjectives")
         local bay=map and map:FindFirstChild("R50_EvacuationBay")
@@ -344,10 +352,10 @@ connect(Run.RenderStepped,function(dt)
         end
     end
     zone.Text=if root then State.zone(refuges,root.Position.X,root.Position.Y,root.Position.Z) else "K-17 / carregando personagem"
-    hints.Text=if UIS.TouchEnabled then "Mapa e arsenal nos botões da tela" elseif zombie then "Clique: atacar · M: mapa · Tab: placar" else "B: arsenal · R: recarga · 1/2: armas · M: mapa"
-    if mode=="Escape" and phase=="Active" and escapeStatus=="Ready" then
+    hints.Text=if UIS.TouchEnabled then "Mapa, arsenal e lanterna nos botões da tela" elseif zombie then "Clique: atacar · F: lanterna · M: mapa" else "B: arsenal · R: recarga · 1/2: armas · F: lanterna"
+    if escapePlaying and escapeStatus=="Ready" then
         hints.Text=EscapeConfig.Stages[escapeStage].Hint or hints.Text
-    elseif mode=="Escape" and phase=="Active" and escapeStatus=="Holding" then
+    elseif escapePlaying and escapeStatus=="Holding" then
         local gate=RS:GetAttribute("ZO_HoldGateStatus")
         if gate=="Closed" then hints.Text="Saída em retenção · defenda os flancos até liberar"
         elseif gate=="Blocked" then hints.Text="Retenção aguarda passagem livre · mantenha os flancos" end

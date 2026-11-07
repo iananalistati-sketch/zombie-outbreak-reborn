@@ -32,9 +32,11 @@ usar novos placeholders de armas para preencher um catálogo.
 - **Estado multiplayer:** Waiting → Training (um jogador) ou Intermission →
   Preparation → Active → Results. Só o servidor escolhe infectados, aplica
   dano, controla munição/créditos e determina resultados.
-- **Treino:** servidor de um jogador oferece três ondas curtas com perseguição,
-  ataque, abates e reinício. A segunda conexão revoga o treino imediatamente.
-  Seu progresso é de sessão, não ranking ou progressão persistente.
+- **Treino:** servidor de um jogador oferece exercício completo de Escape:
+  começa perto do gerador, segue pelos objetivos, enfrenta perseguição contínua
+  de até quatro NPCs e só vence extraindo. A segunda conexão revoga o treino.
+  Seu progresso é de sessão, não ranking ou progressão persistente. As antigas
+  ondas finitas são política de regressão/fallback, fora do modo solo padrão.
 - **Modos:** rotação Escape → Survival. Round controla todo o ciclo e possui
   EscapeSession como sessão subordinada; não há segundo controlador de rodada.
 - **Conteúdo atual:** K-17, quatro classes de armas reais, seis acabamentos,
@@ -110,6 +112,24 @@ Inclui oficina do anel oeste e câmara de válvulas: dois acessos e seis props
 por sala, quatro posições de grupo e recuo fora da linha direta da entrada.
 Indicadores dos objetivos, painel de extração no mundo e avisos da horda
 acompanham o estado do servidor. [Entrega e aceite](RELEASE_0_6.md).
+
+### 0.7 — Escape acessível no primeiro Play
+
+Após a crítica do usuário de que as últimas entregas continuavam iguais, foi
+identificado um problema de exposição: o treino solo ainda mostrava somente
+as mesmas ondas no corredor. Os objetivos estavam restritos ao multiplayer.
+
+Pacote implementado: exercício solo reutilizando EscapeSession, objetivos e
+portões reais, entrada próxima do gerador e perseguição ao longo do percurso.
+Inclui seleção de pontos livres fora da visão direta frontal, retirada de
+NPCs distantes, vitória somente por extração e limpeza ao entrar o segundo
+jogador. HUD/mapa distinguem exercício e partida; a rotação multiplayer não
+é consumida pelo treino. Lanterna local e iluminação de fim de tarde tornam
+a travessia distinta desde o início. [Entrega e aceite](RELEASE_0_7.md).
+
+Priorizar agora a experiência perceptível no primeiro minuto e em uma sessão
+completa. Contagem de arquivos, assertions ou objetos não comprova qualidade
+percebida, nem aprovação do usuário.
 
 ### Próximas entregas — Conteúdo e desempenho
 

@@ -32,5 +32,13 @@ class EscapeReturns(unittest.TestCase):
         error,_=CollisionIndex(boxes).sweep({'points':[p,p]},self.data['avatar'])
         self.assertIn('occupied_return',error)
 
+    def test_solo_pressure_positions_are_supported_with_physical_props(self):
+        index=CollisionIndex(self.boxes)
+        routes=[r for r in self.data['routes'] if r['kind']=='training']
+        self.assertGreater(len(routes),30)
+        for route in routes:
+            with self.subTest(route=route['name']):
+                self.assertIsNone(index.sweep(route,self.data['avatar'])[0])
+
 
 if __name__=='__main__':unittest.main()

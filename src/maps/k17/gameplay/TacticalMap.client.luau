@@ -255,7 +255,8 @@ local extractionArea=rectangle("ExtractionArea",{a[1],b[1],a[3],b[3]},colors.acc
 extractionArea.ZIndex=19
 local function refreshEscape()
     local phase=RS:GetAttribute("ZO_RoundState")
-    local enabled=RS:GetAttribute("ZO_RoundMode")=="Escape" and (phase=="Preparation" or phase=="Active")
+    local enabled=(RS:GetAttribute("ZO_RoundMode")=="Escape" and (phase=="Preparation" or phase=="Active"))
+        or (phase=="Training" and RS:GetAttribute("ZO_TrainingMode")=="Escape" and RS:GetAttribute("ZO_TrainingStage")=="Fighting")
     local stage=RS:GetAttribute("ZO_EscapeStage") or 1
     for i,marker in escapeMarkers do
         marker.Visible=enabled;marker.TextColor3=if i==stage then colors.gold elseif i<stage then colors.accent else colors.muted
@@ -263,7 +264,7 @@ local function refreshEscape()
     for i,lines in escapePaths do for _,line in lines do line.Visible=enabled and i==stage end end
     extractionArea.Visible=enabled
 end
-for _,attribute in {"ZO_RoundMode","ZO_EscapeStage","ZO_RoundState"} do RS:GetAttributeChangedSignal(attribute):Connect(refreshEscape) end
+for _,attribute in {"ZO_RoundMode","ZO_EscapeStage","ZO_RoundState","ZO_TrainingMode","ZO_TrainingStage"} do RS:GetAttributeChangedSignal(attribute):Connect(refreshEscape) end
 refreshEscape()
 rectangle("CentralYard", {-162, 162, -120, 60}, Color3.fromRGB(59, 72, 69), .4)
 local buildings = {
